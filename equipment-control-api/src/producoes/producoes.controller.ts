@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
+import { CreateObservacaoDto } from './dto/create-observacao.dto';
 import { ProducoesService } from './producoes.service';
 
 @ApiTags('Produções')
@@ -15,6 +16,15 @@ export class ProducoesController {
         return this.producoesService.create(body);
     }
 
+    @Post(':id/observacoes')
+    @ApiOperation({ summary: 'Adicionar uma nova Observação'})
+    addObservacao(
+        @Param('id') id: string,
+        @Body() body: CreateObservacaoDto,
+    ) {
+        return this.producoesService.addObservacao(id, body);
+    }
+
     @Get()
     @ApiOperation({ summary: 'Listar todas as produções' })
     findAll() {
@@ -22,10 +32,16 @@ export class ProducoesController {
 
     }
 
+    @Get(':id/observacoes')
+    @ApiOperation({ summary: 'Lista as observações'})
+    listObservacoes(@Param('id') id: string) {
+        return this.producoesService.listObservacoes(id);
+    }
+
     @Get('ordem/:numeroOrdem')
     @ApiOperation({ summary: 'Buscar produção por número da ordem' })
     @ApiParam({ name: 'numeroOrdem', example: 'OP-001' })
-    findByNumeroOrdem(@Param('numeroOrdem') numeroOrdem: string) {
+    findByNumeroOrdem(@Param('numeroOrdem', ParseIntPipe) numeroOrdem: number) {
         return this.producoesService.findByNumeroOrdem(numeroOrdem);
     }
 

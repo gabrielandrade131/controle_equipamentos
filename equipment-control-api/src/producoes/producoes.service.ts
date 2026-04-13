@@ -2,15 +2,16 @@ import { ConflictException, Injectable, NotFoundException  } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
-import { Prisma } from '@prisma/client';
+import { CreateObservacaoDto } from './dto/create-observacao.dto';
+import { Prisma, StatusProducao } from '@prisma/client';
 
 @Injectable()
 export class ProducoesService {
     constructor(private prisma: PrismaService) {}
 
     private montarNumeroSerie(
-        numeroSerieBase?: string,
-        numeroOrdem?: string,
+        numeroSerieBase?: string | null,
+        numeroOrdem?: number | null,
     ): string | null {
        if (!numeroSerieBase || !numeroOrdem) {
             return null;
@@ -18,14 +19,53 @@ export class ProducoesService {
         return `${numeroSerieBase}-${numeroOrdem}`;
     }
 
+    private calcularDiasProducao(
+        dataInicio?: Date | null,
+        dataTermino?: Date| null,
+    ): number | null {
+        if (!dataInicio) {
+            return null;
+        }
+        const dataFinal = dataTermino ?? new Date();
+
+        const inicio = new Date(dataInicio);
+        const fim = new Date(dataFinal);
+
+        inicio.setHours(0, 0, 0, 0);
+        fim.setHours(0, 0, 0, 0);
+
+        const diffMs = fim.getTime() - inicio.getTime();
+        const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        return diffDias >= 0 ? diffDias: 0;
+    }
+
+    private adicionarDiasProducao<T extends { dataInicio?: Date | null; dataTermino?: Date | null }>(
+        producao: T,
+    ) {
+        return {
+            ...producao,
+            diasProducao: this.calcularDiasProducao(
+                producao.dataInicio ?? null,
+                producao.dataTermino ?? null,
+            ),
+        };
+    }
+
     async create(data: CreateProducaoDto) {
         try {
-        return this.prisma.equipment.create({
+        const producaoCriada = await this.prisma.equipment.create({
             data: {
-                numeroOrdem: data.numeroOrdem,
                 numeroSerieBase: data.numeroSerieBase,
-                numeroSerie: this.montarNumeroSerie(data.numeroSerieBase, data.numeroOrdem),
-                dataSolicitacao: data.dataSolicitacao ? new Date(data.dataSolicitacao) : null,
+                dataSolicitacao: data.dataSolicitacao
+                ? new Date(data.dataSolicitacao)
+                : null,
+                dataInicio: data.dataInicio
+                ? new Date(data.dataInicio)
+                : null,
+                dataTermino: data.dataTermino
+                ? new Date(data.dataTermino)
+                : null,
                 modelo: data.modelo,
                 descricao: data.descricao,
                 listaPecas: data.listaPecas ?? false,
@@ -43,11 +83,28 @@ export class ProducoesService {
                 
                 },
             },
-            include: {
-                itensSeriados: true,
-            },
-
         });
+
+            const producaoFinal = await this.prisma.equipment.update({
+                where: { id: producaoCriada.id },
+                data: {
+                    numeroSerie: this.montarNumeroSerie(
+                        producaoCriada.numeroSerieBase,
+                        producaoCriada.numeroOrdem,
+                    ),
+                },
+                include: {
+                    itensSeriados: true,
+                    observacoes: {
+                        orderBy: {
+                            criadoEm: 'desc',
+                        }
+                    }
+                }
+            });
+
+            return this.adicionarDiasProducao(producaoFinal);
+
         } catch(error) {
         if (
             error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -60,14 +117,21 @@ export class ProducoesService {
     }
 
     async findAll() {
-        return this.prisma.equipment.findMany({
+        const producoes = await this.prisma.equipment.findMany({
             include: {
                 itensSeriados: true,
+                observacoes: {
+                    orderBy: {
+                        criadoEm: 'desc',
+                    }
+                }
             },
             orderBy: {
                 criadoEm: 'desc',
             },
         });
+
+        return producoes.map((producao) => this.adicionarDiasProducao(producao));
     }
 
     async findOne(id: string) {
@@ -75,31 +139,40 @@ export class ProducoesService {
             where: { id },
             include: {
                 itensSeriados: true,
+                observacoes: {
+                    orderBy: {
+                        criadoEm: 'desc',
+                    }
+                }
             },
         });
     if (!producao) {
         throw new NotFoundException('Produção não encontrada');
     }
-    return producao;
+    return this.adicionarDiasProducao(producao);
 
     }
 
-    async findByNumeroOrdem(numeroOrdem: string) {
+    async findByNumeroOrdem(numeroOrdem: number) {
         const producao = await this.prisma.equipment.findUnique({
             where: { numeroOrdem },
             include: {
-                itensSeriados: true, 
-            }
-        })
+                itensSeriados: true,
+                observacoes: {
+                    orderBy: {
+                        criadoEm: 'desc',
+                    }
+                }
+            },
+        });
         if (!producao) {
             throw new NotFoundException('Produção não encontrada');
         }
-        return producao;
+        return this.adicionarDiasProducao(producao);
     }
 
     async update(id: string, data: UpdateProducaoDto) {
        const producaoAtual = await this.findOne(id);
-       const numeroOrdemFinal = data.numeroOrdem ?? producaoAtual.numeroOrdem;
        const numeroSerieBaseFinal = 
         data.numeroSerieBase ?? producaoAtual.numeroSerieBase  ?? undefined;
 
@@ -107,15 +180,21 @@ export class ProducoesService {
             return this.prisma.equipment.update({
                 where: { id },
                 data: {
-                    numeroOrdem: data.numeroOrdem,
                     numeroSerieBase: data.numeroSerieBase,
                     numeroSerie: this.montarNumeroSerie(
                         numeroSerieBaseFinal,
-                        numeroOrdemFinal,
+                        producaoAtual.numeroOrdem,
                     ),
                     dataSolicitacao: data.dataSolicitacao 
                         ? new Date(data.dataSolicitacao)
                         : undefined,
+                    dataInicio: data.dataInicio
+                        ? new Date(data.dataInicio)
+                        : undefined,
+                    dataTermino: data.dataTermino
+                        ? new Date(data.dataTermino)
+                        : undefined,
+                    statusProducao: data.statusProducao,
                     modelo: data.modelo,
                     descricao: data.descricao,
                     listaPecas: data.listaPecas,
@@ -127,6 +206,11 @@ export class ProducoesService {
                 },
                 include: {
                     itensSeriados: true,
+                    observacoes: {
+                        orderBy: {
+                            criadoEm: 'desc',
+                        }
+                    }
                 },
             });
         } catch (error) {
@@ -140,6 +224,30 @@ export class ProducoesService {
          }
     }
 
+    async addObservacao(id: string, data: CreateObservacaoDto) {
+        await this.findOne(id);
+
+        return this.prisma.observacaoProducao.create({
+            data: {
+                producaoId: id,
+                descricao: data.descricao,
+            },
+        });
+    }
+
+    async listObservacoes(id: string) {
+        await this.findOne(id);
+        
+        return this.prisma.observacaoProducao.findMany({
+            where: {
+                producaoId: id,
+            },
+            orderBy: {
+                criadoEm: 'desc',
+            }
+        })
+    }
+
     async remove(id: string) {
         await this.findOne(id);
         return this.prisma.equipment.delete({
@@ -149,4 +257,3 @@ export class ProducoesService {
 }
 
     
-

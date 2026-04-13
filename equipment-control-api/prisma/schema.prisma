@@ -13,10 +13,13 @@ datasource db {
 
 model Equipment {
   id                                String                                    @id @default(uuid())
-  numeroOrdem                       String                                    @unique
+  numeroOrdem                       Int                                       @unique @default(autoincrement())
   numeroSerieBase                   String?
   numeroSerie                       String?   
   dataSolicitacao                   DateTime? 
+  dataInicio                        DateTime?
+  dataTermino                       DateTime?
+  statusProducao                    StatusProducao                            @default(PROGRAMADA)  
   modelo                            String? 
   descricao                         String?
 
@@ -30,6 +33,7 @@ model Equipment {
   atualizadoEm                      DateTime                                  @updatedAt
 
   itensSeriados                     ItemSeriado[]
+  observacoes                       ObservacaoProducao[]
 }
 
 model ItemSeriado {
@@ -39,4 +43,19 @@ model ItemSeriado {
   criadoEm          DateTime        @default(now())
 
   equipment         Equipment       @relation(fields: [producaoID], references: [id], onDelete: Cascade)
+}
+
+enum StatusProducao {
+  PROGRAMADA
+  EM_ANDAMENTO
+  CONCLUIDA
+}
+
+model ObservacaoProducao {
+  id          String        @id @default(uuid())
+  producaoId  String
+  descricao   String
+  criadoEm    DateTime    @default(now())
+
+  equipment   Equipment   @relation(fields: [producaoId], references: [id], onDelete: Cascade)
 }

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../services/axiosConfig';
 import { Producao } from '../types/producao';
-
-const API_BASE_URL = 'http://localhost:3001/api';
 
 export const useProducoes = () => {
   const [producoes, setProducoes] = useState<Producao[]>([]);
@@ -13,7 +11,7 @@ export const useProducoes = () => {
     const fetchProducoes = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/producoes`);
+        const response = await axiosInstance.get('/producoes');
         setProducoes(response.data);
         setError(null);
       } catch (err: any) {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useProducoesMock } from '../hooks/useProducoesMock';
 import { Producao } from '../types/producao';
+import { PdfExporter } from '../components/PdfExporter';
 import './OrdemProducao.css';
 
 interface SelectedProducao {
@@ -17,12 +18,6 @@ const OrdemProducao: React.FC = () => {
       id: producao.id || '',
       data: producao,
     });
-  };
-
-  const handleExportPDF = () => {
-    if (!selected) return;
-    console.log('Exportar para PDF:', selected.data);
-    alert('Funcionalidade de PDF será implementada em breve!');
   };
 
   if (loading) return <div className="container"><p>Carregando...</p></div>;
@@ -118,9 +113,9 @@ const OrdemProducao: React.FC = () => {
                 </div>
               </div>
 
-              <button className="btn-export" onClick={handleExportPDF}>
-                📄 Exportar PDF
-              </button>
+              <PdfExporter 
+                producao={selected.data}
+              />
             </div>
           ) : (
             <div className="empty-state">

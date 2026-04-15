@@ -67,6 +67,7 @@ export class ProducoesService {
                 dataTermino: data.dataTermino
                 ? new Date(data.dataTermino)
                 : null,
+                tipoEquipamentoId: data.tipoEquipamentoId,
                 modelo: data.modelo,
                 descricao: data.descricao,
                 listaPecas: data.listaPecas ?? false,
@@ -95,6 +96,7 @@ export class ProducoesService {
                     ),
                 },
                 include: {
+                    tipoEquipamento: true,
                     itensSeriados: true,
                     observacoes: {
                         orderBy: {
@@ -120,6 +122,7 @@ export class ProducoesService {
     async findAll() {
         const producoes = await this.prisma.equipment.findMany({
             include: {
+                tipoEquipamento: true,
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {
@@ -139,6 +142,7 @@ export class ProducoesService {
         const producao = await this.prisma.equipment.findUnique({
             where: { id },
             include: {
+                tipoEquipamento: true,
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {
@@ -158,6 +162,7 @@ export class ProducoesService {
         const producao = await this.prisma.equipment.findUnique({
             where: { numeroOrdem },
             include: {
+                tipoEquipamento: true,
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {
@@ -196,6 +201,7 @@ export class ProducoesService {
                         ? new Date(data.dataTermino)
                         : undefined,
                     statusProducao: data.statusProducao,
+                    tipoEquipamentoId: data.tipoEquipamentoId,
                     modelo: data.modelo,
                     descricao: data.descricao,
                     listaPecas: data.listaPecas,
@@ -206,6 +212,7 @@ export class ProducoesService {
                         data.procedimentoTesteInspecaoMontagem,
                 },
                 include: {
+                    tipoEquipamento: true,
                     itensSeriados: true,
                     observacoes: {
                         orderBy: {
@@ -277,6 +284,7 @@ export class ProducoesService {
                 tag: data.tag,
             },
             include: {
+                tipoEquipamento: true,
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {

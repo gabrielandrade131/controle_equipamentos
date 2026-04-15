@@ -42,6 +42,11 @@ export class CreateProducaoDto {
     @IsEnum(StatusProducao)
     statusProducao?: StatusProducao;
 
+    @ApiPropertyOptional({ example: 'uuid-do-tipo-de-equipamento' })
+    @IsOptional()
+    @IsString()
+    tipoEquipamentoId?: string;
+
     @ApiPropertyOptional({ example: 'EXAUSTOR 420 MONOFASICO' })
     @IsOptional()
     @IsString()

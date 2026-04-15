@@ -21,6 +21,8 @@ model Equipment {
   dataInicio                        DateTime?
   dataTermino                       DateTime?
   statusProducao                    StatusProducao                            @default(PROGRAMADA)  
+  tipoEquipamentoId                 String?
+  tipoEquipamento                   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
   modelo                            String? 
   descricao                         String?
 
@@ -69,4 +71,14 @@ model User {
   ativo                   Boolean                           @default(true)
   precisaTrocarSenha      Boolean                           @default(true)
   criadoEm                DateTime                          @default(now())   
+}
+
+model TipoEquipamento {
+  id                String          @id @default(uuid())
+  nome              String          @unique
+  ativo             Boolean         @default(true)
+  criadoEm          DateTime        @default(now())
+  atualizadoEm      DateTime        @updatedAt
+
+  equipments Equipment[]
 }

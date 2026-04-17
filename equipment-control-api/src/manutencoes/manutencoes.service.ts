@@ -8,12 +8,23 @@ import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 export class ManutencoesService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async createFromSynchro(data: CreateManutencaoSynchroDto) {
-        const situacaoNormalizada = data.situacaoEquipamento?.trim().toLowerCase();
+    private ehSituacaoRetornoBase(value?: string | null): boolean {
+        const situacao = String(value ?? '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, ' ');
 
-        if (situacaoNormalizada !== 'retornou para a base') {
+        return [
+            'retornou_base',
+            'retornou para base',
+            'retornou para a base',
+        ].includes(situacao);
+    }
+
+    async createFromSynchro(data: CreateManutencaoSynchroDto) {
+        if (!this.ehSituacaoRetornoBase(data.situacaoEquipamento)) {
             throw new BadRequestException(
-                'A manutenção só pode ser criada a partir da sincronização se a situação do equipamento for "Retornou para a base".',
+                'A manutenção só pode ser criada a partir da sincronização se a situação do equipamento for "Retornou para a base" ou "retornou_base".',
             );
         }
 

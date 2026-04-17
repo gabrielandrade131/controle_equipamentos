@@ -8,7 +8,7 @@
 .formulario-inspecao h2 {
   margin-bottom: 20px;
   color: #333;
-  border-bottom: 2px solid #B2CC21;
+  border-bottom: 2px solid #FF1C20;
   padding-bottom: 10px;
 }
 
@@ -17,7 +17,7 @@
   padding: 15px;
   background: #f9f9f9;
   border-radius: 5px;
-  border-left: 4px solid #B2CC21;
+  border-left: 4px solid #FF1C20;
 }
 
 .formulario-inspecao .form-section h3 {
@@ -76,7 +76,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 3px solid #B2CC21;
+  border-left: 3px solid #FF1C20;
   font-size: 13px;
 }
 
@@ -113,7 +113,7 @@
 }
 
 .formulario-inspecao .btn-add {
-  background: #B2CC21;
+  background: #FF1C20;
   color: #333;
   border: none;
   padding: 8px 15px;
@@ -146,7 +146,7 @@
 }
 
 .formulario-inspecao .btn-salvar {
-  background: #B2CC21;
+  background: #FF1C20;
   color: #333;
 }
 

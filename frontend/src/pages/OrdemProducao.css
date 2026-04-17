@@ -24,7 +24,7 @@ header {
 }
 
 .btn-novo {
-  background: #FF1C20;
+  background: #B2CC21;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -179,7 +179,7 @@ header {
   margin-bottom: 16px;
   padding: 12px;
   background: #f9f9f9;
-  border-left: 4px solid #FF1C20;
+  border-left: 4px solid #B2CC21;
   border-radius: 4px;
 }
 
@@ -203,7 +203,7 @@ header {
 .btn-export {
   margin-top: 30px;
   padding: 12px 30px;
-  background: #FF1C20;
+  background: #B2CC21;
   color: white;
   border: none;
   border-radius: 6px;

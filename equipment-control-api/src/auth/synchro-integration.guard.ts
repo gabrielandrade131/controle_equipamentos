@@ -7,6 +7,10 @@ import {
 
 @Injectable()
 export class SynchroIntegrationGuard implements CanActivate {
+    private normalizeKey(value: unknown): string {
+        return String(value ?? '').trim().replace(/^-+/, '');
+    }
+
     canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest();
 
@@ -19,7 +23,10 @@ export class SynchroIntegrationGuard implements CanActivate {
             );
         }
 
-        if (!integrationKey || integrationKey !== expectedKey) {
+        if (
+            !integrationKey ||
+            this.normalizeKey(integrationKey) !== this.normalizeKey(expectedKey)
+        ) {
             throw new UnauthorizedException('Chave de integração inválida.');
         }
 

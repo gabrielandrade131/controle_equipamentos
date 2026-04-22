@@ -21,17 +21,13 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCa
     sequencialMontagem: '',
     inspecaoMontagem: '',
     historicoEquipamento: '',
+    procedimentoTestes: '',
   });
 
   const [novoItem, setNovoItem] = useState({
     numero: '',
     descricao: '',
     numeroSerie: '',
-  });
-
-  const [novoDocumento, setNovoDocumento] = useState({
-    nome: '',
-    codigo: '',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -61,28 +57,6 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCa
     setFormData({
       ...formData,
       itensSeriados: formData.itensSeriados.filter((item) => item.id !== id),
-    });
-  };
-
-  const handleAdicionarDocumento = () => {
-    if (novoDocumento.nome && novoDocumento.codigo) {
-      const novoDocComId = {
-        id: `doc-${Date.now()}`,
-        ...novoDocumento,
-      };
-
-      setFormData({
-        ...formData,
-        documentos: [...formData.documentos, novoDocComId],
-      });
-      setNovoDocumento({ nome: '', codigo: '' });
-    }
-  };
-
-  const handleRemoverDocumento = (id: string) => {
-    setFormData({
-      ...formData,
-      documentos: formData.documentos.filter((doc: any) => doc.id !== id),
     });
   };
 
@@ -230,57 +204,6 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCa
         <h3>Documentos Relacionados</h3>
         
         <div className="form-group">
-          <label htmlFor="nomeDoc">Nome do Documento:</label>
-          <input
-            type="text"
-            id="nomeDoc"
-            value={novoDocumento.nome}
-            onChange={(e) => setNovoDocumento({ ...novoDocumento, nome: e.target.value })}
-            placeholder="Ex: Lista de Peças"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="codigoDoc">Código:</label>
-          <input
-            type="text"
-            id="codigoDoc"
-            value={novoDocumento.codigo}
-            onChange={(e) => setNovoDocumento({ ...novoDocumento, codigo: e.target.value })}
-            placeholder="Ex: DM-EX420MONO"
-          />
-        </div>
-
-        <button type="button" onClick={handleAdicionarDocumento} className="btn-add">
-          Adicionar Documento
-        </button>
-
-        {formData.documentos.length > 0 && (
-          <div className="items-list">
-            <h4>Documentos Adicionados:</h4>
-            {formData.documentos.map((doc: any) => (
-              <div key={doc.id} className="item-card">
-                <div className="item-info">
-                  <strong>{doc.nome}</strong>
-                  <small>Código: {doc.codigo}</small>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoverDocumento(doc.id)}
-                  className="btn-remove"
-                >
-                  Remover
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="form-section">
-        <h3>Documentação Adicional</h3>
-        
-        <div className="form-group">
           <label htmlFor="listaPecas">Lista de Peças:</label>
           <textarea
             id="listaPecas"
@@ -325,6 +248,17 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCa
             onChange={handleInputChange}
             placeholder="Descreva o histórico do equipamento ou deixe em branco se não aplicável"
             rows={2}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="procedimento">Procedimento para Testes e Inspeção de Montagem:</label>
+          <input
+            type="text"
+            id="procedimento"
+            value={formData.procedimentoTestes || ''}
+            onChange={(e) => setFormData({ ...formData, procedimentoTestes: e.target.value })}
+            placeholder="Ex: PR-MAN-003"
           />
         </div>
 

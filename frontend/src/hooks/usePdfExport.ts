@@ -129,6 +129,86 @@ export const usePdfExport = () => {
                 yPosition += 2;
             }
 
+            // DOCUMENTOS RELACIONADOS - Seção consolidada
+            if (producao.listaPecas || producao.sequencialMontagem || producao.inspecaoMontagem || producao.historicoEquipamento || producao.procedimentoTestes) {
+                addSection('DOCUMENTOS RELACIONADOS');
+
+                // Lista de Peças
+                if (producao.listaPecas) {
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('Lista de Peças:', marginLeft + 3, yPosition);
+                    yPosition += 4;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    const listaPecasLines = pdf.splitTextToSize(producao.listaPecas, maxWidth - 6);
+                    listaPecasLines.forEach((line: string) => {
+                        pdf.text(line, marginLeft + 5, yPosition);
+                        yPosition += 3.5;
+                    });
+                    yPosition += 2;
+                }
+
+                // Sequencial de Montagem
+                if (producao.sequencialMontagem) {
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('Sequencial de Montagem:', marginLeft + 3, yPosition);
+                    yPosition += 4;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    const seqLines = pdf.splitTextToSize(producao.sequencialMontagem, maxWidth - 6);
+                    seqLines.forEach((line: string) => {
+                        pdf.text(line, marginLeft + 5, yPosition);
+                        yPosition += 3.5;
+                    });
+                    yPosition += 2;
+                }
+
+                // Inspeção de Montagem
+                if (producao.inspecaoMontagem) {
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('Inspeção de Montagem:', marginLeft + 3, yPosition);
+                    yPosition += 4;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    const inspecaoLines = pdf.splitTextToSize(producao.inspecaoMontagem, maxWidth - 6);
+                    inspecaoLines.forEach((line: string) => {
+                        pdf.text(line, marginLeft + 5, yPosition);
+                        yPosition += 3.5;
+                    });
+                    yPosition += 2;
+                }
+
+                // Histórico do Equipamento
+                if (producao.historicoEquipamento) {
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('Histórico do Equipamento:', marginLeft + 3, yPosition);
+                    yPosition += 4;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    const historicooLines = pdf.splitTextToSize(producao.historicoEquipamento, maxWidth - 6);
+                    historicooLines.forEach((line: string) => {
+                        pdf.text(line, marginLeft + 5, yPosition);
+                        yPosition += 3.5;
+                    });
+                    yPosition += 2;
+                }
+
+                // Procedimento para Testes e Inspeção de Montagem
+                if (producao.procedimentoTestes) {
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('Procedimento para Testes e Inspeção de Montagem:', marginLeft + 3, yPosition);
+                    yPosition += 4;
+                    pdf.setFont(undefined, 'normal');
+                    pdf.text('Código: ' + producao.procedimentoTestes, marginLeft + 5, yPosition);
+                    yPosition += 4;
+                }
+            }
+
             // Observações
             if (producao.observacoes) {
                 addSection('OBSERVAÇÕES');
@@ -147,19 +227,22 @@ export const usePdfExport = () => {
             yPosition += 25;
             
             const signatureY = yPosition;
-            const col1 = marginLeft + 15;
-            const col2 = pageWidth / 2;
-            const col3 = pageWidth - marginRight - 15;
+            const signatureAreaWidth = maxWidth; // Respeita margens
+            const signatureColWidth = signatureAreaWidth / 3;
+            const signatureCol1 = marginLeft + signatureColWidth / 2;
+            const signatureCol2 = marginLeft + signatureColWidth + signatureColWidth / 2;
+            const signatureCol3 = marginLeft + 2 * signatureColWidth + signatureColWidth / 2;
+            const lineLength = signatureColWidth * 0.6; // Linha ocupa 60% da coluna
             
-            pdf.line(col1 - 25, signatureY, col1 + 25, signatureY);
-            pdf.line(col2 - 25, signatureY, col2 + 25, signatureY);
-            pdf.line(col3 - 25, signatureY, col3 + 25, signatureY);
+            pdf.line(signatureCol1 - lineLength / 2, signatureY, signatureCol1 + lineLength / 2, signatureY);
+            pdf.line(signatureCol2 - lineLength / 2, signatureY, signatureCol2 + lineLength / 2, signatureY);
+            pdf.line(signatureCol3 - lineLength / 2, signatureY, signatureCol3 + lineLength / 2, signatureY);
             
             yPosition = signatureY + 6;
             pdf.setFontSize(8);
-            pdf.text('Nome', col1, yPosition, { align: 'center' });
-            pdf.text('Data', col2, yPosition, { align: 'center' });
-            pdf.text('Assinatura', col3, yPosition, { align: 'center' });
+            pdf.text('Nome', signatureCol1, yPosition, { align: 'center' });
+            pdf.text('Data', signatureCol2, yPosition, { align: 'center' });
+            pdf.text('Assinatura', signatureCol3, yPosition, { align: 'center' });
 
             pdf.save(filename);
         } catch (error) {

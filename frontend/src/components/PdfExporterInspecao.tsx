@@ -22,18 +22,9 @@ export const PdfExporterInspecao: React.FC<PdfExporterInspecaoProps> = ({
   return (
     <button 
       onClick={handleExport}
-      style={{
-        backgroundColor: '#B2CC21',
-        color: '#333',
-        padding: '10px 20px',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: 'bold',
-      }}
+      className="btn-primary"
     >
-      📄 Exportar PDF
+      Exportar PDF
     </button>
   );
 };

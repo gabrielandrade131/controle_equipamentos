@@ -54,7 +54,7 @@ export const usePdfExportInspecao = () => {
                 pdf.setFillColor(178, 204, 33);
                 pdf.rect(marginLeft, yPosition, maxWidth, 7, 'F');
                 pdf.text(title, marginLeft + 2, yPosition + 4.5);
-                yPosition += 14;
+                yPosition += 12;
             };
 
             const addField = (label: string, value: string | number) => {
@@ -68,165 +68,143 @@ export const usePdfExportInspecao = () => {
                 yPosition += 6;
             };
 
-            // Dados básicos
-            addSection('DADOS DA INSPEÇÃO');
+            // DESCRIÇÃO
+            addSection('DESCRIÇÃO');
             addField('Número de Série', inspecao.numeroSerie);
             addField('Modelo', inspecao.modelo);
-            addField('Data de Inspeção', inspecao.dataInspecao);
+            addField('Data', inspecao.data);
             addField('Responsável', inspecao.responsavel);
-            yPosition += 1;
 
-            // Descrição
-            if (inspecao.descricao) {
-                addSection('DESCRIÇÃO');
-                pdf.setFontSize(9);
-                const descricaoLines = pdf.splitTextToSize(inspecao.descricao, maxWidth - 6);
-                pdf.text(descricaoLines, marginLeft + 3, yPosition);
-                yPosition += descricaoLines.length * 5 + 5;
-            }
-
-            // Verificações Gerais
-            if (inspecao.verificacoesGerais && inspecao.verificacoesGerais.length > 0) {
-                addSection('VERIFICAÇÕES GERAIS');
-                
-                inspecao.verificacoesGerais.forEach((verif) => {
+            // INSTRUMENTOS DE AFEIÇÃO
+            if (inspecao.instrumentosAferição && inspecao.instrumentosAferição.length > 0) {
+                addSection('VERIFICAÇÕES NOS INSTRUMENTOS DE AFEIÇÃO');
+                inspecao.instrumentosAferição.forEach((item) => {
+                    const conformidade = item.conformidade || '—';
                     pdf.setFontSize(8);
-                    const lines = pdf.splitTextToSize(`${verif.nome} - ${verif.resultado}`, maxWidth - 4);
-                    lines.forEach((line: string) => {
-                        pdf.text('• ' + line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
-                    });
-                    if (verif.observacao) {
-                        const obsLines = pdf.splitTextToSize(`   ${verif.observacao}`, maxWidth - 10);
-                        obsLines.forEach((line: string) => {
-                            pdf.text(line, marginLeft + 8, yPosition);
-                            yPosition += 3;
-                        });
-                    }
-                    yPosition += 1;
+                    pdf.text(`• ${item.nome}: ${conformidade}`, marginLeft + 5, yPosition);
+                    yPosition += 4;
                 });
                 yPosition += 2;
             }
 
-            // Verificações Pós-Montagem
-            if (inspecao.verificacoesPosmontagem && inspecao.verificacoesPosmontagem.length > 0) {
-                addSection('VERIFICAÇÕES PÓS-MONTAGEM');
-                
-                inspecao.verificacoesPosmontagem.forEach((verif) => {
+            // VERIFICAÇÃO PRÉ MONTAGEM
+            if (inspecao.verificacaoPremontagem && inspecao.verificacaoPremontagem.length > 0) {
+                addSection('VERIFICAÇÃO GERAL PRÉ MONTAGEM');
+                inspecao.verificacaoPremontagem.forEach((item) => {
                     pdf.setFontSize(8);
-                    const lines = pdf.splitTextToSize(`${verif.nome} - ${verif.resultado}`, maxWidth - 4);
-                    lines.forEach((line: string) => {
-                        pdf.text('• ' + line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
-                    });
-                    if (verif.observacao) {
-                        const obsLines = pdf.splitTextToSize(`   ${verif.observacao}`, maxWidth - 10);
-                        obsLines.forEach((line: string) => {
-                            pdf.text(line, marginLeft + 8, yPosition);
-                            yPosition += 3;
-                        });
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(item.nome, marginLeft + 3, yPosition);
+                    yPosition += 3;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    if (item.valorObservado) {
+                        pdf.text(`Valor Observado: ${item.valorObservado}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
                     }
-                    yPosition += 1;
+                    if (item.instrumentoMedicao) {
+                        pdf.text(`Instrumento: ${item.instrumentoMedicao}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
+                    }
+                    pdf.text(`Conformidade: ${item.conformidade || '—'}`, marginLeft + 5, yPosition);
+                    yPosition += 5;
                 });
                 yPosition += 2;
             }
 
-            // Análise Dimensional
-            if (inspecao.analiseDimensional) {
-                addSection('ANÁLISE DIMENSIONAL');
-                pdf.setFontSize(9);
-                const analiseLines = pdf.splitTextToSize(inspecao.analiseDimensional, maxWidth - 6);
-                pdf.text(analiseLines, marginLeft + 3, yPosition);
-                yPosition += analiseLines.length * 5 + 5;
-            }
-
-            // Testes de Motor
-            if (inspecao.testesMotor && inspecao.testesMotor.length > 0) {
-                addSection('TESTES DE MOTOR');
-                
-                inspecao.testesMotor.forEach((teste) => {
+            // ANÁLISE DIMENSIONAL
+            if (inspecao.analiseDimensional && inspecao.analiseDimensional.length > 0) {
+                addSection('ANÁLISE DIMENSIONAL DE CARCAÇA');
+                inspecao.analiseDimensional.forEach((item) => {
                     pdf.setFontSize(8);
-                    const lines = pdf.splitTextToSize(`${teste.nome} - ${teste.resultado}`, maxWidth - 4);
-                    lines.forEach((line: string) => {
-                        pdf.text('• ' + line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
-                    });
-                    if (teste.observacao) {
-                        const obsLines = pdf.splitTextToSize(`   ${teste.observacao}`, maxWidth - 10);
-                        obsLines.forEach((line: string) => {
-                            pdf.text(line, marginLeft + 8, yPosition);
-                            yPosition += 3;
-                        });
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(item.nome, marginLeft + 3, yPosition);
+                    yPosition += 3;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    if (item.valorObservado) {
+                        pdf.text(`Valor: ${item.valorObservado}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
                     }
-                    yPosition += 1;
+                    if (item.instrumentoMedicao) {
+                        pdf.text(`Instrumento: ${item.instrumentoMedicao}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
+                    }
+                    pdf.text(`Conformidade: ${item.conformidade || '—'}`, marginLeft + 5, yPosition);
+                    yPosition += 5;
                 });
                 yPosition += 2;
             }
 
-            // Testes Adicionais
-            if (inspecao.testesAdicionar && inspecao.testesAdicionar.length > 0) {
-                addSection('TESTES ADICIONAIS');
-                
-                inspecao.testesAdicionar.forEach((teste) => {
+            // TESTES
+            if (inspecao.testes && inspecao.testes.length > 0) {
+                addSection('TESTES');
+                inspecao.testes.forEach((item) => {
                     pdf.setFontSize(8);
-                    const lines = pdf.splitTextToSize(`${teste.nome} - ${teste.resultado}`, maxWidth - 4);
-                    lines.forEach((line: string) => {
-                        pdf.text('• ' + line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
-                    });
-                    if (teste.observacao) {
-                        const obsLines = pdf.splitTextToSize(`   ${teste.observacao}`, maxWidth - 10);
-                        obsLines.forEach((line: string) => {
-                            pdf.text(line, marginLeft + 8, yPosition);
-                            yPosition += 3;
-                        });
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(item.nome, marginLeft + 3, yPosition);
+                    yPosition += 3;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    if (item.valorObservado) {
+                        pdf.text(`Valor: ${item.valorObservado}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
                     }
-                    yPosition += 1;
+                    if (item.instrumentoMedicao) {
+                        pdf.text(`Instrumento: ${item.instrumentoMedicao}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
+                    }
+                    pdf.text(`Conformidade: ${item.conformidade || '—'}`, marginLeft + 5, yPosition);
+                    yPosition += 5;
                 });
                 yPosition += 2;
             }
 
-            // Resultado Final
-            addSection('RESULTADO FINAL');
-            pdf.setFontSize(12);
-            pdf.setFont(undefined, 'bold');
-            if (inspecao.resultadoFinal === 'APROVADO') {
-                pdf.setTextColor(0, 128, 0);
-            } else {
-                pdf.setTextColor(255, 0, 0);
+            // VERIFICAÇÃO PÓS MONTAGEM
+            if (inspecao.verificacaoPosmontagem && inspecao.verificacaoPosmontagem.length > 0) {
+                addSection('VERIFICAÇÕES GERAIS PÓS MONTAGEM');
+                inspecao.verificacaoPosmontagem.forEach((item) => {
+                    pdf.setFontSize(8);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(item.nome, marginLeft + 3, yPosition);
+                    yPosition += 3;
+                    pdf.setFont(undefined, 'normal');
+                    
+                    if (item.valorObservado) {
+                        pdf.text(`Valor: ${item.valorObservado}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
+                    }
+                    if (item.instrumentoMedicao) {
+                        pdf.text(`Instrumento: ${item.instrumentoMedicao}`, marginLeft + 5, yPosition);
+                        yPosition += 3;
+                    }
+                    pdf.text(`Conformidade: ${item.conformidade || '—'}`, marginLeft + 5, yPosition);
+                    yPosition += 5;
+                });
+                yPosition += 2;
             }
-            pdf.text(inspecao.resultadoFinal || '—', marginLeft + 3, yPosition);
-            pdf.setTextColor(0, 0, 0);
-            yPosition += 8;
 
-            // Observações
+            // RESULTADO DE INSPEÇÃO
+            if (inspecao.resultadoFinal) {
+                addSection('RESULTADO DE INSPEÇÃO');
+                pdf.setFontSize(11);
+                pdf.setFont(undefined, 'bold');
+                const color = inspecao.resultadoFinal === 'APROVADO' ? [76, 175, 80] : [244, 67, 54];
+                pdf.setTextColor(color[0], color[1], color[2]);
+                pdf.text(inspecao.resultadoFinal, marginLeft + 3, yPosition);
+                pdf.setTextColor(0, 0, 0);
+                yPosition += 10;
+            }
+
+            // OBSERVAÇÕES
             if (inspecao.observacoes) {
                 addSection('OBSERVAÇÕES');
                 pdf.setFontSize(9);
                 const obsLines = pdf.splitTextToSize(inspecao.observacoes, maxWidth - 6);
-                pdf.text(obsLines, marginLeft + 3, yPosition);
-                yPosition += obsLines.length * 5 + 5;
+                obsLines.forEach((line: string) => {
+                    pdf.text(line, marginLeft + 3, yPosition);
+                    yPosition += 4;
+                });
             }
-
-            // Assinaturas
-            yPosition += 10;
-            addSection('RECEBIMENTO DA INSPEÇÃO');
-            yPosition += 25;
-            
-            const signatureY = yPosition;
-            const col1 = marginLeft + 20;
-            const col2 = pageWidth / 2;
-            const col3 = pageWidth - marginRight - 20;
-            
-            pdf.line(col1 - 25, signatureY, col1 + 25, signatureY);
-            pdf.line(col2 - 25, signatureY, col2 + 25, signatureY);
-            pdf.line(col3 - 25, signatureY, col3 + 25, signatureY);
-            
-            yPosition = signatureY + 6;
-            pdf.setFontSize(8);
-            pdf.text('Nome', col1, yPosition, { align: 'center' });
-            pdf.text('Data', col2, yPosition, { align: 'center' });
-            pdf.text('Assinatura', col3, yPosition, { align: 'center' });
 
             pdf.save(filename);
         } catch (error) {

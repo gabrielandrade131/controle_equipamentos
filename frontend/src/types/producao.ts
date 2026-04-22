@@ -27,6 +27,7 @@ export interface CreateProducaoDto {
   sequencialMontagem?: string;
   inspecaoMontagem?: string;
   historicoEquipamento?: string;
+  procedimentoTestes?: string;
 }
 
 // Para RECEBER (resposta do backend)

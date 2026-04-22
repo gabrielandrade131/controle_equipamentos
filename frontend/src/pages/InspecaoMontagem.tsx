@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useInspecoesMock } from '../hooks/useInspecoesMock';
-import { InspecaoMontagem, CreateInspecaoMontageDto } from '../types/inspecao';
+import { InspecaoMontagem } from '../types/inspecao';
 import { PdfExporterInspecao } from '../components/PdfExporterInspecao';
-import { FormularioInspecao } from '../components/FormularioInspecao';
-import './InspecaoMontagem.css';
+import { FormularioInspecaoNovo } from '../components/FormularioInspecaoNovo';
+import '../pages/Producao.css';
 
 interface SelectedInspecao {
   id: string;
@@ -11,7 +11,7 @@ interface SelectedInspecao {
 }
 
 const InspecaoMontagemPage: React.FC = () => {
-  const { inspecoes, loading, error, criarInspecao } = useInspecoesMock();
+  const { inspecoes, loading, criarInspecao } = useInspecoesMock();
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
   const [modo, setModo] = useState<'lista' | 'criar'>('lista');
 
@@ -29,12 +29,11 @@ const InspecaoMontagemPage: React.FC = () => {
   };
 
   if (loading) return <div className="container"><p>Carregando...</p></div>;
-  if (error) return <div className="container error"><p>Erro: {error}</p></div>;
 
   if (modo === 'criar') {
     return (
       <div className="container">
-        <FormularioInspecao
+        <FormularioInspecaoNovo
           onSubmit={handleCriarInspecao}
           onCancel={() => setModo('lista')}
         />
@@ -43,25 +42,25 @@ const InspecaoMontagemPage: React.FC = () => {
   }
 
   return (
-    <div className="container">
-      <h1>Inspeção de Montagem</h1>
+    <div className="producao-page">
+      <h2>Inspeção de Montagem</h2>
       
-      <div className="toolbar">
+      <div className="page-toolbar">
         <button 
           onClick={() => setModo('criar')}
-          className="btn-novo"
+          className="btn-primary"
         >
           Criar Inspeção de Montagem
         </button>
       </div>
       
-      <div className="content">
-        <div className="list-section">
-          <h2>Inspeções ({inspecoes.length})</h2>
+      <div className="page-content">
+        <div className="page-list-section">
+          <h3>Inspeções ({inspecoes.length})</h3>
           {inspecoes.length === 0 ? (
             <p>Nenhuma inspeção encontrada</p>
           ) : (
-            <ul className="inspecao-list">
+            <ul className="page-list">
               {inspecoes.map((inspecao: InspecaoMontagem) => (
                 <li
                   key={inspecao.id}
@@ -76,11 +75,11 @@ const InspecaoMontagemPage: React.FC = () => {
           )}
         </div>
 
-        <div className="detail-section">
+        <div className="page-detail-section">
           {selected ? (
             <div className="inspecao-detail">
-              <h2>Detalhes da Inspeção</h2>
-              <div className="detail-grid">
+              <h3>Detalhes da Inspeção</h3>
+              <div className="page-detail-grid">
                 <div className="detail-item">
                   <label>Número de Série:</label>
                   <p>{selected.data.numeroSerie}</p>
@@ -91,110 +90,33 @@ const InspecaoMontagemPage: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Data de Inspeção:</label>
-                  <p>{selected.data.dataInspecao}</p>
+                  <p>{selected.data.data}</p>
                 </div>
                 <div className="detail-item">
                   <label>Responsável:</label>
                   <p>{selected.data.responsavel}</p>
                 </div>
+                <div className="detail-item">
+                  <label>Resultado:</label>
+                  <p><strong style={{ color: selected.data.resultadoFinal === 'APROVADO' ? '#4caf50' : '#f44336' }}>
+                    {selected.data.resultadoFinal}
+                  </strong></p>
+                </div>
               </div>
 
-              {selected.data.descricao && (
-                <div className="detail-section-item">
-                  <label>Descrição:</label>
-                  <p>{selected.data.descricao}</p>
-                </div>
-              )}
-
-              {selected.data.verificacoesGerais && selected.data.verificacoesGerais.length > 0 && (
-                <div className="detail-section-item">
-                  <label>Verificações Gerais:</label>
-                  <ul>
-                    {selected.data.verificacoesGerais.map((verif) => (
-                      <li key={verif.id}>
-                        <strong>{verif.nome}</strong> - {verif.resultado}
-                        {verif.observacao && ` (${verif.observacao})`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selected.data.verificacoesPosmontagem && selected.data.verificacoesPosmontagem.length > 0 && (
-                <div className="detail-section-item">
-                  <label>Verificações Pós-Montagem:</label>
-                  <ul>
-                    {selected.data.verificacoesPosmontagem.map((verif) => (
-                      <li key={verif.id}>
-                        <strong>{verif.nome}</strong> - {verif.resultado}
-                        {verif.observacao && ` (${verif.observacao})`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selected.data.analiseDimensional && (
-                <div className="detail-section-item">
-                  <label>Análise Dimensional:</label>
-                  <p>{selected.data.analiseDimensional}</p>
-                </div>
-              )}
-
-              {selected.data.testesMotor && selected.data.testesMotor.length > 0 && (
-                <div className="detail-section-item">
-                  <label>Testes de Motor:</label>
-                  <ul>
-                    {selected.data.testesMotor.map((teste) => (
-                      <li key={teste.id}>
-                        <strong>{teste.nome}</strong> - {teste.resultado}
-                        {teste.observacao && ` (${teste.observacao})`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selected.data.testesAdicionar && selected.data.testesAdicionar.length > 0 && (
-                <div className="detail-section-item">
-                  <label>Testes Adicionais:</label>
-                  <ul>
-                    {selected.data.testesAdicionar.map((teste) => (
-                      <li key={teste.id}>
-                        <strong>{teste.nome}</strong> - {teste.resultado}
-                        {teste.observacao && ` (${teste.observacao})`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selected.data.resultadoFinal && (
-                <div className="detail-section-item">
-                  <label>Resultado Final:</label>
-                  <p style={{
-                    fontWeight: 'bold',
-                    color: selected.data.resultadoFinal === 'APROVADO' ? '#008000' : '#FF0000',
-                    fontSize: '16px'
-                  }}>
-                    {selected.data.resultadoFinal}
-                  </p>
-                </div>
-              )}
-
               {selected.data.observacoes && (
-                <div className="detail-section-item">
-                  <label>Observações:</label>
+                <div style={{ marginTop: '20px' }}>
+                  <h4>Observações:</h4>
                   <p>{selected.data.observacoes}</p>
                 </div>
               )}
 
-              <div className="action-buttons">
+              <div className="page-toolbar" style={{ marginTop: '20px' }}>
                 <PdfExporterInspecao inspecao={selected.data} />
               </div>
             </div>
           ) : (
-            <div className="no-selection">
+            <div className="page-detail-section">
               <p>Selecione uma inspeção para ver os detalhes</p>
             </div>
           )}

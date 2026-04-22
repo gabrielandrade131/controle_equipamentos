@@ -3,7 +3,7 @@ import { useProducoesMock } from '../hooks/useProducoesMock';
 import { Producao, CreateProducaoDto } from '../types/producao';
 import { PdfExporter } from '../components/PdfExporter';
 import { FormularioOrdem } from '../components/FormularioOrdem';
-import './OrdemProducao.css';
+import '../pages/Producao.css';
 
 interface SelectedProducao {
   id: string;
@@ -43,25 +43,25 @@ const OrdemProducao: React.FC = () => {
   }
 
   return (
-    <div className="container">
-      <h1>Ordem de Produção</h1>
+    <div className="producao-page">
+      <h2>Ordem de Produção</h2>
       
-      <div className="toolbar">
+      <div className="page-toolbar">
         <button 
           onClick={() => setModo('criar')}
-          className="btn-novo"
+          className="btn-primary"
         >
           Gerar Ordem de Produção
         </button>
       </div>
       
-      <div className="content">
-        <div className="list-section">
-          <h2>Produções ({producoes.length})</h2>
+      <div className="page-content">
+        <div className="page-list-section">
+          <h3>Produções ({producoes.length})</h3>
           {producoes.length === 0 ? (
             <p>Nenhuma produção encontrada</p>
           ) : (
-            <ul className="producao-list">
+            <ul className="page-list">
               {producoes.map((producao: Producao) => (
                 <li
                   key={producao.id}
@@ -76,11 +76,11 @@ const OrdemProducao: React.FC = () => {
           )}
         </div>
 
-        <div className="detail-section">
+        <div className="page-detail-section">
           {selected ? (
             <div className="producao-detail">
               <h2>Detalhes da Ordem</h2>
-              <div className="detail-grid">
+              <div className="page-detail-grid">
                 <div className="detail-item">
                   <label>Número Ordem:</label>
                   <p>{selected.data.numeroOrdem}</p>
@@ -108,9 +108,9 @@ const OrdemProducao: React.FC = () => {
                   <h3>Itens Serializados</h3>
                   {selected.data.itensSeriados.map((item) => (
                     <div key={item.id} className="doc-item">
-                      <strong>{item.numero}</strong>
+                      <strong>Item {item.numero}</strong>
                       <p>{item.descricao}</p>
-                      <small>Série: {item.numeroSerie}</small>
+                      {item.numeroSerie && <small>Série: {item.numeroSerie}</small>}
                     </div>
                   ))}
                 </div>
@@ -121,38 +121,9 @@ const OrdemProducao: React.FC = () => {
                   <h3>Documentos Relacionados</h3>
                   {selected.data.documentos.map((doc) => (
                     <div key={doc.id} className="doc-item">
-                      <strong>{doc.nome}</strong>
-                      <small>Código: {doc.codigo}</small>
+                      <strong>{doc.nome}:</strong> {doc.codigo}
                     </div>
                   ))}
-                </div>
-              )}
-
-              {selected.data.listaPecas && (
-                <div className="documents-section">
-                  <h3>Lista de Peças</h3>
-                  <p>{selected.data.listaPecas}</p>
-                </div>
-              )}
-
-              {selected.data.sequencialMontagem && (
-                <div className="documents-section">
-                  <h3>Sequencial de Montagem</h3>
-                  <p>{selected.data.sequencialMontagem}</p>
-                </div>
-              )}
-
-              {selected.data.inspecaoMontagem && (
-                <div className="documents-section">
-                  <h3>Inspeção de Montagem</h3>
-                  <p>{selected.data.inspecaoMontagem}</p>
-                </div>
-              )}
-
-              {selected.data.historicoEquipamento && (
-                <div className="documents-section">
-                  <h3>Histórico do Equipamento</h3>
-                  <p>{selected.data.historicoEquipamento}</p>
                 </div>
               )}
 

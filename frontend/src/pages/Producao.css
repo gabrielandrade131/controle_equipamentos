@@ -1,0 +1,263 @@
+.producao-container {
+  width: 100%;
+  min-height: calc(100vh - 140px);
+  background: #f8f9fa;
+}
+
+.producao-header {
+  background: white;
+  border-bottom: 2px solid #FF1C20;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.producao-header h1 {
+  color: #0d4c94;
+  margin: 0 0 20px 0;
+  font-size: 28px;
+}
+
+.producao-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  border-color: #FF1C20;
+  color: #FF1C20;
+}
+
+.tab-button.active {
+  background: #FF1C20;
+  color: white;
+  border-color: #FF1C20;
+  box-shadow: 0 2px 8px rgba(255, 28, 32, 0.3);
+}
+
+.producao-content {
+  padding: 20px;
+}
+
+/* Padronização de containers para as subpáginas */
+.producao-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.producao-page h2 {
+  color: #0d4c94;
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+
+.page-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.page-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 30px;
+  min-height: 600px;
+}
+
+/* Lista Section */
+.page-list-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.page-list-section h3 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #0d4c94;
+  font-weight: 600;
+}
+
+.page-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.page-list li {
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f9f9f9;
+}
+
+.page-list li:hover {
+  background-color: #f0f0f0;
+  border-color: #FF1C20;
+  box-shadow: 0 2px 4px rgba(255, 28, 32, 0.1);
+}
+
+.page-list li.active {
+  background-color: #fff3f3;
+  border-color: #FF1C20;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(255, 28, 32, 0.2);
+}
+
+.page-list li strong {
+  display: block;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.page-list li small {
+  display: block;
+  color: #666;
+  font-size: 12px;
+}
+
+/* Detail Section */
+.page-detail-section {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.page-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 5px;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.detail-item p {
+  color: #333;
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Buttons Padronizado */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #FF1C20;
+  color: white;
+  box-shadow: 0 2px 4px rgba(255, 28, 32, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #CC1319;
+  box-shadow: 0 4px 8px rgba(255, 28, 32, 0.4);
+}
+
+.btn-secondary {
+  background-color: #FF1C20;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #CC1319;
+}
+
+.btn-danger {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #da190b;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.no-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .producao-header h1 {
+    font-size: 24px;
+  }
+
+  .producao-tabs {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .page-content {
+    grid-template-columns: 1fr;
+  }
+
+  .page-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    width: 100%;
+  }
+}

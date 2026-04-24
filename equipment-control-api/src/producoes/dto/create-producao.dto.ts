@@ -14,11 +14,6 @@ import { CreateItemSeriadoDto } from "./create-item-seriado.dto";
 import { StatusProducao } from '@prisma/client';
 
 export class CreateProducaoDto {
-    @ApiPropertyOptional({ example: 'SER-1001'})
-    @IsOptional()
-    @IsString()
-    numeroSerieBase?: string;
-
     @ApiPropertyOptional({ example: '2023-01-01' })
     @IsOptional()
     @IsDateString()

@@ -14,7 +14,6 @@ datasource db {
 model Equipment {
   id                                String                                    @id @default(uuid())
   numeroOrdem                       Int                                       @unique @default(autoincrement())
-  numeroSerieBase                   String?
   numeroSerie                       String?   
   tag                               String?                                   @unique
   dataSolicitacao                   DateTime? 
@@ -130,8 +129,23 @@ model Manutencao {
 
   criadoEm                DateTime            @default(now())
   atualizadoEm            DateTime            @updatedAt
+  historicoAlteracoes     HistoricoManutencao[]
   
   @@index([numeroSerie])
   @@index([tag])
 
+}
+
+model HistoricoManutencao {
+  id                String              @id @default(uuid())
+  manutencaoId      String      
+  campo             String
+  valorAnterior     String?
+  valorNovo         String?
+  alteradoPor       String?
+  criadoEm          DateTime            @default(now())
+
+  manutencao        Manutencao          @relation(fields: [manutencaoId], references: [id], onDelete: Cascade)
+
+  @@index([manutencaoId])
 }

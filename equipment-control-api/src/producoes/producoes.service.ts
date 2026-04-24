@@ -12,13 +12,13 @@ export class ProducoesService {
     constructor(private prisma: PrismaService) {}
 
     private montarNumeroSerie(
-        numeroSerieBase?: string | null,
+        modelo?: string | null,
         numeroOrdem?: number | null,
     ): string | null {
-       if (!numeroSerieBase || !numeroOrdem) {
+       if (!modelo || !numeroOrdem) {
             return null;
         }
-        return `${numeroSerieBase}-${numeroOrdem}`;
+        return `${modelo}-${numeroOrdem}`;
     }
 
     private montarDescricao(
@@ -88,7 +88,6 @@ export class ProducoesService {
             }
         const producaoCriada = await this.prisma.equipment.create({
             data: {
-                numeroSerieBase: data.numeroSerieBase,
                 dataSolicitacao: data.dataSolicitacao
                 ? new Date(data.dataSolicitacao)
                 : null,
@@ -128,7 +127,7 @@ export class ProducoesService {
                 where: { id: producaoCriada.id },
                 data: {
                     numeroSerie: this.montarNumeroSerie(
-                        producaoCriada.numeroSerieBase,
+                        producaoCriada.modelo,
                         producaoCriada.numeroOrdem,
                     ),
                 },
@@ -237,8 +236,6 @@ export class ProducoesService {
 
     async update(id: string, data: UpdateProducaoDto) {
        const producaoAtual = await this.findOne(id);
-       const numeroSerieBaseFinal = 
-        data.numeroSerieBase ?? producaoAtual.numeroSerieBase  ?? undefined;
        const tipoEquipamentoIdFinal = 
         data.tipoEquipamentoId ?? producaoAtual.tipoEquipamentoId ?? undefined;
 
@@ -268,9 +265,8 @@ export class ProducoesService {
             return this.prisma.equipment.update({
                 where: { id },
                 data: {
-                    numeroSerieBase: data.numeroSerieBase,
                     numeroSerie: this.montarNumeroSerie(
-                        numeroSerieBaseFinal,
+                        data.modelo ?? producaoAtual.modelo,
                         producaoAtual.numeroOrdem,
                     ),
                     dataSolicitacao: data.dataSolicitacao 

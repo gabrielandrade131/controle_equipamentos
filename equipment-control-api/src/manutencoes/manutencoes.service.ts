@@ -14,6 +14,12 @@ import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto'
 import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
 
+type UsuarioHistorico = {
+  nome?: string | null;
+  email?: string | null;
+  username?: string | null;
+} | null;
+
 @Injectable()
 export class ManutencoesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -29,6 +35,18 @@ export class ManutencoesService {
       'retornou para base',
       'retornou para a base',
     ].includes(situacao);
+  }
+
+  private formatarValor(value: unknown): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    return String(value);
   }
 
   async createFromSynchro(data: CreateManutencaoSynchroDto) {
@@ -113,11 +131,30 @@ export class ManutencoesService {
       };
     }
 
-    if (filters.modeloEquipamento) {
-      where.modeloEquipamento = {
-        contains: filters.modeloEquipamento,
-        mode: 'insensitive',
-      };
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 10;
+    const skip = (page - 1) * limit;
+    const sortBy = filters.sortBy ?? 'criadoEm';
+    const sortOrder = filters.sortOrder ?? 'desc';
+
+    const [data, total] = await Promise.all([
+      this.prisma.manutencao.findMany({
+        where,
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.manutencao.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     }
 
     return this.prisma.manutencao.findMany({
@@ -131,6 +168,13 @@ export class ManutencoesService {
   async findOne(id: string) {
     const manutencao = await this.prisma.manutencao.findUnique({
       where: { id },
+      include: {
+        historicoAlteracoes: {
+          orderBy: {
+            criadoEm: 'desc',
+          },
+        },
+      },
     });
 
     if (!manutencao) {
@@ -140,19 +184,81 @@ export class ManutencoesService {
     return manutencao;
   }
 
-  async update(id: string, data: UpdateManutencaoDto) {
-    await this.findOne(id);
-
-    return this.prisma.manutencao.update({
+  async update(id: string, data: UpdateManutencaoDto, user?: UsuarioHistorico) {
+    const manutencaoAtual = await this.prisma.manutencao.findUnique({
       where: { id },
-      data: {
-        diagnostico: data.diagnostico,
-        responsavelManutencao: data.responsavelManutencao,
-        statusManutencao: data.statusManutencao,
-        dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
-        dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
-      },
     });
+
+    if (!manutencaoAtual) {
+      throw new NotFoundException('Manutenção não encontrada.');
+    }
+
+    const novosDados = {
+      diagnostico: data.diagnostico,
+      responsavelManutencao: data.responsavelManutencao,
+      statusManutencao: data.statusManutencao,
+      dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
+      dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
+    };
+
+    const alteradoPor = 
+      user?.nome ||
+      user?.email || 
+      user?.username ||
+      null;
+
+    const historicoParaCriar: {
+      campo: string;
+      valorAnterior: string | null;
+      valorNovo: string | null;
+    }[] = [];
+
+    const camposMonitorados: Array<keyof typeof novosDados> = [
+      'diagnostico',
+      'responsavelManutencao',
+      'statusManutencao',
+      'dataInicio',
+      'dataTermino',
+    ];
+
+    for (const campo of camposMonitorados) {
+      const novoValor = novosDados[campo];
+
+      if (novoValor === undefined) {
+        continue;
+      }
+
+      const valorAnterior = manutencaoAtual[campo];
+      const anteriorFormatado = this.formatarValor(valorAnterior);
+      const novoFormatado = this.formatarValor(novoValor);
+
+      if (anteriorFormatado !== novoFormatado) {
+        historicoParaCriar.push({
+          campo,
+          valorAnterior: anteriorFormatado,
+          valorNovo: novoFormatado,
+        });
+      }
+    }
+
+    const manutencaoAtualizada = await this.prisma.manutencao.update({
+      where: { id },
+      data: novosDados,
+    });
+
+    if (historicoParaCriar.length > 0) {
+      await this.prisma.historicoManutencao.createMany({
+        data: historicoParaCriar.map((item) => ({
+          manutencaoId: id,
+          campo: item.campo,
+          valorAnterior: item.valorAnterior,
+          valorNovo: item.valorNovo,
+          alteradoPor,
+        })),
+      });
+    }
+
+    return this.findOne(manutencaoAtualizada.id);
   }
 
   async remove(id: string) {
@@ -160,6 +266,19 @@ export class ManutencoesService {
 
     return this.prisma.manutencao.delete({
       where: { id },
+    });
+  }
+
+  async listHistorico(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.historicoManutencao.findMany({
+      where: {
+        manutencaoId: id,
+      },
+      orderBy: {
+        criadoEm: 'desc',
+      },
     });
   }
 }

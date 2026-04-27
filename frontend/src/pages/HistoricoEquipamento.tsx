@@ -147,12 +147,6 @@ const HistoricoEquipamento: React.FC = () => {
                 </div>
               </div>
 
-              {selected.data.notas && (
-                <div className="section-notas">
-                  <h3>Notas</h3>
-                  <p>{selected.data.notas}</p>
-                </div>
-              )}
 
               <div className="action-buttons">
                 <button 
@@ -161,7 +155,7 @@ const HistoricoEquipamento: React.FC = () => {
                 >
                   Editar
                 </button>
-                <PdfExporterHistorico historico={selected.data} />
+                <PdfExporterHistorico historico={selected.data} logoPath="/logo.png" />
               </div>
             </div>
           ) : (

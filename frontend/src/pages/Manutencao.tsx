@@ -4,12 +4,25 @@ import { InspecaoManutencao } from '../types/manutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import './Manutencao.css';
 
-type AbaAtiva = 'nova' | 'historico';
+interface SelectedInspecao {
+  id: string;
+  data: InspecaoManutencao;
+}
+
+type Modo = 'lista' | 'criar';
 
 export const Manutencao: React.FC = () => {
-  const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('nova');
+  const [modo, setModo] = useState<Modo>('lista');
   const [historicoManutencoes, setHistoricoManutencoes] = useState<InspecaoManutencao[]>([]);
+  const [selected, setSelected] = useState<SelectedInspecao | null>(null);
   const { exportInspecaoToPdf } = usePdfExportManutencao();
+
+  const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
+    setSelected({
+      id: inspecao.id || '',
+      data: inspecao,
+    });
+  };
 
   const handleSalvarInspecao = (inspecao: InspecaoManutencao) => {
     const novoRegistro: InspecaoManutencao = {
@@ -20,9 +33,8 @@ export const Manutencao: React.FC = () => {
 
     setHistoricoManutencoes((prev) => [novoRegistro, ...prev]);
     alert('Inspeção salva com sucesso!');
-    setAbaAtiva('historico');
+    setModo('lista');
 
-    // Aqui você poderia enviar para o backend
     console.log('Inspeção salva:', novoRegistro);
   };
 
@@ -35,88 +47,107 @@ export const Manutencao: React.FC = () => {
     }
   };
 
-  return (
-    <div className="manutencao-container">
-      <div className="manutencao-header">
-        <h1>Manutenção</h1>
-        <div className="manutencao-tabs">
-          <button
-            className={`tab-button ${abaAtiva === 'nova' ? 'active' : ''}`}
-            onClick={() => setAbaAtiva('nova')}
-          >
-            Nova Inspeção
-          </button>
-          <button
-            className={`tab-button ${abaAtiva === 'historico' ? 'active' : ''}`}
-            onClick={() => setAbaAtiva('historico')}
-          >
-            Histórico
-          </button>
-        </div>
+  // Modo criar - mostrar formulário em página cheia
+  if (modo === 'criar') {
+    return (
+      <div className="manutencao-container">
+        <FormularioInspecaoManutencao onSalvar={handleSalvarInspecao} />
       </div>
+    );
+  }
 
-      <div className="manutencao-content">
-        <div className="manutencao-page">
-          {/* Aba de Nova Inspeção */}
-          {abaAtiva === 'nova' && (
-            <div className="tab-nova-inspecao">
-              <FormularioInspecaoManutencao onSalvar={handleSalvarInspecao} />
-            </div>
+  // Modo lista - mostrar layout split
+  return (
+    <div className="manutencao-page">
+      <h2>Manutenção</h2>
+      
+      <div className="page-toolbar">
+        <button 
+          onClick={() => setModo('criar')}
+          className="btn-primary"
+        >
+          Nova Inspeção
+        </button>
+      </div>
+      
+      <div className="page-content">
+        <div className="page-list-section">
+          <h3>Histórico de Manutenções ({historicoManutencoes.length})</h3>
+          {historicoManutencoes.length === 0 ? (
+            <p>Nenhuma manutenção registrada</p>
+          ) : (
+            <ul className="page-list">
+              {historicoManutencoes.map((inspecao) => (
+                <li
+                  key={inspecao.id}
+                  className={selected?.id === inspecao.id ? 'active' : ''}
+                  onClick={() => handleSelectInspecao(inspecao)}
+                >
+                  <strong>{inspecao.numeroSerie || 'Sem série'}</strong>
+                  <small>{inspecao.fabricante || '—'}</small>
+                </li>
+              ))}
+            </ul>
           )}
+        </div>
 
-          {/* Aba de Histórico */}
-          {abaAtiva === 'historico' && (
-            <div className="tab-historico">
-              <h2>Histórico de Manutenções</h2>
-              {historicoManutencoes.length === 0 ? (
-                <div className="sem-dados">
-                  <p>Nenhuma manutenção registrada</p>
+        <div className="page-detail-section">
+          {selected ? (
+            <div className="manutencao-detail">
+              <h2>Detalhes da Inspeção</h2>
+              <div className="page-detail-grid">
+                <div className="detail-item">
+                  <label>Número de Série:</label>
+                  <p>{selected.data.numeroSerie || '—'}</p>
                 </div>
-              ) : (
-                <div className="tabela-container">
-                  <table className="tabela-historico">
-                    <thead>
-                      <tr>
-                        <th>Número de Série</th>
-                        <th>Fabricante / Modelo</th>
-                        <th>Data da Manutenção</th>
-                        <th>Responsável</th>
-                        <th>Avaliação</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historicoManutencoes.map((inspecao) => (
-                        <tr key={inspecao.id}>
-                          <td>
-                            <strong>{inspecao.numeroSerie || '—'}</strong>
-                            {inspecao.tag && <div style={{ fontSize: '12px', color: '#666' }}>TAG: {inspecao.tag}</div>}
-                          </td>
-                          <td>{inspecao.fabricante || '—'} / {inspecao.modelo || '—'}</td>
-                          <td>{new Date(inspecao.dataManutencao).toLocaleDateString('pt-BR')}</td>
-                          <td>{inspecao.responsavel || '—'}</td>
-                          <td>
-                            <span
-                              className={`badge badge-${inspecao.avaliacaoFinal === 'CONFORME' ? 'success' : 'danger'}`}
-                            >
-                              {inspecao.avaliacaoFinal || '—'}
-                            </span>
-                          </td>
-                          <td>
-                            <button 
-                              className="btn-exportar-historico"
-                              onClick={() => handleExportarPDF(inspecao)}
-                              title="Exportar inspeção em PDF"
-                            >
-                              📄 PDF
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="detail-item">
+                  <label>TAG:</label>
+                  <p>{selected.data.tag || '—'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Fabricante:</label>
+                  <p>{selected.data.fabricante || '—'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Modelo:</label>
+                  <p>{selected.data.modelo || '—'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Data da Manutenção:</label>
+                  <p>{new Date(selected.data.dataManutencao).toLocaleDateString('pt-BR')}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Responsável:</label>
+                  <p>{selected.data.responsavel || '—'}</p>
+                </div>
+              </div>
+
+              <div className="detail-item full">
+                <label>Avaliação Final:</label>
+                <span className={`badge badge-${selected.data.avaliacaoFinal === 'CONFORME' ? 'success' : 'danger'}`}>
+                  {selected.data.avaliacaoFinal || '—'}
+                </span>
+              </div>
+
+              {selected.data.observacoes && (
+                <div className="documents-section">
+                  <h3>Observações</h3>
+                  <p>{selected.data.observacoes}</p>
                 </div>
               )}
+
+              <div className="action-buttons">
+                <button 
+                  onClick={() => handleExportarPDF(selected.data)}
+                  className="btn-secondary"
+                >
+                  📄 Exportar PDF
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>Selecione uma manutenção para visualizar detalhes</p>
             </div>
           )}
         </div>

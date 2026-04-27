@@ -56,7 +56,7 @@ export interface InspecaoManutencao {
   
   // Avaliação Final
   avaliacaoFinal: 'CONFORME' | 'NÃO CONFORME' | '';
-  observacoesGerais?: string;
+  observacoes?: string;
   assinatura?: string;
   
   criadoEm?: string;

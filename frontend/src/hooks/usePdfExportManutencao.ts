@@ -156,15 +156,15 @@ export const usePdfExportManutencao = () => {
 
       yPosition += 10;
 
-      // Observações Gerais
-      if (inspecao.observacoesGerais) {
+      // Observações
+      if (inspecao.observacoes) {
         verificarNovaLinhaOuPagina(12);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Observações Gerais:', marginLeft, yPosition);
+        pdf.text('Observações:', marginLeft, yPosition);
         yPosition += 5;
         
         pdf.setFont(undefined, 'normal');
-        const obsLinhas = pdf.splitTextToSize(inspecao.observacoesGerais, maxWidth);
+        const obsLinhas = pdf.splitTextToSize(inspecao.observacoes, maxWidth);
         obsLinhas.forEach((linha: string) => {
           verificarNovaLinhaOuPagina(4);
           pdf.text(linha, marginLeft, yPosition);

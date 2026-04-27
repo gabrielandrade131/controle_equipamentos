@@ -11,9 +11,9 @@ interface SelectedProducao {
 }
 
 const OrdemProducao: React.FC = () => {
-  const { producoes, loading, error, criarProducao } = useProducoesMock();
+  const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoesMock();
   const [selected, setSelected] = useState<SelectedProducao | null>(null);
-  const [modo, setModo] = useState<'lista' | 'criar'>('lista');
+  const [modo, setModo] = useState<'lista' | 'criar' | 'editar'>('lista');
 
   const handleSelectProducao = (producao: Producao) => {
     setSelected({
@@ -28,6 +28,15 @@ const OrdemProducao: React.FC = () => {
     alert('Ordem de produção criada com sucesso!');
   };
 
+  const handleEditarOrdem = (producaoAtualizada: Producao | CreateProducaoDto) => {
+    if (selected && 'id' in producaoAtualizada) {
+      atualizarProducao(selected.id, producaoAtualizada as Producao);
+      setSelected(null);
+      setModo('lista');
+      alert('Ordem de produção atualizada com sucesso!');
+    }
+  };
+
   if (loading) return <div className="container"><p>Carregando...</p></div>;
   if (error) return <div className="container error"><p>Erro: {error}</p></div>;
 
@@ -37,6 +46,22 @@ const OrdemProducao: React.FC = () => {
         <FormularioOrdem
           onSalvar={handleCriarOrdem}
           onCancelar={() => setModo('lista')}
+        />
+      </div>
+    );
+  }
+
+  if (modo === 'editar' && selected) {
+    return (
+      <div className="container">
+        <FormularioOrdem
+          producao={selected.data}
+          onSalvar={handleEditarOrdem}
+          onCancelar={() => {
+            setModo('lista');
+            setSelected(null);
+          }}
+          isEditing
         />
       </div>
     );
@@ -134,9 +159,17 @@ const OrdemProducao: React.FC = () => {
                 </div>
               )}
 
-              <PdfExporter 
-                producao={selected.data}
-              />
+              <div className="action-buttons">
+                <button 
+                  onClick={() => setModo('editar')}
+                  className="btn-secondary"
+                >
+                  Editar
+                </button>
+                <PdfExporter 
+                  producao={selected.data}
+                />
+              </div>
             </div>
           ) : (
             <div className="empty-state">

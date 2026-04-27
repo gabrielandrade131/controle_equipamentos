@@ -209,18 +209,6 @@ export const usePdfExport = () => {
                 }
             }
 
-            // Observações
-            if (producao.observacoes) {
-                addSection('OBSERVAÇÕES');
-                pdf.setFontSize(9);
-                
-                const obsLines = pdf.splitTextToSize(producao.observacoes, maxWidth - 6);
-                obsLines.forEach((line: string) => {
-                    pdf.text(line, marginLeft + 3, yPosition);
-                    yPosition += 4;
-                });
-            }
-
             // Assinaturas
             yPosition += 10;
             addSection('RECEBIMENTO DA ORDEM');

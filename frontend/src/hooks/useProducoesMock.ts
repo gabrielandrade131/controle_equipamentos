@@ -92,10 +92,16 @@ export const useProducoesMock = () => {
     console.log('[useProducoesMock] Produção criada:', producaoCompleta);
   };
 
+  const atualizarProducao = (id: string, producaoAtualizada: Producao) => {
+    setProducoes(producoes.map(p => p.id === id ? producaoAtualizada : p));
+    console.log('[useProducoesMock] Produção atualizada:', producaoAtualizada);
+  };
+
   return {
     producoes,
     loading,
     error,
     criarProducao,
+    atualizarProducao,
   };
 };

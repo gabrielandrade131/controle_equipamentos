@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
-import { CreateProducaoDto } from '../types/producao';
+import React, { useState, useEffect } from 'react';
+import { CreateProducaoDto, Producao } from '../types/producao';
 import './FormularioOrdem.css';
 
 interface FormularioOrdemProps {
-  onSalvar: (producao: CreateProducaoDto) => void;
+  producao?: Producao;
+  onSalvar: (producao: CreateProducaoDto | Producao) => void;
   onCancelar: () => void;
+  isEditing?: boolean;
 }
 
-export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCancelar }) => {
-  const [formData, setFormData] = useState<CreateProducaoDto>({
+export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ 
+  producao, 
+  onSalvar, 
+  onCancelar,
+  isEditing = false 
+}) => {
+  const initialFormData = producao || {
     numeroOrdem: '',
     numeroSerie: '',
     dataSolicitacao: '',
@@ -22,7 +29,9 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCa
     inspecaoMontagem: '',
     historicoEquipamento: '',
     procedimentoTestes: '',
-  });
+  };
+
+  const [formData, setFormData] = useState<CreateProducaoDto | Producao>(initialFormData);
 
   const [novoItem, setNovoItem] = useState({
     numero: '',
@@ -67,7 +76,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCa
 
   return (
     <form onSubmit={handleSubmit} className="formulario-ordem">
-      <h2>Nova Ordem de Produção</h2>
+      <h2>{isEditing ? 'Editar Ordem de Produção' : 'Nova Ordem de Produção'}</h2>
 
       <div className="form-section">
         <h3>Informações Básicas</h3>
@@ -277,7 +286,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({ onSalvar, onCa
 
       <div className="form-actions">
         <button type="submit" className="btn-salvar">
-          Salvar Ordem
+          {isEditing ? 'Atualizar Ordem' : 'Salvar Ordem'}
         </button>
         <button type="button" onClick={onCancelar} className="btn-cancelar">
           Cancelar

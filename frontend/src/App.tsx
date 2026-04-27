@@ -7,6 +7,7 @@ import Producao from './pages/Producao';
 import OrdemProducao from './pages/OrdemProducao';
 import InspecaoMontagem from './pages/InspecaoMontagem';
 import HistoricoEquipamento from './pages/HistoricoEquipamento';
+import { Manutencao } from './pages/Manutencao';
 
 function App() {
   return (
@@ -31,7 +32,7 @@ function App() {
           <Route path="/" element={<Producao><Outlet /></Producao>}>
             <Route index element={<OrdemProducao />} />
           </Route>
-          <Route path="/manutencao" element={<div>Manutenção (em desenvolvimento)</div>} />
+          <Route path="/manutencao" element={<Manutencao />} />
         </Routes>
       </div>
     </BrowserRouter>

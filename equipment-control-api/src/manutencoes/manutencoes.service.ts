@@ -49,6 +49,40 @@ export class ManutencoesService {
     return String(value);
   }
 
+  private calcularDias(
+    dataInicio?: Date | null,
+    dataTermino?: Date | null,
+  ): number | null {
+    if (!dataInicio) {
+      return null;
+    }
+
+    const inicio = new Date(dataInicio);
+    const fim = dataTermino ? new Date(dataTermino) : new Date();
+
+    inicio.setHours(0, 0, 0, 0);
+    fim.setHours(0, 0, 0, 0);
+
+    
+    const diffMs = fim.getTime() - inicio.getTime();
+    const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    return dias >= 0 ? dias : 0;
+  }
+
+  private adicionarDiasManutencao<T extends { dataInicio?: Date | null; dataTermino?: Date | null }>(
+    manutencao: T,
+  ) {
+    return { 
+      ...manutencao,
+      diasManutencao: This.calcularDias(
+        manutencao.dataInicio ?? null,
+        manutencao.dataTermino ?? null,
+      ),
+    };
+  }
+
+
   async createFromSynchro(data: CreateManutencaoSynchroDto) {
     if (!this.ehSituacaoRetornoBase(data.situacaoEquipamento)) {
       throw new BadRequestException(
@@ -150,12 +184,12 @@ export class ManutencoesService {
     ]);
 
     return {
-      data,
+      data: data.map((manutencao) => this.adicionarDiasManutencao(manutencao)),
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-    }
+    };
 
     return this.prisma.manutencao.findMany({
       where,
@@ -181,7 +215,7 @@ export class ManutencoesService {
       throw new NotFoundException('Manutenção não encontrada.');
     }
 
-    return manutencao;
+    return this.adicionarDiasManutencao(manutencao);
   }
 
   async update(id: string, data: UpdateManutencaoDto, user?: UsuarioHistorico) {

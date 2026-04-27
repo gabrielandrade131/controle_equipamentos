@@ -1,51 +1,180 @@
 import React from 'react';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { HistoricoEquipamentoData } from '../types/historico';
 
 interface PdfExporterHistoricoProps {
   historico: HistoricoEquipamentoData;
+  logoPath?: string;
 }
 
-export const PdfExporterHistorico: React.FC<PdfExporterHistoricoProps> = ({ historico }) => {
+export const PdfExporterHistorico: React.FC<PdfExporterHistoricoProps> = ({ historico, logoPath }) => {
   const handleExportPDF = async () => {
-    const element = document.createElement('div');
-    element.innerHTML = gerarHtmlHistorico(historico);
-    element.style.padding = '20px';
-    element.style.backgroundColor = 'white';
-
-    document.body.appendChild(element);
-
     try {
-      const canvas = await html2canvas(element);
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
       });
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const marginLeft = 15;
+      const marginRight = 15;
+      const maxWidth = pageWidth - marginLeft - marginRight;
+      const pageBottomMargin = 15;
+      const maxYPosition = pageHeight - pageBottomMargin;
+      
+      let yPosition = 15;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= 297;
+      // Função para gerenciar quebra de página automática
+      const checkPageBreak = (spaceNeeded: number) => {
+        if (yPosition + spaceNeeded > maxYPosition) {
+          pdf.addPage();
+          yPosition = 15;
+        }
+      };
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
+      // Logo
+      if (logoPath) {
+        try {
+          const img = new Image();
+          img.src = logoPath;
+          await new Promise((resolve) => {
+            img.onload = () => {
+              pdf.addImage(img, 'PNG', marginLeft, yPosition + 2, 27, 20);
+              resolve(undefined);
+            };
+          });
+          yPosition += 15;
+        } catch (e) {
+          console.error('Erro ao adicionar logo:', e);
+        }
       }
+
+      // Cabeçalho
+      pdf.setFontSize(14);
+      pdf.text('HISTÓRICO DO EQUIPAMENTO', pageWidth / 2, yPosition, { align: 'center' });
+      
+      pdf.setFontSize(9);
+      pdf.text('FOR-MAN-008 - Rev. 1', pageWidth - marginRight - 5, yPosition, { align: 'right' });
+      
+      yPosition += 8;
+
+      // Linha divisória
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(marginLeft, yPosition, pageWidth - marginRight, yPosition);
+      yPosition += 7;
+
+      // Função auxiliar para seções
+      const addSection = (title: string) => {
+        pdf.setFontSize(10);
+        pdf.setFillColor(178, 204, 33);
+        pdf.rect(marginLeft, yPosition, maxWidth, 7, 'F');
+        pdf.text(title, marginLeft + 2, yPosition + 4.5);
+        yPosition += 12;
+      };
+
+      const addField = (label: string, value: string | number) => {
+        pdf.setFontSize(9);
+        const labelWidth = maxWidth * 0.35;
+        const valueX = marginLeft + labelWidth;
+        
+        pdf.text(label + ':', marginLeft + 3, yPosition);
+        pdf.text(String(value), valueX, yPosition);
+        
+        yPosition += 6;
+      };
+
+      // DESCRIÇÃO
+      addSection('DESCRIÇÃO');
+      addField('Número de Série', historico.numeroSerie);
+      addField('Modelo', historico.modelo);
+
+      // REGISTROS
+      if (historico.registros && historico.registros.length > 0) {
+        checkPageBreak(25);
+        addSection('HISTÓRICO DE REGISTROS');
+        
+        // Tabela com linhas
+        const colWidths = [maxWidth * 0.20, maxWidth * 0.50, maxWidth * 0.30];
+        const rowHeight = 6;
+        
+        // Cabeçalho da tabela
+        pdf.setFillColor(240, 240, 240);
+        pdf.setDrawColor(0, 0, 0);
+        pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight, 'F');
+        pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight, 'F');
+        pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, 'F');
+        
+        pdf.setFont(undefined, 'bold');
+        pdf.setFontSize(8);
+        pdf.text('Data', marginLeft + 2, yPosition + 3.5);
+        pdf.text('Histórico', marginLeft + colWidths[0] + 2, yPosition + 3.5);
+        pdf.text('Assinatura', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 3.5);
+        yPosition += rowHeight;
+        
+        // Linhas de dados
+        pdf.setFont(undefined, 'normal');
+        historico.registros.forEach((registro) => {
+          checkPageBreak(8);
+          pdf.setDrawColor(0, 0, 0);
+          pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight);
+          pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight);
+          pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
+          
+          pdf.setFontSize(7);
+          const dataFormatada = new Date(registro.data).toLocaleDateString('pt-BR');
+          pdf.text(dataFormatada, marginLeft + 2, yPosition + 3);
+          
+          const historicoText = pdf.splitTextToSize(registro.historico, colWidths[1] - 4);
+          pdf.text(historicoText[0] || '', marginLeft + colWidths[0] + 2, yPosition + 3);
+          pdf.text(registro.assinatura || '', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 3);
+          yPosition += rowHeight;
+        });
+        yPosition += 3;
+      }
+
+      // NOTAS
+      if (historico.notas) {
+        checkPageBreak(20);
+        addSection('NOTAS');
+        pdf.setFontSize(9);
+        const notasLines = pdf.splitTextToSize(historico.notas, maxWidth - 6);
+        notasLines.forEach((line: string) => {
+          checkPageBreak(5);
+          pdf.text(line, marginLeft + 3, yPosition);
+          yPosition += 5;
+        });
+        yPosition += 5;
+      }
+
+      // INSTRUÇÕES
+      checkPageBreak(30);
+      addSection('INSTRUÇÕES IMPORTANTES');
+      pdf.setFontSize(8);
+      
+      const instrucoes = [
+        '1) Todas as alterações no equipamento devem ser documentadas com uma breve descrição e data da ocorrência',
+        '2) Eventos que devem ser documentados: Troca de algum item seriado, devolução por parte do cliente, etc',
+        '3) Se o equipamento for vendido, deve-se mencionar número da nota fiscal e razão social do cliente',
+        '4) O histórico do equipamento deve ser preservado por toda sua vida útil ou por 12 meses a partir da data no caso de venda'
+      ];
+      
+      instrucoes.forEach((instr) => {
+        checkPageBreak(8);
+        const instrLines = pdf.splitTextToSize(instr, maxWidth - 6);
+        instrLines.forEach((line: string) => {
+          checkPageBreak(4);
+          pdf.text(line, marginLeft + 3, yPosition);
+          yPosition += 4;
+        });
+        yPosition += 1;
+      });
 
       pdf.save(`historico-${historico.numeroSerie}.pdf`);
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);
       alert('Erro ao exportar PDF');
-    } finally {
-      document.body.removeChild(element);
     }
   };
 
@@ -60,81 +189,3 @@ export const PdfExporterHistorico: React.FC<PdfExporterHistoricoProps> = ({ hist
   );
 };
 
-const gerarHtmlHistorico = (historico: HistoricoEquipamentoData): string => {
-  const notasText = historico.notas || '';
-  const notasExemplo = `1) Todas as alterações no equipamento devem ser documentadas com uma breve descrição e data da ocorrência
-2) Eventos que devem ser documentados: Troca de algum item seriado, devolução por parte do cliente, etc
-3) Se o equipamento for vendido, deve-se mencionar número da nota fiscal e razão social do cliente
-4) O histórico do equipamento deve ser preservado por toda sua vida útil ou por 12 meses a partir da data no caso de venda`;
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 100%; border: 2px solid #000;">
-      <div style="display: flex; align-items: center; border-bottom: 2px solid #000; padding: 10px;">
-        <div style="flex: 1; text-align: center; border-right: 2px solid #000; padding: 10px;">
-          <strong style="font-size: 18px;">ambipar</strong><br/>
-          <span style="font-size: 10px;">response</span>
-        </div>
-        <div style="flex: 2; text-align: center; font-size: 20px; font-weight: bold;">
-          HISTÓRICO DO EQUIPAMENTO
-        </div>
-        <div style="flex: 1; text-align: center; border-left: 2px solid #000; padding: 10px; font-size: 12px; font-weight: bold;">
-          FOR-MAN-008 - Rev. 1
-        </div>
-      </div>
-
-      <div style="padding: 10px;">
-        <div style="margin-bottom: 15px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="border: 1px solid #000; padding: 8px; font-weight: bold; background-color: #f0f0f0; width: 20%;">Descrição</td>
-              <td style="border: 1px solid #000; padding: 8px; background-color: #f0f0f0;"></td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Número da Série</td>
-              <td style="border: 1px solid #000; padding: 8px;">${historico.numeroSerie}</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Modelo</td>
-              <td style="border: 1px solid #000; padding: 8px;">${historico.modelo}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr>
-                <th style="border: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold; text-align: left;">Data</th>
-                <th style="border: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold; text-align: left;">Histórico</th>
-                <th style="border: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold; text-align: left;">Assinatura</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${historico.registros.map(registro => `
-                <tr>
-                  <td style="border: 1px solid #000; padding: 8px;">${new Date(registro.data).toLocaleDateString('pt-BR')}</td>
-                  <td style="border: 1px solid #000; padding: 8px;">${registro.historico}</td>
-                  <td style="border: 1px solid #000; padding: 8px;">${registro.assinatura}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <div style="margin-bottom: 15px; border: 1px solid #000; padding: 10px; background-color: #fffbea;">
-          <div style="font-weight: bold; margin-bottom: 10px;">Notas:</div>
-          <div style="font-size: 12px; line-height: 1.6;">
-            ${notasExemplo.split('\n').map(nota => `<div>${nota}</div>`).join('')}
-          </div>
-        </div>
-
-        ${notasText ? `
-          <div style="margin-top: 15px; border: 1px solid #000; padding: 10px; background-color: #f0f0f0;">
-            <div style="font-weight: bold; margin-bottom: 10px;">Observações Adicionais:</div>
-            <div>${notasText}</div>
-          </div>
-        ` : ''}
-      </div>
-    </div>
-  `;
-};

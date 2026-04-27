@@ -24,6 +24,11 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
     }
   );
 
+  // Rastrear IDs de registros originais (imutáveis)
+  const [registrosOriginaisIds] = useState<Set<string>>(
+    new Set((historico?.registros.map(r => r.id) || []).filter((id): id is string => !!id))
+  );
+
   const [novoRegistro, setNovoRegistro] = useState<RegistroHistorico>({
     data: new Date().toISOString().split('T')[0],
     historico: '',
@@ -71,6 +76,13 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
 
   const removerRegistro = (id: string | undefined) => {
     if (!id) return;
+    
+    // Em modo edição, bloquear remoção de registros originais
+    if (isEditing && registrosOriginaisIds.has(id)) {
+      alert('Registros já criados não podem ser removidos. Eles são imutáveis.');
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       registros: prev.registros.filter(r => r.id !== id)
@@ -114,6 +126,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
               value={formData.numeroSerie}
               onChange={handleInputChange}
               placeholder="Ex: CSEX420ACM-0559"
+              disabled={isEditing}
               required
             />
           </div>
@@ -126,6 +139,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
               value={formData.modelo}
               onChange={handleInputChange}
               placeholder="Ex: CSEX420ACM"
+              disabled={isEditing}
               required
             />
           </div>
@@ -190,26 +204,19 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
                     <th>Data</th>
                     <th>Histórico</th>
                     <th>Assinatura</th>
-                    <th>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.registros.map((registro) => (
-                    <tr key={registro.id}>
-                      <td>{new Date(registro.data).toLocaleDateString('pt-BR')}</td>
-                      <td>{registro.historico.substring(0, 50)}...</td>
-                      <td>{registro.assinatura}</td>
-                      <td>
-                        <button
-                          type="button"
-                          onClick={() => removerRegistro(registro.id)}
-                          className="btn-remover"
-                        >
-                          Remover
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {formData.registros.map((registro) => {
+                    const ehOriginal = isEditing && registrosOriginaisIds.has(registro.id || '');
+                    return (
+                      <tr key={registro.id} style={{ backgroundColor: ehOriginal ? '#f0f0f0' : 'transparent' }}>
+                        <td>{new Date(registro.data).toLocaleDateString('pt-BR')}</td>
+                        <td>{registro.historico.substring(0, 50)}...</td>
+                        <td>{registro.assinatura}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
+import { useManutencaoMock } from '../hooks/useManutencaoMock';
 import './Manutencao.css';
 
 interface SelectedInspecao {
@@ -13,8 +14,8 @@ type Modo = 'lista' | 'criar';
 
 export const Manutencao: React.FC = () => {
   const [modo, setModo] = useState<Modo>('lista');
-  const [historicoManutencoes, setHistoricoManutencoes] = useState<InspecaoManutencao[]>([]);
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
+  const { historico, adicionarInspecao } = useManutencaoMock();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
 
   const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
@@ -31,7 +32,7 @@ export const Manutencao: React.FC = () => {
       criadoEm: new Date().toISOString(),
     };
 
-    setHistoricoManutencoes((prev) => [novoRegistro, ...prev]);
+    adicionarInspecao(novoRegistro);
     alert('Inspeção salva com sucesso!');
     setModo('lista');
 
@@ -72,12 +73,12 @@ export const Manutencao: React.FC = () => {
       
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Histórico de Manutenções ({historicoManutencoes.length})</h3>
-          {historicoManutencoes.length === 0 ? (
+          <h3>Histórico de Manutenções ({historico.length})</h3>
+          {historico.length === 0 ? (
             <p>Nenhuma manutenção registrada</p>
           ) : (
             <ul className="page-list">
-              {historicoManutencoes.map((inspecao) => (
+              {historico.map((inspecao) => (
                 <li
                   key={inspecao.id}
                   className={selected?.id === inspecao.id ? 'active' : ''}

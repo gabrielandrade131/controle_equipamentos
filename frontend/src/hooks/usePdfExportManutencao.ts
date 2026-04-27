@@ -2,7 +2,10 @@ import jsPDF from 'jspdf';
 import { InspecaoManutencao } from '../types/manutencao';
 
 export const usePdfExportManutencao = () => {
-  const exportInspecaoToPdf = async (inspecao: InspecaoManutencao, filename: string) => {
+  const exportInspecaoToPdf = async (
+    inspecao: InspecaoManutencao,
+    filename: string
+  ) => {
     try {
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -12,13 +15,14 @@ export const usePdfExportManutencao = () => {
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const marginLeft = 12;
-      const marginRight = 12;
+      const marginLeft = 15;
+      const marginRight = 15;
       const maxWidth = pageWidth - marginLeft - marginRight;
-      
+
       let yPosition = 15;
 
-      // Função para adicionar nova página se necessário
+      const greenColor = [173, 216, 59];
+
       const verificarNovaLinhaOuPagina = (altura: number) => {
         if (yPosition + altura > pageHeight - 15) {
           pdf.addPage();
@@ -26,161 +30,182 @@ export const usePdfExportManutencao = () => {
         }
       };
 
-      // Cabeçalho
-      pdf.setFontSize(16);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('RELATÓRIO DE INSPEÇÃO DE MANUTENÇÃO', marginLeft, yPosition);
-      yPosition += 10;
+      const desenharBoxSecao = (titulo: string) => {
+        verificarNovaLinhaOuPagina(10);
 
-      // Dados da Manutenção
-      pdf.setFontSize(11);
+        pdf.setFillColor(greenColor[0], greenColor[1], greenColor[2]);
+        pdf.rect(marginLeft, yPosition, maxWidth, 7, 'F');
+        pdf.setFontSize(11);
+        pdf.setFont(undefined, 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(titulo, marginLeft + 2, yPosition + 5);
+
+        yPosition += 8;
+      };
+
+      // CABEÇALHO
+      pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('DADOS DA MANUTENÇÃO', marginLeft, yPosition);
-      yPosition += 6;
+      pdf.text('HISTORICO DE INSPECAO DE MANUTENCAO', marginLeft, yPosition);
+      yPosition += 8;
 
       pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
 
+      // DADOS
+      desenharBoxSecao('DADOS DA MANUTENCAO');
+
       const dadosManutencao = [
-        { label: 'Data da Manutenção:', valor: inspecao.dataManutencao },
-        { label: 'Local da Manutenção:', valor: inspecao.localManutencao },
-        { label: 'Fabricante / Modelo:', valor: `${inspecao.fabricante} / ${inspecao.modelo}` },
-        { label: 'Nº de Série / TAG:', valor: `${inspecao.numeroSerie} / ${inspecao.tag}` },
+        { label: 'Data da Manutencao:', valor: inspecao.dataManutencao },
+        { label: 'Local da Manutencao:', valor: inspecao.localManutencao },
+        {
+          label: 'Fabricante / Modelo:',
+          valor: `${inspecao.fabricante} / ${inspecao.modelo}`,
+        },
+        {
+          label: 'No de Serie / TAG:',
+          valor: `${inspecao.numeroSerie} / ${inspecao.tag}`,
+        },
         { label: 'Destino:', valor: inspecao.destino },
-        { label: 'Responsável:', valor: inspecao.responsavel },
+        { label: 'Responsavel:', valor: inspecao.responsavel },
       ];
 
-      dadosManutencao.forEach((dado) => {
-        verificarNovaLinhaOuPagina(5);
-        pdf.text(`${dado.label} ${dado.valor}`, marginLeft, yPosition);
-        yPosition += 5;
+      dadosManutencao.forEach((desc) => {
+        const linha = `${desc.label} ${desc.valor}`;
+        const linhas = pdf.splitTextToSize(linha, maxWidth);
+
+        linhas.forEach((l: string) => {
+          verificarNovaLinhaOuPagina(4);
+          pdf.text(l, marginLeft, yPosition);
+          yPosition += 4;
+        });
       });
 
       yPosition += 5;
 
-      // Função para desenhar seção de verificações
+      // ✅ FUNÇÃO CORRETA (ÚNICA)
       const desenharSecao = (
         titulo: string,
-        itens: Array<{ id: string; titulo: string; resposta: string; observacoes?: string }>
+        itens: Array<{ titulo: string; resposta: string }>
       ) => {
-        verificarNovaLinhaOuPagina(8);
-        pdf.setFontSize(11);
-        pdf.setFont(undefined, 'bold');
-        pdf.text(`🔹 ${titulo}`, marginLeft, yPosition);
-        yPosition += 8;
+        if (itens.length === 0) return;
 
-        pdf.setFontSize(9);
+        desenharBoxSecao(titulo);
+
+        pdf.setFontSize(10);
         pdf.setFont(undefined, 'normal');
 
         itens.forEach((item) => {
-          verificarNovaLinhaOuPagina(6);
-          
-          // Texto da pergunta quebrado em múltiplas linhas
-          const linhas = pdf.splitTextToSize(item.titulo, maxWidth - 30);
+          const checkboxSize = 3;
+
+          const linhas = pdf.splitTextToSize(item.titulo, maxWidth - 60);
+
+          const alturaBloco = linhas.length * 4 + 6;
+          verificarNovaLinhaOuPagina(alturaBloco);
+
+          const startY = yPosition;
+
+          // TEXTO
           linhas.forEach((linha: string, index: number) => {
-            if (index === 0) {
-              pdf.text(linha, marginLeft, yPosition);
-              yPosition += 4;
-            } else {
-              verificarNovaLinhaOuPagina(4);
-              pdf.text(linha, marginLeft, yPosition);
-              yPosition += 4;
-            }
+            pdf.text(linha, marginLeft, startY + index * 4);
           });
 
-          // Checkboxes
-          const respostas = ['SIM', 'NÃO', 'N/A'];
-          let xPosCheckbox = marginLeft + 5;
-          respostas.forEach((resp) => {
-            const isSelected = item.resposta === resp;
-            pdf.rect(xPosCheckbox, yPosition - 3, 3, 3);
-            if (isSelected) {
-              pdf.text('✓', xPosCheckbox + 0.5, yPosition - 0.5);
+          // CHECKBOX
+          let xCheckbox = marginLeft + maxWidth - 55;
+          const yCheckbox = startY - 2;
+
+          ['SIM', 'NAO', 'N/A'].forEach((option) => {
+            pdf.rect(xCheckbox, yCheckbox, checkboxSize, checkboxSize);
+
+            if (item.resposta === option) {
+              pdf.text('X', xCheckbox + 0.5, yCheckbox + 2.5);
             }
-            pdf.text(resp, xPosCheckbox + 5, yPosition);
-            xPosCheckbox += 20;
+
+            pdf.text(option, xCheckbox + 5, yCheckbox + 2.5);
+            xCheckbox += 20;
           });
 
-          yPosition += 5;
-
-          // Observações se existirem
-          if (item.observacoes) {
-            verificarNovaLinhaOuPagina(4);
-            pdf.setFont(undefined, 'italic');
-            const obsLinhas = pdf.splitTextToSize(`Obs: ${item.observacoes}`, maxWidth - 10);
-            obsLinhas.forEach((linha: string) => {
-              verificarNovaLinhaOuPagina(3);
-              pdf.text(linha, marginLeft + 5, yPosition);
-              yPosition += 3;
-            });
-            pdf.setFont(undefined, 'normal');
-            yPosition += 1;
-          }
+          yPosition += alturaBloco;
         });
 
         yPosition += 2;
       };
 
-      // Desenhar todas as seções
-      desenharSecao('CERTIFICAÇÕES E DOCUMENTAÇÃO', inspecao.certificacoes);
-      desenharSecao('ESTRUTURA E INTEGRIDADE MECÂNICA', inspecao.estruturaMecanica);
-      desenharSecao('SISTEMA HIDRÁULICO', inspecao.sistemaHidraulico);
-      desenharSecao('SISTEMA PNEUMÁTICO', inspecao.sistemaPneumatico);
-      desenharSecao('SISTEMA ELÉTRICO', inspecao.sistemaEletrico);
-      desenharSecao('DISPOSITIVOS DE SEGURANÇA', inspecao.dispositivoSeguranca);
+      // CHAMADAS DAS SEÇÕES
+      desenharSecao('CERTIFICACOES E DOCUMENTACAO', inspecao.certificacoes);
+      desenharSecao('ESTRUTURA E INTEGRIDADE MECANICA', inspecao.estruturaMecanica);
+      desenharSecao('SISTEMA HIDRAULICO', inspecao.sistemaHidraulico);
+      desenharSecao('SISTEMA PNEUMATICO', inspecao.sistemaPneumatico);
+      desenharSecao('SISTEMA ELETRICO', inspecao.sistemaEletrico);
+      desenharSecao('DISPOSITIVOS DE SEGURANCA', inspecao.dispositivoSeguranca);
       desenharSecao('COMPONENTES OPERACIONAIS', inspecao.componentesOperacionais);
-      desenharSecao('ACESSÓRIOS E ITENS ESPECÍFICOS', inspecao.acessorios);
+      desenharSecao('ACESSORIOS E ITENS ESPECIFICOS', inspecao.acessorios);
       desenharSecao('TESTES OPERACIONAIS', inspecao.testesOperacionais);
 
-      // Avaliação Final
-      verificarNovaLinhaOuPagina(12);
-      pdf.setFontSize(11);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('🔹 AVALIAÇÃO FINAL', marginLeft, yPosition);
-      yPosition += 7;
+      // AVALIAÇÃO FINAL
+      desenharBoxSecao('AVALIACAO FINAL');
 
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
+      const checkboxSize = 3;
+      let xPosAval = marginLeft;
 
-      const avaliacoes = ['CONFORME', 'NÃO CONFORME'];
-      let xPosAvaliacao = marginLeft;
-      avaliacoes.forEach((aval) => {
-        const isSelected = inspecao.avaliacaoFinal === aval;
-        pdf.rect(xPosAvaliacao, yPosition - 2, 3, 3);
-        if (isSelected) {
-          pdf.text('✓', xPosAvaliacao + 0.5, yPosition);
+      ['CONFORME', 'NAO CONFORME'].forEach((option) => {
+        pdf.rect(xPosAval, yPosition - 2, checkboxSize, checkboxSize);
+
+        if (inspecao.avaliacaoFinal === option) {
+          pdf.text('X', xPosAval + 0.5, yPosition);
         }
-        pdf.text(aval, xPosAvaliacao + 5, yPosition + 1);
-        xPosAvaliacao += 50;
+
+        pdf.text(option, xPosAval + 5, yPosition);
+        xPosAval += 50;
       });
 
       yPosition += 10;
 
-      // Observações
+      // OBS
       if (inspecao.observacoes) {
-        verificarNovaLinhaOuPagina(12);
-        pdf.setFont(undefined, 'bold');
-        pdf.text('Observações:', marginLeft, yPosition);
-        yPosition += 5;
-        
-        pdf.setFont(undefined, 'normal');
-        const obsLinhas = pdf.splitTextToSize(inspecao.observacoes, maxWidth);
+        desenharBoxSecao('OBSERVACOES');
+
+        const obsLinhas = pdf.splitTextToSize(inspecao.observacoes, maxWidth - 4);
+
         obsLinhas.forEach((linha: string) => {
           verificarNovaLinhaOuPagina(4);
-          pdf.text(linha, marginLeft, yPosition);
+          pdf.text(linha, marginLeft + 2, yPosition);
           yPosition += 4;
         });
+
         yPosition += 5;
       }
 
-      // Assinatura
-      verificarNovaLinhaOuPagina(15);
-      pdf.setFont(undefined, 'normal');
-      pdf.text('Assinatura: _________________________________', marginLeft, yPosition);
-      yPosition += 10;
-      pdf.text('Data: _____/_____/_______', marginLeft, yPosition);
+      // INSTRUÇÕES
+      desenharBoxSecao('INSTRUCOES IMPORTANTES');
 
-      // Salvar PDF
+      const instrucoes = [
+        '1) Todas as alteracoes no equipamento devem ser documentadas',
+        '2) Eventos devem ser registrados',
+        '3) Em caso de venda, registrar NF e cliente',
+        '4) Historico deve ser preservado',
+      ];
+
+      instrucoes.forEach((instr) => {
+        const linhas = pdf.splitTextToSize(instr, maxWidth - 4);
+
+        linhas.forEach((linha: string) => {
+          verificarNovaLinhaOuPagina(4);
+          pdf.text(linha, marginLeft + 2, yPosition);
+          yPosition += 4;
+        });
+
+        yPosition += 2;
+      });
+
+      // ASSINATURA
+      yPosition += 10;
+      verificarNovaLinhaOuPagina(15);
+
+      pdf.text('Assinatura: _________________________________', marginLeft, yPosition);
+      yPosition += 8;
+      pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, marginLeft, yPosition);
+
       pdf.save(filename);
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);

@@ -30,7 +30,8 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       console.warn('Token expirado. Fazendo logout...');
-      sessionStorage.clear();
+      sessionStorage.removeItem('authToken');
+      sessionStorage.removeItem('usuario');
       window.location.href = '/login';
     }
     if (error.response?.status === 403) {

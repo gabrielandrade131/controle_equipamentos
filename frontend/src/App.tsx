@@ -64,7 +64,7 @@ function App() {
             }
           />
 
-          <Route path="/" element={<Navigate to="/producao/ordem" replace />} />
+          <Route path="/" element={<Navigate to={isAuthenticated() ? '/producao/ordem' : '/login'} replace />} />
         </Routes>
       </div>
     </BrowserRouter>

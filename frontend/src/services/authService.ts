@@ -27,7 +27,8 @@ export function saveSession(response: LoginResponse): void {
 }
 
 export function logout(): void {
-  sessionStorage.clear();
+  sessionStorage.removeItem('authToken');
+  sessionStorage.removeItem('usuario');
   window.location.href = '/login';
 }
 

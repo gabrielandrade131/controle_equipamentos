@@ -10,26 +10,61 @@ import InspecaoMontagem from './pages/InspecaoMontagem';
 import HistoricoEquipamento from './pages/HistoricoEquipamento';
 import { Manutencao } from './pages/Manutencao';
 import { NovaManutencao } from './pages/NovaManutencao';
+import Login from './pages/Login';
+import { isAuthenticated } from './services/authService';
+
+const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return (
+    <>
+      <Header title="Sistema de Controle de Equipamentos" />
+      <Navbar />
+      {children}
+    </>
+  );
+};
 
 function App() {
   return (
     <BrowserRouter>
       <div className="App">
-        <Header title="Sistema de Controle de Equipamentos" />
-        <Navbar />
-
         <Routes>
-          <Route path="/producao" element={<Producao><Outlet /></Producao>}>
+          <Route path="/login" element={<Login />} />
+
+          <Route
+            path="/producao"
+            element={
+              <PrivateLayout>
+                <Producao><Outlet /></Producao>
+              </PrivateLayout>
+            }
+          >
             <Route path="ordem" element={<OrdemProducao />} />
             <Route path="inspecao" element={<InspecaoMontagem />} />
             <Route path="historico" element={<HistoricoEquipamento />} />
             <Route index element={<Navigate to="/producao/ordem" replace />} />
           </Route>
-          <Route path="/" element={<Producao><Outlet /></Producao>}>
-            <Route index element={<Navigate to="/producao/ordem" replace />} />
-          </Route>
-          <Route path="/manutencao" element={<Manutencao />} />
-          <Route path="/manutencao/criar" element={<NovaManutencao />} />
+
+          <Route
+            path="/manutencao"
+            element={
+              <PrivateLayout>
+                <Manutencao />
+              </PrivateLayout>
+            }
+          />
+          <Route
+            path="/manutencao/criar"
+            element={
+              <PrivateLayout>
+                <NovaManutencao />
+              </PrivateLayout>
+            }
+          />
+
+          <Route path="/" element={<Navigate to="/producao/ordem" replace />} />
         </Routes>
       </div>
     </BrowserRouter>

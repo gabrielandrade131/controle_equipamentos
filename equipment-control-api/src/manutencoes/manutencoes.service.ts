@@ -67,18 +67,26 @@ export class ManutencoesService {
     const diffMs = fim.getTime() - inicio.getTime();
     const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    return dias >= 0 ? dias : 0;
+    return dias >= 1 ? dias : 1;
   }
 
-  private adicionarDiasManutencao<T extends { dataInicio?: Date | null; dataTermino?: Date | null }>(
+  private adicionarDiasManutencao<T extends { 
+    dataInicio?: Date | null;
+    dataTermino?: Date | null;
+    statusManutencao?: string | null;
+  }>(
     manutencao: T,
   ) {
-    return { 
+    const deveCalcular = manutencao.statusManutencao === 'EM_MANUTENCAO';
+
+    return {
       ...manutencao,
-      diasManutencao: This.calcularDias(
+      diasManutencao: deveCalcular
+      ? this.calcularDias(
         manutencao.dataInicio ?? null,
         manutencao.dataTermino ?? null,
-      ),
+      )
+      : null,
     };
   }
 

@@ -56,19 +56,28 @@ export class ProducoesService {
         const diffMs = fim.getTime() - inicio.getTime();
         const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        return diffDias >= 0 ? diffDias: 0;
+        return diffDias >= 1 ? diffDias: 1;
     }
 
-    private adicionarDiasProducao<T extends { dataInicio?: Date | null; dataTermino?: Date | null }>(
+    private adicionarDiasProducao<T extends {
+        dataInicio?: Date | null;
+        dataTermino?: Date | null;
+        statusProducao?: string | null;
+    }>(
         producao: T,
     ) {
+        const deveCalcular = producao.statusProducao === 'EM_ANDAMENTO';
+
         return {
             ...producao,
-            diasProducao: this.calcularDiasProducao(
+            diasProducao: deveCalcular
+            ? this.calcularDiasProducao(
                 producao.dataInicio ?? null,
                 producao.dataTermino ?? null,
-            ),
-        };
+            )
+
+            : null,
+        }
     }
 
     async create(data: CreateProducaoDto) {

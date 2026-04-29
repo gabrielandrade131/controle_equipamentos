@@ -10,6 +10,17 @@ interface SelectedProducao {
   data: Producao;
 }
 
+const calcularDiasProducao = (dataSolicitacao: string, dataTermino?: string): number | null => {
+  if (!dataTermino) return null;
+  
+  const inicio = new Date(dataSolicitacao);
+  const fim = new Date(dataTermino);
+  const differenceInMs = fim.getTime() - inicio.getTime();
+  const dias = Math.ceil(differenceInMs / (1000 * 60 * 60 * 24));
+  
+  return Math.max(0, dias);
+};
+
 const OrdemProducao: React.FC = () => {
   const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoes();
   const [selected, setSelected] = useState<SelectedProducao | null>(null);
@@ -130,6 +141,18 @@ const OrdemProducao: React.FC = () => {
                   <label>Data Solicitacao:</label>
                   <p>{selected.data.dataSolicitacao}</p>
                 </div>
+                {selected.data.dataTermino && (
+                  <>
+                    <div className="detail-item">
+                      <label>Data Término:</label>
+                      <p>{selected.data.dataTermino}</p>
+                    </div>
+                    <div className="detail-item">
+                      <label>Dias de Produção:</label>
+                      <p><strong>{calcularDiasProducao(selected.data.dataSolicitacao, selected.data.dataTermino)}</strong></p>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="detail-item full">
                 <label>Descricao:</label>
@@ -170,7 +193,7 @@ const OrdemProducao: React.FC = () => {
               <div className="action-buttons">
                 <button
                   onClick={() => setModo('editar')}
-                  className="btn-secondary"
+                  className="btn-primary"
                 >
                   Editar
                 </button>

@@ -19,6 +19,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     numeroOrdem: '',
     numeroSerie: '',
     dataSolicitacao: '',
+    dataTermino: '',
     modelo: '',
     descricao: '',
     itensSeriados: [],
@@ -116,6 +117,17 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
             value={formData.dataSolicitacao}
             onChange={handleInputChange}
             required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="dataTermino">Data Término:</label>
+          <input
+            type="date"
+            id="dataTermino"
+            name="dataTermino"
+            value={formData.dataTermino || ''}
+            onChange={handleInputChange}
           />
         </div>
 

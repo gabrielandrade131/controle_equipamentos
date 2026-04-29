@@ -18,6 +18,7 @@ export interface CreateProducaoDto {
   numeroOrdem: string;
   numeroSerie: string;
   dataSolicitacao: string;
+  dataTermino?: string;
   modelo: string;
   descricao: string;
   itensSeriados: ItemSeriado[];

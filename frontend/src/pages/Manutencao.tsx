@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
+import { useManutencaoMock } from '../hooks/useManutencaoMock';
+import { useNavigate } from 'react-router-dom';
 import './Manutencao.css';
 
 interface SelectedInspecao {
@@ -9,12 +10,10 @@ interface SelectedInspecao {
   data: InspecaoManutencao;
 }
 
-type Modo = 'lista' | 'criar';
-
 export const Manutencao: React.FC = () => {
-  const [modo, setModo] = useState<Modo>('lista');
-  const [historicoManutencoes, setHistoricoManutencoes] = useState<InspecaoManutencao[]>([]);
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
+  const { historico } = useManutencaoMock();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
 
   const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
@@ -22,20 +21,6 @@ export const Manutencao: React.FC = () => {
       id: inspecao.id || '',
       data: inspecao,
     });
-  };
-
-  const handleSalvarInspecao = (inspecao: InspecaoManutencao) => {
-    const novoRegistro: InspecaoManutencao = {
-      ...inspecao,
-      id: Math.random().toString(36).substr(2, 9),
-      criadoEm: new Date().toISOString(),
-    };
-
-    setHistoricoManutencoes((prev) => [novoRegistro, ...prev]);
-    alert('Inspeção salva com sucesso!');
-    setModo('lista');
-
-    console.log('Inspeção salva:', novoRegistro);
   };
 
   const handleExportarPDF = async (inspecao: InspecaoManutencao) => {
@@ -47,15 +32,6 @@ export const Manutencao: React.FC = () => {
     }
   };
 
-  // Modo criar - mostrar formulário em página cheia
-  if (modo === 'criar') {
-    return (
-      <div className="manutencao-container">
-        <FormularioInspecaoManutencao onSalvar={handleSalvarInspecao} />
-      </div>
-    );
-  }
-
   // Modo lista - mostrar layout split
   return (
     <div className="manutencao-page">
@@ -63,7 +39,7 @@ export const Manutencao: React.FC = () => {
       
       <div className="page-toolbar">
         <button 
-          onClick={() => setModo('criar')}
+          onClick={() => navigate('/manutencao/criar')}
           className="btn-primary"
         >
           Nova Inspeção
@@ -72,12 +48,12 @@ export const Manutencao: React.FC = () => {
       
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Histórico de Manutenções ({historicoManutencoes.length})</h3>
-          {historicoManutencoes.length === 0 ? (
+          <h3>Histórico de Manutenções ({historico.length})</h3>
+          {historico.length === 0 ? (
             <p>Nenhuma manutenção registrada</p>
           ) : (
             <ul className="page-list">
-              {historicoManutencoes.map((inspecao) => (
+              {historico.map((inspecao) => (
                 <li
                   key={inspecao.id}
                   className={selected?.id === inspecao.id ? 'active' : ''}
@@ -139,9 +115,9 @@ export const Manutencao: React.FC = () => {
               <div className="action-buttons">
                 <button 
                   onClick={() => handleExportarPDF(selected.data)}
-                  className="btn-secondary"
+                  className="btn-primary"
                 >
-                  📄 Exportar PDF
+                  Exportar PDF
                 </button>
               </div>
             </div>

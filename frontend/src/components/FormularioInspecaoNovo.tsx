@@ -530,6 +530,8 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSu
     observacoes: undefined,
     responsavel: '',
     data: new Date().toISOString().split('T')[0],
+    nomeAssinante: '',
+    aprovado: false,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -782,6 +784,48 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSu
             onChange={handleInputChange}
             required
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="nomeAssinante">Nome (Assinante):</label>
+          <input
+            type="text"
+            id="nomeAssinante"
+            name="nomeAssinante"
+            value={formData.nomeAssinante || ''}
+            onChange={handleInputChange}
+            placeholder="Nome de quem assina o documento"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="aprovado">Aprovado:</label>
+          <div className="checkbox-group">
+            <label>
+              <input
+                type="radio"
+                name="aprovado"
+                value="true"
+                checked={formData.aprovado === true}
+                onChange={() =>
+                  setFormData({ ...formData, aprovado: true })
+                }
+              />
+              SIM
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="aprovado"
+                value="false"
+                checked={formData.aprovado === false}
+                onChange={() =>
+                  setFormData({ ...formData, aprovado: false })
+                }
+              />
+              NÃO
+            </label>
+          </div>
         </div>
       </div>
 

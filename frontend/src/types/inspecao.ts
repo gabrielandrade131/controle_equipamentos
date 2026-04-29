@@ -24,6 +24,8 @@ export interface CreateInspecaoMontageDto {
   responsavel: string;
   data: string;
   assinatura?: string;
+  nomeAssinante?: string;
+  aprovado?: boolean;
 }
 
 // Para RECEBER (resposta do backend)

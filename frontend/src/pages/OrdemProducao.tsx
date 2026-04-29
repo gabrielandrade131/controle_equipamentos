@@ -162,7 +162,7 @@ const OrdemProducao: React.FC = () => {
               <div className="action-buttons">
                 <button 
                   onClick={() => setModo('editar')}
-                  className="btn-secondary"
+                  className="btn-primary"
                 >
                   Editar
                 </button>

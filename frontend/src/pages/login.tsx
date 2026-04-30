@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../services/axiosConfig";
 import "./login.css";
 
 import img1 from "../assets/login/img1.jpg";
@@ -35,12 +35,14 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await axios.post(
-        "http://localhost:3000/login",
-        { email, password }
+      const response = await axiosInstance.post(
+        "/auth/login",
+        { email, senha: password }
       );
 
-      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("token", response.data.access_token);
+      sessionStorage.setItem("authToken", response.data.access_token);
+      sessionStorage.setItem("authUser", JSON.stringify(response.data.usuario));
 
       window.location.href = "/";
     } catch (err) {

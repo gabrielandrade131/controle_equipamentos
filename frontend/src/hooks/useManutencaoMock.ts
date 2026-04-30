@@ -1,102 +1,83 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import axiosInstance from '../services/axiosConfig';
 import { InspecaoManutencao, criarInspecaoVazia } from '../types/manutencao';
 
-// Dados mockados de inspeção de manutenção
-const criarInspecaoMock = (): InspecaoManutencao => {
-  const inspecao = criarInspecaoVazia();
-  
+type ApiListResponse<T> = {
+  data: T[];
+};
+
+const toDateInput = (value?: string | null) => {
+  if (!value) return new Date().toISOString().split('T')[0];
+  return value.split('T')[0];
+};
+
+const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
+  const base = criarInspecaoVazia();
+
   return {
-    ...inspecao,
-    id: 'mock-1',
-    dataManutencao: '2026-04-27',
-    localManutencao: 'Oficina Piracicaba',
-    fabricante: 'ALLIGATOR',
-    modelo: 'CSEX420ACM',
-    numeroSerie: 'CSEX420ACM-0559',
-    tag: 'EQUIP-001',
-    destino: 'Manutenção preventiva',
-    responsavel: 'João Silva',
-    
-    // Certificações - algumas com respostas
-    certificacoes: inspecao.certificacoes.map((item, index) => ({
-      ...item,
-      resposta: index === 0 ? 'SIM' : index === 1 ? 'SIM' : 'N/A',
-    })),
-    
-    // Estrutura - algumas preenchidas
-    estruturaMecanica: inspecao.estruturaMecanica.map((item, index) => ({
-      ...item,
-      resposta: index < 3 ? 'SIM' : index === 3 ? 'NÃO' : '',
-    })),
-    
-    // Sistema Hidráulico
-    sistemaHidraulico: inspecao.sistemaHidraulico.map((item, index) => ({
-      ...item,
-      resposta: index % 2 === 0 ? 'SIM' : 'N/A',
-    })),
-    
-    // Sistema Pneumático
-    sistemaPneumatico: inspecao.sistemaPneumatico.map((item, index) => ({
-      ...item,
-      resposta: index % 2 === 0 ? 'SIM' : 'NÃO',
-    })),
-    
-    // Sistema Elétrico
-    sistemaEletrico: inspecao.sistemaEletrico.map((item, index) => ({
-      ...item,
-      resposta: index === 0 ? 'NÃO' : 'SIM',
-    })),
-    
-    // Dispositivos de Segurança
-    dispositivoSeguranca: inspecao.dispositivoSeguranca.map((item, index) => ({
-      ...item,
-      resposta: 'SIM',
-    })),
-    
-    // Componentes Operacionais
-    componentesOperacionais: inspecao.componentesOperacionais.map((item, index) => ({
-      ...item,
-      resposta: index < 2 ? 'SIM' : 'N/A',
-    })),
-    
-    // Acessórios
-    acessorios: inspecao.acessorios.map((item) => ({
-      ...item,
-      resposta: 'SIM',
-    })),
-    
-    // Testes Operacionais
-    testesOperacionais: inspecao.testesOperacionais.map((item, index) => ({
-      ...item,
-      resposta: index === 0 ? 'SIM' : 'SIM',
-    })),
-    
-    avaliacaoFinal: 'CONFORME',
-    observacoes: 'Equipamento inspecionado e aprovado para operação. Próxima manutenção preventiva em 06/2026.',
-    assinatura: 'João Silva',
-    criadoEm: new Date().toISOString(),
+    ...base,
+    id: manutencao.id,
+    dataManutencao: toDateInput(manutencao.dataInicio || manutencao.dataRetornoBase || manutencao.criadoEm),
+    localManutencao: manutencao.origem === 'SYNCHRO' ? 'Retorno Synchro' : '',
+    fabricante: manutencao.tipoEquipamentoNome ?? '',
+    modelo: manutencao.modeloEquipamento ?? '',
+    numeroSerie: manutencao.numeroSerie ?? '',
+    tag: manutencao.tag ?? '',
+    destino: manutencao.situacaoEquipamento ?? '',
+    responsavel: manutencao.responsavelManutencao ?? '',
+    avaliacaoFinal: manutencao.statusManutencao === 'CONCLUIDA' ? 'CONFORME' : '',
+    observacoes: manutencao.diagnostico ?? '',
+    criadoEm: manutencao.criadoEm,
+    atualizadoEm: manutencao.atualizadoEm,
   };
 };
+
+const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
+  tipoEquipamentoNome: inspecao.fabricante || undefined,
+  modeloEquipamento: inspecao.modelo || undefined,
+  numeroSerie: inspecao.numeroSerie || undefined,
+  tag: inspecao.tag || undefined,
+  situacaoEquipamento: inspecao.destino || 'Manutencao manual',
+  dataRetornoBase: inspecao.dataManutencao || undefined,
+  dataInicio: inspecao.dataManutencao || undefined,
+  diagnostico: inspecao.observacoes || undefined,
+  responsavelManutencao: inspecao.responsavel || undefined,
+  statusManutencao: inspecao.avaliacaoFinal === 'CONFORME' ? 'CONCLUIDA' : 'EM_MANUTENCAO',
+});
 
 export const useManutencaoMock = () => {
   const [historico, setHistorico] = useState<InspecaoManutencao[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Simular carregamento assíncrono
-    setLoading(true);
-    setTimeout(() => {
-      setHistorico([criarInspecaoMock()]);
+  const carregarManutencoes = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get<ApiListResponse<any>>('/manutencoes', {
+        params: { limit: 100 },
+      });
+      setHistorico(response.data.data.map(mapApiToInspecao));
+      setError(null);
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Erro ao carregar manutencoes');
+    } finally {
       setLoading(false);
-    }, 500);
-  }, []);
-
-  const adicionarInspecao = (inspecao: InspecaoManutencao) => {
-    setHistorico((prev) => [inspecao, ...prev]);
+    }
   };
 
-  const removerInspecao = (id: string) => {
+  useEffect(() => {
+    carregarManutencoes();
+  }, []);
+
+  const adicionarInspecao = async (inspecao: InspecaoManutencao) => {
+    const response = await axiosInstance.post('/manutencoes', mapInspecaoToApi(inspecao));
+    const novaInspecao = mapApiToInspecao(response.data);
+    setHistorico((prev) => [novaInspecao, ...prev]);
+    return novaInspecao;
+  };
+
+  const removerInspecao = async (id: string) => {
+    await axiosInstance.delete(`/manutencoes/${id}`);
     setHistorico((prev) => prev.filter((item) => item.id !== id));
   };
 

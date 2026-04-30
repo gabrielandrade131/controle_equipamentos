@@ -95,13 +95,6 @@ function AppContent() {
 }
 
 function App() {
-  // TODO: Remover esta linha depois que o backend estiver funcionando
-  React.useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      localStorage.setItem("token", "dev-token");
-    }
-  }, []);
-
   return (
     <BrowserRouter>
       <AppContent />

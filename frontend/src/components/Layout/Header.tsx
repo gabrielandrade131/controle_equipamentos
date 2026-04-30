@@ -9,6 +9,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+        sessionStorage.clear();
         navigate('/login');
     };
 

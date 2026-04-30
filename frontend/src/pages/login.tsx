@@ -1,27 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
-import './login.css';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import "./login.css";
 
-import img1 from '../assets/login/img1.jpg';
-import img3 from '../assets/login/img3.jpg';
-import img4 from '../assets/login/img4.jpg';
-import img6 from '../assets/login/img6.jpg';
-import img7 from '../assets/login/img7.jpg';
-import logo from '../assets/login/logo.png';
+import img1 from "../assets/login/img1.jpg";
+import img3 from "../assets/login/img3.jpg";
+import img4 from "../assets/login/img4.jpg";
+import img6 from "../assets/login/img6.jpg";
+import img7 from "../assets/login/img7.jpg";
+import logo from "../assets/login/logo.png";
 
+// ✅ FORA do componente
 const images = [img1, img3, img4, img6, img7];
 
 export default function Login() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/producao/ordem';
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,20 +29,22 @@ export default function Login() {
     return () => clearInterval(interval);
   }, []);
 
-  if (authService.isAuthenticated()) {
-    return <Navigate to={from} replace />;
-  }
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      await authService.login(email, senha);
-      navigate(from, { replace: true });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Email ou senha invalidos');
+      const response = await axios.post(
+        "http://localhost:3000/login",
+        { email, password }
+      );
+
+      localStorage.setItem("token", response.data.token);
+
+      window.location.href = "/";
+    } catch (err) {
+      setError("Email ou senha inválidos");
     } finally {
       setLoading(false);
     }
@@ -74,21 +74,19 @@ export default function Login() {
           placeholder="E-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
           required
         />
 
         <input
           type="password"
           placeholder="Senha"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
 
         <button disabled={loading}>
-          {loading ? 'Entrando...' : 'Entrar'}
+          {loading ? "Entrando..." : "Entrar"}
         </button>
 
         {error && <span className="error">{error}</span>}

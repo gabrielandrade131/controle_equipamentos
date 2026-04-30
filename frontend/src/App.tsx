@@ -4,45 +4,104 @@ import './App.css';
 import './pages/Producao.css';
 import Header from './components/Layout/Header';
 import Navbar from './components/Layout/Navbar';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import Login from './pages/Login';
 import Producao from './pages/Producao';
 import OrdemProducao from './pages/OrdemProducao';
 import InspecaoMontagem from './pages/InspecaoMontagem';
 import HistoricoEquipamento from './pages/HistoricoEquipamento';
 import { Manutencao } from './pages/Manutencao';
 import { NovaManutencao } from './pages/NovaManutencao';
+import Login from './pages/login';
 
 function AppContent() {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
-
+  
+  const isAuthenticated = () => {
+  return !!localStorage.getItem("token");
+  };
+  const ProtectedRoute = ({ children }: { children: React.ReactElement}) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+  };
+  
   return (
     <div className="App">
-      {!isLoginPage && (
+      {location.pathname !== "/login" ? (
         <>
           <Header title="Sistema de Controle de Equipamentos" />
           <Navbar />
         </>
-      )}
-
+      ) : null}
       <Routes>
+
+        {/* LOGIN */}
         <Route path="/login" element={<Login />} />
-        <Route path="/producao" element={<ProtectedRoute><Producao><Outlet /></Producao></ProtectedRoute>}>
+
+        {/* PROTEGIDO - PRODUÇÃO */}
+        <Route
+          path="/producao"
+          element={
+            <ProtectedRoute>
+              <Producao>
+                <Outlet />
+              </Producao>
+            </ProtectedRoute>
+          }
+        >
           <Route path="ordem" element={<OrdemProducao />} />
           <Route path="inspecao" element={<InspecaoMontagem />} />
           <Route path="historico" element={<HistoricoEquipamento />} />
+
           <Route index element={<Navigate to="/producao/ordem" replace />} />
         </Route>
-        <Route path="/" element={<Navigate to="/producao/ordem" replace />} />
-        <Route path="/manutencao" element={<ProtectedRoute><Manutencao /></ProtectedRoute>} />
-        <Route path="/manutencao/criar" element={<ProtectedRoute><NovaManutencao /></ProtectedRoute>} />
+
+        {/* RAIZ */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Producao>
+                <Outlet />
+              </Producao>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/producao/ordem" replace />} />
+        </Route>
+
+        {/* MANUTENÇÃO */}
+        <Route
+          path="/manutencao"
+          element={
+            <ProtectedRoute>
+              <Manutencao />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manutencao/criar"
+          element={
+            <ProtectedRoute>
+              <NovaManutencao />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
     </div>
   );
 }
 
 function App() {
+  // TODO: Remover esta linha depois que o backend estiver funcionando
+  React.useEffect(() => {
+    if (!localStorage.getItem("token")) {
+      localStorage.setItem("token", "dev-token");
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <AppContent />
@@ -51,3 +110,4 @@ function App() {
 }
 
 export default App;
+

@@ -2,20 +2,25 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
-import { useManutencoes } from '../hooks/useManutencoes';
+import { useManutencaoMock } from '../hooks/useManutencaoMock';
 
 export const NovaManutencao: React.FC = () => {
   const navigate = useNavigate();
-  const { adicionarInspecao } = useManutencoes();
+  const { adicionarInspecao } = useManutencaoMock();
 
-  const handleSalvarInspecao = async (inspecao: InspecaoManutencao) => {
-    try {
-      await adicionarInspecao(inspecao);
-      alert('Inspecao salva com sucesso!');
-      navigate('/manutencao');
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao salvar inspecao');
-    }
+  const handleSalvarInspecao = (inspecao: InspecaoManutencao) => {
+    const novoRegistro: InspecaoManutencao = {
+      ...inspecao,
+      id: Math.random().toString(36).substr(2, 9),
+      criadoEm: new Date().toISOString(),
+    };
+
+    adicionarInspecao(novoRegistro);
+    alert('Inspeção salva com sucesso!');
+
+    console.log('Inspeção salva:', novoRegistro);
+    
+    navigate('/manutencao');
   };
 
   return (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { InspecaoManutencao } from '../types/manutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
-import { useManutencaoMock } from '../hooks/useManutencaoMock';
+import { useManutencao } from '../hooks/useManutencao';
 import { useNavigate } from 'react-router-dom';
 import './Manutencao.css';
 
@@ -13,7 +13,7 @@ interface SelectedInspecao {
 export const Manutencao: React.FC = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
-  const { historico } = useManutencaoMock();
+  const { historico } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
 
   const handleSelectInspecao = (inspecao: InspecaoManutencao) => {

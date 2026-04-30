@@ -2,11 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
-import { useManutencaoMock } from '../hooks/useManutencaoMock';
+import { useManutencao } from '../hooks/useManutencao';
 
 export const NovaManutencao: React.FC = () => {
   const navigate = useNavigate();
-  const { adicionarInspecao } = useManutencaoMock();
+  const { adicionarInspecao } = useManutencao();
 
   const handleSalvarInspecao = (inspecao: InspecaoManutencao) => {
     const novoRegistro: InspecaoManutencao = {

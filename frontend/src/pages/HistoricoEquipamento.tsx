@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHistoricoMock } from '../hooks/useHistoricoMock';
+import { useHistorico } from '../hooks/useHistorico';
 import { HistoricoEquipamentoData, CreateHistoricoDto } from '../types/historico';
 import { PdfExporterHistorico } from '../components/PdfExporterHistorico';
 import { FormularioHistorico } from '../components/FormularioHistorico';
@@ -11,7 +11,7 @@ interface SelectedHistorico {
 }
 
 const HistoricoEquipamento: React.FC = () => {
-  const { historicos, loading, criarHistorico, atualizarHistorico } = useHistoricoMock();
+  const { historicos, loading, criarHistorico, atualizarHistorico } = useHistorico();
   const [selected, setSelected] = useState<SelectedHistorico | null>(null);
   const [modo, setModo] = useState<'lista' | 'criar' | 'editar'>('lista');
 

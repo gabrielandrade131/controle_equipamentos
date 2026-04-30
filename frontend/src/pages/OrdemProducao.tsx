@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useProducoesMock } from '../hooks/useProducoesMock';
+import { useProducoes } from '../hooks/useProducoes';
 import { Producao, CreateProducaoDto } from '../types/producao';
 import { PdfExporter } from '../components/PdfExporter';
 import { FormularioOrdem } from '../components/FormularioOrdem';
@@ -22,7 +22,7 @@ const calcularDiasProducao = (dataSolicitacao: string, dataTermino?: string): nu
 };
 
 const OrdemProducao: React.FC = () => {
-  const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoesMock();
+  const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoes();
   const [selected, setSelected] = useState<SelectedProducao | null>(null);
   const [modo, setModo] = useState<'lista' | 'criar' | 'editar'>('lista');
 

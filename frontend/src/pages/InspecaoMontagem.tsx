@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useInspecoesMock } from '../hooks/useInspecoesMock';
+import { useInspecoes } from '../hooks/useInspecoes';
 import { InspecaoMontagem } from '../types/inspecao';
 import { PdfExporterInspecao } from '../components/PdfExporterInspecao';
 import { FormularioInspecaoNovo } from '../components/FormularioInspecaoNovo';
@@ -11,7 +11,7 @@ interface SelectedInspecao {
 }
 
 const InspecaoMontagemPage: React.FC = () => {
-  const { inspecoes, loading, criarInspecao } = useInspecoesMock();
+  const { inspecoes, loading, criarInspecao } = useInspecoes();
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
   const [modo, setModo] = useState<'lista' | 'criar'>('lista');
 

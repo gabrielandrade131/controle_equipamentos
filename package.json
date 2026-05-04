@@ -1,7 +1,6 @@
 {
   "scripts": {
-    "start": "cd equipment-control-api && PORT=3000 npm start",
-    "start:dev": "cd equipment-control-api && PORT=3000 npm run start:dev",
+    "start": "cd equipment-control-api && cross-env PORT=3000 npm start",
     "build": "cd frontend && npm run build && cd ../equipment-control-api && npm run build",
     "install": "npm install && cd equipment-control-api && npm install && cd ../frontend && npm install"
   },
@@ -11,5 +10,8 @@
     "bcrypt": "^6.0.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }

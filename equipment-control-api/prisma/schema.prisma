@@ -8,12 +8,13 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model Equipment {
   id                                String                                    @id @default(uuid())
-  numeroOrdem                       Int                                       @unique @default(autoincrement())
+  numeroOrdem                       Int                                       @unique
   numeroSerie                       String?   
   tag                               String?                                   @unique
   dataSolicitacao                   DateTime?
@@ -21,7 +22,7 @@ model Equipment {
 
   dataInicio                        DateTime?
   dataTermino                       DateTime?
-  statusProducao                    StatusProducao                            @default(PROGRAMADA)  
+  statusProducao                    String                                @default("PROGRAMADA")  
   tipoEquipamentoId                 String?
   tipoEquipamento                   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
   modelo                            String? 
@@ -68,12 +69,6 @@ model ItemSeriado {
   equipment         Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 }
 
-enum StatusProducao {
-  PROGRAMADA
-  PARALISADA
-  EM_ANDAMENTO
-  CONCLUIDA
-}
 
 model ObservacaoProducao {
   id          String        @id @default(uuid())
@@ -119,21 +114,9 @@ model RegistroInspecaoMontagem {
   @@unique([equipmentId, ordem])
 }
 
-enum OrigemManutencao {
-  SYNCHRO
-  MANUAL
-}
-
-enum StatusManutencao {
-  PENDENTE
-  PARALISADA
-  EM_MANUTENCAO
-  CONCLUIDA
-}
-
 model Manutencao {
   id                      String        @id @default(uuid())
-  origem                  OrigemManutencao      @default(SYNCHRO)
+  origem                  String      @default("SYNCHRO")
 
   tipoEquipamentoNome     String?
   modeloEquipamento       String?
@@ -145,7 +128,7 @@ model Manutencao {
   dataInicio              DateTime?
   dataTermino             DateTime?
 
-  statusManutencao        StatusManutencao    @default(PENDENTE)
+  statusManutencao        String    @default("PENDENTE")
   diagnostico             String?
   responsavelManutencao   String?
 

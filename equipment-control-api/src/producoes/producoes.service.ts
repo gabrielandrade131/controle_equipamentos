@@ -134,6 +134,9 @@ export class ProducoesService {
                 dataInicio: data.dataInicio
                 ? new Date(data.dataInicio)
                 : null,
+                previsaoTermino: data.previsaoTermino
+                ? new Date(data.previsaoTermino)
+                : null,
                 dataTermino: data.dataTermino
                 ? new Date(data.dataTermino)
                 : null,
@@ -377,6 +380,7 @@ export class ProducoesService {
             dataSolicitacao: data.dataSolicitacao ? new Date(data.dataSolicitacao) : undefined,
             solicitante: data.solicitante,
             dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
+            previsaoTermino: data.previsaoTermino ? new Date(data.previsaoTermino) : undefined,
             dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
             listaPecas: data.listaPecas,
             sequenciaMontagem: data.sequenciaMontagem,
@@ -435,6 +439,9 @@ export class ProducoesService {
                         : undefined,
                     dataInicio: data.dataInicio
                         ? new Date(data.dataInicio)
+                        : undefined,
+                    previsaoTermino: data.previsaoTermino
+                        ? new Date(data.previsaoTermino)
                         : undefined,
                     dataTermino: data.dataTermino
                         ? new Date(data.dataTermino)

@@ -21,6 +21,7 @@ model Equipment {
   solicitante                       String?   
 
   dataInicio                        DateTime?
+  previsaoTermino                   DateTime?
   dataTermino                       DateTime?
   statusProducao                    String                                @default("PROGRAMADA")  
   tipoEquipamentoId                 String?

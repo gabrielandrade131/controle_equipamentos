@@ -30,6 +30,11 @@ export class CreateProducaoDto {
     @ApiPropertyOptional({ example: '2026-04-30' })
     @IsOptional()
     @IsDateString()
+    previsaoTermino?: string;
+
+    @ApiPropertyOptional({ example: '2026-04-30' })
+    @IsOptional()
+    @IsDateString()
     dataTermino?: string;
 
     @ApiPropertyOptional({

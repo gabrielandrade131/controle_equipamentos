@@ -1,6 +1,10 @@
 {
   "scripts": {
-    "start": "cd equipment-control-api && cross-env PORT=3000 npm start",
+    "start": "npm run start:all",
+    "start:api": "cd equipment-control-api && set PORT=3000&& npm run start:dev",
+    "start:front": "cd frontend && set PORT=3001&& set REACT_APP_API_URL=http://localhost:3000&& npm start",
+    "start:all": "start \"equipment-api\" cmd /k \"cd equipment-control-api && set PORT=3000&& npm run start:dev\" && start \"equipment-front\" cmd /k \"cd frontend && set PORT=3001&& set REACT_APP_API_URL=http://localhost:3000&& npm start\"",
+    "start:dev": "npm run start:api",
     "build": "cd frontend && npm run build && cd ../equipment-control-api && npm run build",
     "install": "npm install && cd equipment-control-api && npm install && cd ../frontend && npm install"
   },

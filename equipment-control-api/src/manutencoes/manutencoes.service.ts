@@ -5,23 +5,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { OrigemManutencao, Prisma, StatusManutencao } from '@prisma/client';
 import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto';
 import { CreateManutencaoDto } from './dto/create-manutencao.dto';
 import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
-
-enum OrigemManutencao {
-  SYNCHRO = 'SYNCHRO',
-  MANUAL = 'MANUAL',
-}
-
-enum StatusManutencao {
-  PENDENTE = 'PENDENTE',
-  EM_MANUTENCAO = 'EM_MANUTENCAO',
-  PARALISADA = 'PARALISADA',
-  CONCLUIDA = 'CONCLUIDA',
-}
 
 type UsuarioHistorico = {
   nome?: string | null;
@@ -169,7 +157,9 @@ export class ManutencoesService {
         dataInicio: data.dataInicio ? new Date(data.dataInicio) : null,
         diagnostico: data.diagnostico,
         responsavelManutencao: data.responsavelManutencao,
-        statusManutencao: data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
+        statusManutencao:
+          (data.statusManutencao as StatusManutencao | undefined) ??
+          StatusManutencao.EM_MANUTENCAO,
       },
     });
 
@@ -182,7 +172,7 @@ export class ManutencoesService {
     };
 
     if (filters.statusManutencao) {
-      where.statusManutencao = filters.statusManutencao;
+      where.statusManutencao = filters.statusManutencao as StatusManutencao;
     }
 
     if (filters.tag) {
@@ -271,7 +261,7 @@ export class ManutencoesService {
     const novosDados = {
       diagnostico: data.diagnostico,
       responsavelManutencao: data.responsavelManutencao,
-      statusManutencao: data.statusManutencao,
+      statusManutencao: data.statusManutencao as StatusManutencao | undefined,
       dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
       dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
     };

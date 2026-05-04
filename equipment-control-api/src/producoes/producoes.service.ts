@@ -5,7 +5,7 @@ import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, StatusProducao as PrismaStatusProducao } from '@prisma/client';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
 
 @Injectable()
@@ -63,12 +63,19 @@ export class ProducoesService {
     private adicionarDiasProducao<T extends {
         dataSolicitacao?: Date | null;
         dataInicio?: Date | null;
+        previsaoTermino?: Date | null;
         dataTermino?: Date | null;
         statusProducao?: string | null;
     }>(
         producao: T,
     ) {
         const deveCalcular = producao.statusProducao === 'EM_ANDAMENTO';
+
+        const prazo = this.calcularPrazoProducao(
+            producao.statusProducao ?? null,
+            producao.previsaoTermino ?? null,
+            producao.dataTermino ?? null,
+        );
 
         return {
             ...producao,
@@ -86,6 +93,9 @@ export class ProducoesService {
             )
 
             : null,
+
+            situacaoPrazo: prazo.situacaoPrazo,
+            resultadoPrazo: prazo.resultadoPrazo,
         };
     }
 
@@ -99,6 +109,68 @@ export class ProducoesService {
         }
 
         return String(value);
+    }
+
+    private calcularPrazoProducao(
+        statusProducao?: string | null,
+        previsaoTermino?: Date | null,
+        dataTermino?: Date | null,
+    ): {
+        situacaoPrazo: 'NO_PRAZO' | 'ATENCAO' | 'ATRASADA' | 'CONCLUIDA' | null;
+        resultadoPrazo: 'CONCLUIDA_NO_PRAZO' | 'CONCLUIDA_COM_ATRASO' | null;
+    } {
+        if (!previsaoTermino) {
+            return {
+                situacaoPrazo: null,
+                resultadoPrazo: null,
+            };
+        }
+
+        const previsao = new Date(previsaoTermino);
+        previsao.setHours(0, 0, 0, 0);
+
+        if (statusProducao === 'CONCLUIDA') {
+            if (!dataTermino) {
+                return {
+                    situacaoPrazo: 'CONCLUIDA',
+                    resultadoPrazo: null,
+                };
+            }
+
+            const termino = new Date(dataTermino);
+            termino.setHours(0, 0, 0, 0);
+
+            return {
+                situacaoPrazo: 'CONCLUIDA',
+                resultadoPrazo: 
+                   termino.getTime() <= previsao.getTime()
+                   ? 'CONCLUIDA_NO_PRAZO'
+                   : 'CONCLUIDA_COM_ATRASO',
+            };
+        }
+
+        const hoje = new Date ();
+        hoje.setHours(0, 0, 0, 0);
+
+        if (hoje.getTime() < previsao.getTime()) {
+            return {
+                situacaoPrazo: 'NO_PRAZO',
+                resultadoPrazo: null,
+
+            };
+        }
+
+        if (hoje.getTime() === previsao.getTime()) {
+            return {
+                situacaoPrazo: 'ATENCAO',
+                resultadoPrazo: null,
+            };
+        }
+
+        return {
+            situacaoPrazo: 'ATRASADA',
+            resultadoPrazo: null,
+        };
     }
 
     async create(data: CreateProducaoDto) {
@@ -446,7 +518,7 @@ export class ProducoesService {
                     dataTermino: data.dataTermino
                         ? new Date(data.dataTermino)
                         : undefined,
-                    statusProducao: data.statusProducao,
+                    statusProducao: data.statusProducao as PrismaStatusProducao | undefined,
                     tipoEquipamentoId: data.tipoEquipamentoId,
                     modelo: data.modelo,
                     descricao: this.montarDescricao(

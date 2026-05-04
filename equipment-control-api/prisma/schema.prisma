@@ -61,11 +61,11 @@ model HistoricoProducao {
 
 model ItemSeriado {
   id                String          @id             @default(uuid())
-  producaoID        String
+  equipmentId       String
   descricao         String
   criadoEm          DateTime        @default(now())
 
-  equipment         Equipment       @relation(fields: [producaoID], references: [id], onDelete: Cascade)
+  equipment         Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 }
 
 enum StatusProducao {

@@ -287,11 +287,7 @@ export class ProducoesService {
                         ordem: 'asc',
                     },
                 },
-                historicoAlteracoes: {
-                    orderBy: {
-                        criadoEm: 'desc',
-                    }
-                }
+                historicoAlteracoes: true,
             },
         });
     if (!producao) {
@@ -405,15 +401,19 @@ export class ProducoesService {
 
         try{
             if (historicoParaCriar.length > 0) {
-                await this.prisma.historicoProducao.createMany({
-                    data: historicoParaCriar.map((item) => ({
-                        equipmentId: id,
-                        campo: item.campo,
-                        valorAnterior: item.valorAnterior,
-                        valorNovo: item.valorNovo,
-                        alteradoPor: item.alteradoPor,
-                    })),
-                });
+                await Promise.all(
+                    historicoParaCriar.map((item) =>
+                        this.prisma.historicoProducao.create({
+                            data: {
+                                equipmentId: id,
+                                campo: item.campo,
+                                valorAnterior: item.valorAnterior,
+                                valorNovo: item.valorNovo,
+                                alteradoPor: item.alteradoPor,
+                            },
+                        })
+                    )
+                );
             }
 
             return this.prisma.equipment.update({
@@ -607,7 +607,6 @@ export class ProducoesService {
         return this.prisma.equipment.update({
             where: { id },
             data: {
-                ativo: false,
                 excluidoEm: new Date(),
             },
         });

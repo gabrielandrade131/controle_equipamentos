@@ -5,15 +5,23 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  OrigemManutencao,
-  Prisma,
-  StatusManutencao,
-} from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto';
 import { CreateManutencaoDto } from './dto/create-manutencao.dto';
 import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
+
+enum OrigemManutencao {
+  SYNCHRO = 'SYNCHRO',
+  MANUAL = 'MANUAL',
+}
+
+enum StatusManutencao {
+  PENDENTE = 'PENDENTE',
+  EM_MANUTENCAO = 'EM_MANUTENCAO',
+  PARALISADA = 'PARALISADA',
+  CONCLUIDA = 'CONCLUIDA',
+}
 
 type UsuarioHistorico = {
   nome?: string | null;
@@ -180,21 +188,18 @@ export class ManutencoesService {
     if (filters.tag) {
       where.tag = {
         contains: filters.tag,
-        mode: 'insensitive',
       };
     }
 
     if (filters.numeroSerie) {
       where.numeroSerie = {
         contains: filters.numeroSerie,
-        mode: 'insensitive',
       };
     }
 
     if (filters.tipoEquipamentoNome) {
       where.tipoEquipamentoNome = {
         contains: filters.tipoEquipamentoNome,
-        mode: 'insensitive',
       };
     }
 

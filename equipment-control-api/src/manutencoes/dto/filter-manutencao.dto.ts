@@ -1,17 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { StatusManutencao } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { PaginationManutencaoDto } from './pagination-manutencao.dto';
 
 export class FilterManutencaoDto {
     @ApiPropertyOptional({ 
-        enum: StatusManutencao,
-        example: StatusManutencao.PENDENTE,
+        example: 'PENDENTE',
+        description: 'Status: PENDENTE, PARALISADA, EM_MANUTENCAO, CONCLUIDA'
     })
     @IsOptional()
-    @IsEnum(StatusManutencao)
-    statusManutencao?: StatusManutencao;
+    @IsString()
+    statusManutencao?: string;
 
     @ApiPropertyOptional({ example: 'TAG-0001'})
     @IsOptional()

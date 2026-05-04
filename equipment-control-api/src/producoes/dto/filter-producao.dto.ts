@@ -1,8 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { StatusProducao } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { PaginationProducaoDto } from './pagination-producao.dto';
+
+export enum StatusProducao {
+    PROGRAMADA = 'PROGRAMADA',
+    PARALISADA = 'PARALISADA',
+    EM_ANDAMENTO = 'EM_ANDAMENTO',
+    CONCLUIDA = 'CONCLUIDA',
+}
 
 export class FilterProducaoDto extends PaginationProducaoDto {
     @ApiPropertyOptional({ example:1 })

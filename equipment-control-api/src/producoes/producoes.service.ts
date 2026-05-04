@@ -5,7 +5,7 @@ import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
-import { Prisma, StatusProducao } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
 
 @Injectable()
@@ -116,8 +116,17 @@ export class ProducoesService {
                 
                 tipoEquipamentoNome = tipoEquipamento.nome;
             }
+        
+        // Gerar próximo numeroOrdem
+        const lastEquipment = await this.prisma.equipment.findFirst({
+            orderBy: { numeroOrdem: 'desc' },
+            select: { numeroOrdem: true },
+        });
+        const nextNumeroOrdem = (lastEquipment?.numeroOrdem ?? 0) + 1;
+
         const producaoCriada = await this.prisma.equipment.create({
             data: {
+                numeroOrdem: nextNumeroOrdem,
                 dataSolicitacao: data.dataSolicitacao
                 ? new Date(data.dataSolicitacao)
                 : null,
@@ -128,7 +137,7 @@ export class ProducoesService {
                 dataTermino: data.dataTermino
                 ? new Date(data.dataTermino)
                 : null,
-                tipoEquipamentoId: data.tipoEquipamentoId,
+                tipoEquipamentoId: data.tipoEquipamentoId || null,
                 modelo: data.modelo,
                 descricao: this.montarDescricao(
                     tipoEquipamentoNome,
@@ -203,14 +212,12 @@ export class ProducoesService {
        if (filters.numeroSerie) {
         where.numeroSerie = {
             contains: filters.numeroSerie,
-            mode: 'insensitive',
         };
        }
 
        if (filters.tag) {
         where.tag = {
             contains: filters.tag,
-            mode: 'insensitive',
         };
        }
 

@@ -1,20 +1,20 @@
-import 'dotenv/config';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
-
-const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL!,
-});
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     constructor() {
-        super({ adapter });
+        super();
     }
 
     async onModuleInit() {
-        await this.$connect();
+        try {
+            await this.$connect();
+            console.log('✓ Conectado ao banco de dados');
+        } catch (error) {
+            console.error('✗ Erro ao conectar ao banco de dados:', error);
+            throw error;
+        }
     }
 
     async onModuleDestroy() {

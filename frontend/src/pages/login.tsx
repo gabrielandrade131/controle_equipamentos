@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from "../services/axiosConfig";
 import "./login.css";
 
@@ -13,6 +14,7 @@ import logo from "../assets/login/logo.png";
 const images = [img1, img3, img4, img6, img7];
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -44,7 +46,7 @@ export default function Login() {
       sessionStorage.setItem("authToken", response.data.access_token);
       sessionStorage.setItem("authUser", JSON.stringify(response.data.usuario));
 
-      window.location.href = "/";
+      navigate('/producao/ordem', { replace: true });
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||

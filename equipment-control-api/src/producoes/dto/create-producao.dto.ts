@@ -2,7 +2,6 @@ import {
     IsArray,
     IsBoolean,
     IsDateString,
-    IsEnum,
     IsOptional,
     IsString,
     ValidateNested,
@@ -11,7 +10,6 @@ import {
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { CreateItemSeriadoDto } from "./create-item-seriado.dto";
-import { StatusProducao } from '@prisma/client';
 
 export class CreateProducaoDto {
     @ApiPropertyOptional({ example: '2023-01-01' })
@@ -35,12 +33,12 @@ export class CreateProducaoDto {
     dataTermino?: string;
 
     @ApiPropertyOptional({
-        enum: StatusProducao,
-        example: StatusProducao.PROGRAMADA,
+        example: 'PROGRAMADA',
+        description: 'Status: PROGRAMADA, PARALISADA, EM_ANDAMENTO, CONCLUIDA'
     })
     @IsOptional()
-    @IsEnum(StatusProducao)
-    statusProducao?: StatusProducao;
+    @IsString()
+    statusProducao?: string;
 
     @ApiPropertyOptional({ example: 'uuid-do-tipo-de-equipamento' })
     @IsOptional()

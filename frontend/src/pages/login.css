@@ -2,21 +2,24 @@
   position: relative;
   height: 100vh;
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 420px;
   overflow: hidden;
+  background: #f5f5f5;
 }
 
 .login-background {
-  position: absolute;
-  inset: 0;
+  grid-column: 1 / 2;
+  grid-row: 1 / -1;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+  min-height: 100vh;
   animation: fadeIn 0.8s ease-in-out;
-  filter: brightness(1.05) contrast(1.1);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: brightness(1.02) contrast(1.05);
+  z-index: 0;
+  pointer-events: none;
 }
 
 @keyframes fadeIn {
@@ -31,24 +34,26 @@
 .login-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    rgba(0, 0, 0, 0.25),
-    rgba(0, 0, 0, 0.35)
-  );
+  display: none;
   z-index: 1;
+  pointer-events: none;
 }
 
 .login-card {
-  width: 380px;
+  grid-column: 2 / 3;
+  grid-row: 1 / -1;
+  align-self: center;
+  justify-self: center;
+  position: relative;
+  width: 100%;
+  max-width: 420px;
   padding: 40px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  border-radius: 0;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  position: relative;
+  box-shadow: none;
   z-index: 2;
 }
 
@@ -107,7 +112,7 @@
 }
 
 .login-title {
-  color: white;
+  color: #1f2937;
   text-align: center;
   font-size: 32px;
   font-weight: 700;
@@ -117,7 +122,7 @@
 }
 
 .login-subtitle {
-  color: rgba(255, 255, 255, 0.9);
+  color: #6b7280;
   text-align: center;
   font-size: 14px;
   margin: 0;
@@ -129,9 +134,9 @@
 .login-card input {
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   outline: none;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(249, 250, 251, 1);
   font-size: 14px;
   transition: all 0.3s ease;
 }
@@ -177,4 +182,29 @@
   padding: 10px;
   border-radius: 6px;
   margin-top: 8px;
+}
+
+/* Responsivo para tablets e mobile */
+@media (max-width: 1024px) {
+  .login-container {
+    display: block;
+  }
+
+  .login-background {
+    position: absolute;
+    inset: 0;
+    opacity: 0.9;
+  }
+
+  .login-card {
+    position: relative;
+    margin: 60px auto;
+    left: 0;
+    right: 0;
+    transform: none;
+    width: min(92%, 420px);
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
 }

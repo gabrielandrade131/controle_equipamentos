@@ -45,8 +45,12 @@ export default function Login() {
       sessionStorage.setItem("authUser", JSON.stringify(response.data.usuario));
 
       window.location.href = "/";
-    } catch (err) {
-      setError("Email ou senha inválidos");
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Não foi possível entrar. Verifique a conexão com a API.";
+      setError(Array.isArray(message) ? message.join(" ") : String(message));
     } finally {
       setLoading(false);
     }

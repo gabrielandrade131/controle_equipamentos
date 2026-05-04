@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "start": "cd equipment-control-api && PORT=3000 npm start",
+    "start:dev": "cd equipment-control-api && PORT=3000 npm run start:dev",
+    "build": "cd frontend && npm run build && cd ../equipment-control-api && npm run build",
+    "install": "npm install && cd equipment-control-api && npm install && cd ../frontend && npm install"
+  },
   "dependencies": {
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",

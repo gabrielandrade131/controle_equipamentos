@@ -4,14 +4,13 @@ import axiosInstance from "../services/axiosConfig";
 import "./login.css";
 
 import img1 from "../assets/login/img1.jpg";
+import img2 from "../assets/login/img2.jpg";
 import img3 from "../assets/login/img3.jpg";
 import img4 from "../assets/login/img4.jpg";
-import img6 from "../assets/login/img6.jpg";
-import img7 from "../assets/login/img7.jpg";
 import logo from "../assets/login/logo.png";
 
 // ✅ FORA do componente
-const images = [img1, img3, img4, img6, img7];
+const images = [img1, img2, img3, img4];
 
 export default function Login() {
   const navigate = useNavigate();
@@ -60,11 +59,10 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      <img
-        src={images[currentIndex]}
-        alt="Background"
+      <div
         className="login-background"
-        key={currentIndex}
+        style={{ backgroundImage: `url(${images[currentIndex]})` }}
+        aria-hidden="true"
       />
       <div className="login-overlay"></div>
       <form className="login-card" onSubmit={handleLogin}>

@@ -19,14 +19,7 @@ export const axiosInstance: AxiosInstance = axios.create({
 // Interceptador de Requisição - Adiciona token
 axiosInstance.interceptors.request.use(
   (config) => {
-    // If the request URL starts with a single slash (e.g. "/auth/login"),
-    // browsers will resolve it to the origin root, which bypasses `baseURL`.
-    // Many components call endpoints like "/auth/login". To avoid CORS and
-    // ensure requests target the API prefix, normalize such URLs to include
-    // the `/api` prefix.
-    if (config.url && config.url.startsWith('/') && !config.url.startsWith('/api')) {
-      config.url = `/api${config.url}`;
-    }
+    // Removido ajuste automático de prefixo '/api' para evitar duplicidade.
 
     const token = sessionStorage.getItem('authToken') || localStorage.getItem('token');
     if (token) {

@@ -11,6 +11,8 @@ export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     @Post('register')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'Cadastrar usuário' })
     register(@Body() body: CreateUserDto) {
         return this.authService.register(body);

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
@@ -8,6 +8,7 @@ import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
 import { ProducoesService } from './producoes.service';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { Response } from 'express';
 
 @ApiTags('Produções')
 @UseGuards(JwtAuthGuard)
@@ -48,6 +49,31 @@ export class ProducoesController {
     @ApiParam({ name: 'numeroOrdem', example: 'OP-001' })
     findByNumeroOrdem(@Param('numeroOrdem', ParseIntPipe) numeroOrdem: number) {
         return this.producoesService.findByNumeroOrdem(numeroOrdem);
+    }
+
+    @Get('export/excel')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Exportar produções para Excel' })
+    async exportExcel(
+        @Query() filters: FilterProducaoDto,
+        @Res() res: Response,
+    ) {
+        const buffer = await this.producoesService.exportExcel(filters);
+
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            
+        );
+        res.setHeader(
+            'Content-Disposition',
+            'attachment; filename=producoes.xlsx',
+
+        );
+
+        res.send(buffer);
+
     }
 
     @Get(':id')

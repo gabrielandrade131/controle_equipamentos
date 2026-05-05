@@ -7,6 +7,7 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
 import { Prisma, StatusProducao as PrismaStatusProducao } from '@prisma/client';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class ProducoesService {
@@ -173,6 +174,47 @@ export class ProducoesService {
         };
     }
 
+    private montarWhere(filters: FilterProducaoDto): Prisma.EquipmentWhereInput {
+        const where: Prisma.EquipmentWhereInput = {
+            ativo: true,
+        };
+
+        if (filters.numeroOrdem) {
+            where.numeroOrdem = filters.numeroOrdem;
+        }
+
+        if (filters.numeroSerie) {
+            where.numeroSerie = {
+            contains: filters.numeroSerie,
+            mode: 'insensitive',
+            };
+        }
+
+        if (filters.modelo) {
+            where.modelo = {
+            contains: filters.modelo,
+            mode: 'insensitive',
+            };
+        }
+
+        if (filters.tag) {
+            where.tag = {
+            contains: filters.tag,
+            mode: 'insensitive',
+            };
+        }
+
+        if (filters.statusProducao) {
+            where.statusProducao = filters.statusProducao;
+        }
+
+        if (filters.tipoEquipamentoId) {
+            where.tipoEquipamentoId = filters.tipoEquipamentoId;
+        }
+
+        return where;
+    }
+
     async create(data: CreateProducaoDto) {
         try {
             let tipoEquipamentoNome: string | null = null;
@@ -276,9 +318,7 @@ export class ProducoesService {
     }
 
     async findAll(filters: FilterProducaoDto) {
-       const where: Prisma.EquipmentWhereInput = {
-            ativo: true,
-        } ;
+       const where = this.montarWhere(filters);
 
        if (filters.numeroOrdem) {
         where.numeroOrdem = filters.numeroOrdem;
@@ -686,6 +726,137 @@ export class ProducoesService {
                 criadoEm: 'desc',
             },
         });
+    }
+
+    async exportExcel(filters: FilterProducaoDto) {
+        const where = this.montarWhere(filters);
+
+        const sortBy = filters.sortBy ?? 'criadoEm';
+        const sortOrder = filters.sortOrder ?? 'desc';
+
+        const producoes = await this.prisma.equipment.findMany({
+            where,
+            include: {
+            tipoEquipamento: true,
+            itensSeriados: true,
+            },
+            orderBy: {
+            [sortBy]: sortOrder,
+            },
+        });
+
+        const dados = producoes.map((producao) =>
+            this.adicionarDiasProducao(producao),
+        );
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Produções');
+
+        worksheet.columns = [
+            { header: 'Número da Ordem', key: 'numeroOrdem', width: 18 },
+            { header: 'Número de Série', key: 'numeroSerie', width: 26 },
+            { header: 'Tipo de Equipamento', key: 'tipoEquipamentoNome', width: 26 },
+            { header: 'Modelo', key: 'modelo', width: 24 },
+            { header: 'Descrição', key: 'descricao', width: 36 },
+            { header: 'Solicitante', key: 'solicitante', width: 24 },
+            { header: 'Data de Solicitação', key: 'dataSolicitacao', width: 22 },
+            { header: 'Dias de Solicitação', key: 'diasSolicitacao', width: 22 },
+            { header: 'Data de Início', key: 'dataInicio', width: 18 },
+            { header: 'Previsão de Término', key: 'previsaoTermino', width: 22 },
+            { header: 'Data de Término', key: 'dataTermino', width: 18 },
+            { header: 'Dias de Produção', key: 'diasProducao', width: 20 },
+            { header: 'Status da Produção', key: 'statusProducao', width: 22 },
+            { header: 'Situação do Prazo', key: 'situacaoPrazo', width: 22 },
+            { header: 'Resultado do Prazo', key: 'resultadoPrazo', width: 26 },
+            { header: 'TAG', key: 'tag', width: 18 },
+            { header: 'Lista de Peças', key: 'listaPecas', width: 16 },
+            { header: 'Sequência de Montagem', key: 'sequenciaMontagem', width: 24 },
+            { header: 'Inspeção de Montagem', key: 'inspecaoMontagem', width: 24 },
+            { header: 'Histórico do Equipamento', key: 'historicoEquipamento', width: 26 },
+            { header: 'Procedimento de Teste', key: 'procedimentoTesteInspecaoMontagem', width: 26 },
+            { header: 'Itens Seriados', key: 'itensSeriados', width: 45 },
+            { header: 'Criado em', key: 'criadoEm', width: 20 },
+        ];
+
+        dados.forEach((producao) => {
+            worksheet.addRow({
+            numeroOrdem: producao.numeroOrdem,
+            numeroSerie: producao.numeroSerie,
+            tipoEquipamentoNome: producao.tipoEquipamento?.nome,
+            modelo: producao.modelo,
+            descricao: producao.descricao,
+            solicitante: producao.solicitante,
+            dataSolicitacao: producao.dataSolicitacao,
+            diasSolicitacao: producao.diasSolicitacao,
+            dataInicio: producao.dataInicio,
+            previsaoTermino: producao.previsaoTermino,
+            dataTermino: producao.dataTermino,
+            diasProducao: producao.diasProducao,
+            statusProducao: producao.statusProducao,
+            situacaoPrazo: producao.situacaoPrazo,
+            resultadoPrazo: producao.resultadoPrazo,
+            tag: producao.tag,
+            listaPecas: producao.listaPecas ? 'Sim' : 'Não',
+            sequenciaMontagem: producao.sequenciaMontagem ? 'Sim' : 'Não',
+            inspecaoMontagem: producao.inspecaoMontagem ? 'Sim' : 'Não',
+            historicoEquipamento: producao.historicoEquipamento ? 'Sim' : 'Não',
+            procedimentoTesteInspecaoMontagem:
+                producao.procedimentoTesteInspecaoMontagem ? 'Sim' : 'Não',
+            itensSeriados: producao.itensSeriados
+                ?.map((item) => item.descricao)
+                .join(' | '),
+            criadoEm: producao.criadoEm,
+            });
+        });
+
+        worksheet.getRow(1).font = {
+            bold: true,
+        };
+
+        worksheet.getRow(1).alignment = {
+            vertical: 'middle',
+            horizontal: 'center',
+        };
+
+        worksheet.getRow(1).height = 22;
+
+        worksheet.eachRow((row) => {
+            row.eachCell((cell) => {
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' },
+            };
+
+            cell.alignment = {
+                vertical: 'middle',
+                wrapText: true,
+            };
+            });
+        });
+
+        worksheet.getColumn('dataSolicitacao').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('dataInicio').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('previsaoTermino').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('dataTermino').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('criadoEm').numFmt = 'dd/mm/yyyy hh:mm';
+
+        worksheet.autoFilter = {
+            from: 'A1',
+            to: 'W1',
+        };
+
+        worksheet.views = [
+            {
+            state: 'frozen',
+            ySplit: 1,
+            },
+        ];
+
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        return buffer;
     }
 
     async remove(id: string) {

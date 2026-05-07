@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useProducoes } from '../hooks/useProducoes';
-import { Producao, CreateProducaoDto } from '../types/producao';
+import { CreateProducaoDto, Producao } from '../types/producao';
 import { PdfExporter } from '../components/PdfExporter';
 import { FormularioOrdem } from '../components/FormularioOrdem';
 import '../pages/Producao.css';
@@ -12,12 +12,12 @@ interface SelectedProducao {
 
 const calcularDiasProducao = (dataInicio: string, dataTermino?: string): number | null => {
   if (!dataTermino) return null;
-  
+
   const inicio = new Date(dataInicio);
   const fim = new Date(dataTermino);
   const differenceInMs = fim.getTime() - inicio.getTime();
   const dias = Math.ceil(differenceInMs / (1000 * 60 * 60 * 24));
-  
+
   return Math.max(0, dias);
 };
 
@@ -34,24 +34,30 @@ const OrdemProducao: React.FC = () => {
   };
 
   const handleCriarOrdem = (novaProducao: CreateProducaoDto) => {
-    criarProducao(novaProducao);
-    setModo('lista');
-    alert('Ordem de produção criada com sucesso!');
+    criarProducao(novaProducao)
+      .then(() => {
+        setModo('lista');
+        alert('Ordem de producao criada com sucesso!');
+      })
+      .catch((error) => {
+        console.error('Erro ao criar ordem de producao:', error);
+        alert(error.response?.data?.message || 'Nao foi possivel criar a ordem de producao.');
+      });
   };
 
   const handleEditarOrdem = (producaoAtualizada: Producao | CreateProducaoDto) => {
-    if (selected) {
-      atualizarProducao(selected.id, producaoAtualizada as Producao)
-        .then(() => {
-          setSelected(null);
-          setModo('lista');
-          alert('Ordem de produção atualizada com sucesso!');
-        })
-        .catch((error) => {
-          console.error('Erro ao atualizar ordem de produção:', error);
-          alert('Não foi possível atualizar a ordem de produção.');
-        });
-    }
+    if (!selected) return;
+
+    atualizarProducao(selected.id, producaoAtualizada as Producao)
+      .then((producao) => {
+        setSelected({ id: producao.id, data: producao });
+        setModo('lista');
+        alert('Ordem de producao atualizada com sucesso!');
+      })
+      .catch((error) => {
+        console.error('Erro ao atualizar ordem de producao:', error);
+        alert(error.response?.data?.message || 'Nao foi possivel atualizar a ordem de producao.');
+      });
   };
 
   if (loading) return <div className="container"><p>Carregando...</p></div>;
@@ -86,22 +92,22 @@ const OrdemProducao: React.FC = () => {
 
   return (
     <div className="producao-page">
-      <h2>Ordem de Produção</h2>
-      
+      <h2>Ordem de Producao</h2>
+
       <div className="page-toolbar">
-        <button 
+        <button
           onClick={() => setModo('criar')}
           className="btn-primary"
         >
-          Gerar Ordem de Produção
+          Gerar Ordem de Producao
         </button>
       </div>
-      
+
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Produções ({producoes.length})</h3>
+          <h3>Producoes ({producoes.length})</h3>
           {producoes.length === 0 ? (
-            <p>Nenhuma produção encontrada</p>
+            <p>Nenhuma producao encontrada</p>
           ) : (
             <ul className="page-list">
               {producoes.map((producao: Producao) => (
@@ -112,6 +118,7 @@ const OrdemProducao: React.FC = () => {
                 >
                   <strong>{producao.numeroOrdem}</strong>
                   <small>{producao.modelo}</small>
+                  <small>{producao.statusProducao}</small>
                 </li>
               ))}
             </ul>
@@ -124,44 +131,72 @@ const OrdemProducao: React.FC = () => {
               <h2>Detalhes da Ordem</h2>
               <div className="page-detail-grid">
                 <div className="detail-item">
-                  <label>Número Ordem:</label>
+                  <label>Numero Ordem:</label>
                   <p>{selected.data.numeroOrdem}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Série:</label>
-                  <p>{selected.data.numeroSerie}</p>
+                  <label>Serie:</label>
+                  <p>{selected.data.numeroSerie || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Status:</label>
+                  <p>{selected.data.statusProducao || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>TAG:</label>
+                  <p>{selected.data.tag || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Tipo Equipamento:</label>
+                  <p>{selected.data.tipoEquipamentoNome || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Modelo:</label>
                   <p>{selected.data.modelo}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Solicitação:</label>
+                  <label>Data Solicitacao:</label>
                   <p>{selected.data.dataSolicitacao}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Início:</label>
+                  <label>Data Inicio:</label>
                   <p>{selected.data.dataInicio || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Previsão:</label>
+                  <label>Data Previsao:</label>
                   <p>{selected.data.dataPrevisao || '-'}</p>
                 </div>
-                {selected.data.dataTermino && (
-                  <>
-                    <div className="detail-item">
-                      <label>Data Término:</label>
-                      <p>{selected.data.dataTermino}</p>
-                    </div>
-                    <div className="detail-item">
-                      <label>Dias de Produção:</label>
-                      <p>{calcularDiasProducao(selected.data.dataInicio || selected.data.dataSolicitacao, selected.data.dataTermino)}</p>
-                    </div>
-                  </>
-                )}
+                <div className="detail-item">
+                  <label>Data Termino:</label>
+                  <p>{selected.data.dataTermino || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Dias Solicitacao:</label>
+                  <p>{selected.data.diasSolicitacao ?? '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Dias Producao:</label>
+                  <p>
+                    {selected.data.diasProducao ??
+                      calcularDiasProducao(
+                        selected.data.dataInicio || selected.data.dataSolicitacao,
+                        selected.data.dataTermino,
+                      ) ??
+                      '-'}
+                  </p>
+                </div>
+                <div className="detail-item">
+                  <label>Situacao Prazo:</label>
+                  <p>{selected.data.situacaoPrazo || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Resultado Prazo:</label>
+                  <p>{selected.data.resultadoPrazo || '-'}</p>
+                </div>
               </div>
+
               <div className="detail-item full">
-                <label>Descrição:</label>
+                <label>Descricao:</label>
                 <p>{selected.data.descricao}</p>
               </div>
 
@@ -172,7 +207,7 @@ const OrdemProducao: React.FC = () => {
                     <div key={item.id} className="doc-item">
                       <strong>Item {item.numero}</strong>
                       <p>{item.descricao}</p>
-                      {item.numeroSerie && <small>Série: {item.numeroSerie}</small>}
+                      {item.numeroSerie && <small>Serie: {item.numeroSerie}</small>}
                     </div>
                   ))}
                 </div>
@@ -191,21 +226,19 @@ const OrdemProducao: React.FC = () => {
 
               {selected.data.observacoes && (
                 <div className="documents-section">
-                  <h3>Observações Adicionais</h3>
+                  <h3>Observacoes Adicionais</h3>
                   <p>{selected.data.observacoes}</p>
                 </div>
               )}
 
               <div className="action-buttons">
-                <button 
+                <button
                   onClick={() => setModo('editar')}
                   className="btn-primary"
                 >
                   Editar
                 </button>
-                <PdfExporter 
-                  producao={selected.data}
-                />
+                <PdfExporter producao={selected.data} />
               </div>
             </div>
           ) : (

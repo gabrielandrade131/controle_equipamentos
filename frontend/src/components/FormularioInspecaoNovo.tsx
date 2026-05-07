@@ -5,6 +5,8 @@ import './FormularioInspecao.css';
 interface FormularioInspecaoProps {
   onSubmit: (inspecao: InspecaoMontagem) => void;
   onCancel: () => void;
+  inspecaoInicial?: InspecaoMontagem;
+  titulo?: string;
 }
 
 // Itens FIXOS conforme FOR-MAN-006 Rev. 5 (Ambipar Response)
@@ -48,7 +50,12 @@ const VERIFICACAO_POSMONTAGEM = [
   'Teste de Continuidade (Resultado: >=0)'
 ];
 
-export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSubmit, onCancel }) => {
+export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
+  onSubmit,
+  onCancel,
+  inspecaoInicial,
+  titulo = 'Inspecao de Montagem',
+}) => {
   const [formData, setFormData] = useState<CreateInspecaoMontageDto>({
     numeroSerie: '',
     dataInspecao: new Date().toISOString().split('T')[0],
@@ -78,6 +85,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSu
     data: new Date().toISOString().split('T')[0],
     nomeAssinante: '',
     aprovado: false,
+    ...inspecaoInicial,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -102,15 +110,15 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSu
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.numeroSerie.trim() || !formData.modelo.trim() || !formData.responsavel.trim()) {
+    if (!formData.numeroSerie.trim() || !formData.modelo.trim()) {
       alert('Preencha os campos obrigatórios!');
       return;
     }
 
     const novaInspecao: InspecaoMontagem = {
       ...formData,
-      id: String(Date.now()),
-      createdAt: new Date().toISOString(),
+      id: inspecaoInicial?.id || String(Date.now()),
+      createdAt: inspecaoInicial?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -211,7 +219,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSu
 
   return (
     <form onSubmit={handleSubmit} className="formulario-inspecao">
-      <h2>Nova Inspeção de Montagem</h2>
+      <h2>{titulo}</h2>
 
       <div className="form-section">
         <h3>Descrição</h3>
@@ -225,6 +233,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSu
             onChange={handleInputChange}
             placeholder="Ex: CSEX420ACM-0559"
             required
+            readOnly={Boolean(inspecaoInicial)}
           />
         </div>
         <div className="form-group">
@@ -237,6 +246,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({ onSu
             onChange={handleInputChange}
             placeholder="Ex: CSEX420ACM"
             required
+            readOnly={Boolean(inspecaoInicial)}
           />
         </div>
       </div>

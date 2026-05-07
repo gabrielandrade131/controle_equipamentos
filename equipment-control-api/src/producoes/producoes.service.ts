@@ -3,10 +3,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
+import { CreateHistoricoEquipamentoDto } from './dto/create-historico-equipamento.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, StatusProducao as PrismaStatusProducao } from '@prisma/client';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class ProducoesService {
@@ -63,12 +65,19 @@ export class ProducoesService {
     private adicionarDiasProducao<T extends {
         dataSolicitacao?: Date | null;
         dataInicio?: Date | null;
+        previsaoTermino?: Date | null;
         dataTermino?: Date | null;
         statusProducao?: string | null;
     }>(
         producao: T,
     ) {
         const deveCalcular = producao.statusProducao === 'EM_ANDAMENTO';
+
+        const prazo = this.calcularPrazoProducao(
+            producao.statusProducao ?? null,
+            producao.previsaoTermino ?? null,
+            producao.dataTermino ?? null,
+        );
 
         return {
             ...producao,
@@ -86,6 +95,9 @@ export class ProducoesService {
             )
 
             : null,
+
+            situacaoPrazo: prazo.situacaoPrazo,
+            resultadoPrazo: prazo.resultadoPrazo,
         };
     }
 
@@ -99,6 +111,113 @@ export class ProducoesService {
         }
 
         return String(value);
+    }
+
+    private obterPrevisaoTermino(data: CreateProducaoDto | UpdateProducaoDto): string | undefined {
+        return data.previsaoTermino ?? data.dataPrevisao;
+    }
+
+    private calcularPrazoProducao(
+        statusProducao?: string | null,
+        previsaoTermino?: Date | null,
+        dataTermino?: Date | null,
+    ): {
+        situacaoPrazo: 'NO_PRAZO' | 'ATENCAO' | 'ATRASADA' | 'CONCLUIDA' | null;
+        resultadoPrazo: 'CONCLUIDA_NO_PRAZO' | 'CONCLUIDA_COM_ATRASO' | null;
+    } {
+        if (!previsaoTermino) {
+            return {
+                situacaoPrazo: null,
+                resultadoPrazo: null,
+            };
+        }
+
+        const previsao = new Date(previsaoTermino);
+        previsao.setHours(0, 0, 0, 0);
+
+        if (statusProducao === 'CONCLUIDA') {
+            if (!dataTermino) {
+                return {
+                    situacaoPrazo: 'CONCLUIDA',
+                    resultadoPrazo: null,
+                };
+            }
+
+            const termino = new Date(dataTermino);
+            termino.setHours(0, 0, 0, 0);
+
+            return {
+                situacaoPrazo: 'CONCLUIDA',
+                resultadoPrazo: 
+                   termino.getTime() <= previsao.getTime()
+                   ? 'CONCLUIDA_NO_PRAZO'
+                   : 'CONCLUIDA_COM_ATRASO',
+            };
+        }
+
+        const hoje = new Date ();
+        hoje.setHours(0, 0, 0, 0);
+
+        if (hoje.getTime() < previsao.getTime()) {
+            return {
+                situacaoPrazo: 'NO_PRAZO',
+                resultadoPrazo: null,
+
+            };
+        }
+
+        if (hoje.getTime() === previsao.getTime()) {
+            return {
+                situacaoPrazo: 'ATENCAO',
+                resultadoPrazo: null,
+            };
+        }
+
+        return {
+            situacaoPrazo: 'ATRASADA',
+            resultadoPrazo: null,
+        };
+    }
+
+    private montarWhere(filters: FilterProducaoDto): Prisma.EquipmentWhereInput {
+        const where: Prisma.EquipmentWhereInput = {
+            ativo: true,
+        };
+
+        if (filters.numeroOrdem) {
+            where.numeroOrdem = filters.numeroOrdem;
+        }
+
+        if (filters.numeroSerie) {
+            where.numeroSerie = {
+            contains: filters.numeroSerie,
+            mode: 'insensitive',
+            };
+        }
+
+        if (filters.modelo) {
+            where.modelo = {
+            contains: filters.modelo,
+            mode: 'insensitive',
+            };
+        }
+
+        if (filters.tag) {
+            where.tag = {
+            contains: filters.tag,
+            mode: 'insensitive',
+            };
+        }
+
+        if (filters.statusProducao) {
+            where.statusProducao = filters.statusProducao;
+        }
+
+        if (filters.tipoEquipamentoId) {
+            where.tipoEquipamentoId = filters.tipoEquipamentoId;
+        }
+
+        return where;
     }
 
     async create(data: CreateProducaoDto) {
@@ -124,6 +243,8 @@ export class ProducoesService {
         });
         const nextNumeroOrdem = (lastEquipment?.numeroOrdem ?? 0) + 1;
 
+        const previsaoTermino = this.obterPrevisaoTermino(data);
+
         const producaoCriada = await this.prisma.equipment.create({
             data: {
                 numeroOrdem: nextNumeroOrdem,
@@ -134,10 +255,12 @@ export class ProducoesService {
                 dataInicio: data.dataInicio
                 ? new Date(data.dataInicio)
                 : null,
+                previsaoTermino: previsaoTermino
+                ? new Date(previsaoTermino)
+                : null,
                 dataTermino: data.dataTermino
                 ? new Date(data.dataTermino)
                 : null,
-                    dataPrevisao: data.dataPrevisao ? new Date(data.dataPrevisao) : null,
                 tipoEquipamentoId: data.tipoEquipamentoId || null,
                 modelo: data.modelo,
                 descricao: this.montarDescricao(
@@ -202,9 +325,7 @@ export class ProducoesService {
     }
 
     async findAll(filters: FilterProducaoDto) {
-       const where: Prisma.EquipmentWhereInput = {
-            ativo: true,
-        } ;
+       const where = this.montarWhere(filters);
 
        if (filters.numeroOrdem) {
         where.numeroOrdem = filters.numeroOrdem;
@@ -257,6 +378,11 @@ export class ProducoesService {
                         criadoEm: 'desc',
                     },
                 },
+                historicoEquipamentoRegistros: {
+                    orderBy: {
+                        data: 'desc',
+                    },
+                },
             },
             orderBy: {
                 [sortBy]: sortOrder,
@@ -296,6 +422,11 @@ export class ProducoesService {
                     },
                 },
                 historicoAlteracoes: true,
+                historicoEquipamentoRegistros: {
+                    orderBy: {
+                        data: 'desc',
+                    },
+                },
             },
         });
     if (!producao) {
@@ -370,7 +501,9 @@ export class ProducoesService {
             alteradoPor: string | null;
         }[] = [];
 
-                        const camposMonitorados = {
+        const previsaoTermino = this.obterPrevisaoTermino(data);
+
+        const camposMonitorados = {
             tipoEquipamentoId: data.tipoEquipamentoId,
             modelo: data.modelo,
             descricao: data.descricaoComplemento,
@@ -378,13 +511,13 @@ export class ProducoesService {
             dataSolicitacao: data.dataSolicitacao ? new Date(data.dataSolicitacao) : undefined,
             solicitante: data.solicitante,
             dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
+            previsaoTermino: previsaoTermino ? new Date(previsaoTermino) : undefined,
             dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
-              dataPrevisao: data.dataPrevisao ? new Date(data.dataPrevisao) : undefined,
-                        listaPecas: data.listaPecas,
-                        sequenciaMontagem: data.sequencialMontagem,
-                        inspecaoMontagem: data.inspecaoMontagem,
-                        historicoEquipamento: data.historicoEquipamento,
-                        procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
+            listaPecas: data.listaPecas,
+            sequenciaMontagem: data.sequencialMontagem,
+            inspecaoMontagem: data.inspecaoMontagem,
+            historicoEquipamento: data.historicoEquipamento,
+            procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
         };
 
         for (const [campo, novoValor] of Object.entries(camposMonitorados)) {
@@ -438,11 +571,13 @@ export class ProducoesService {
                     dataInicio: data.dataInicio
                         ? new Date(data.dataInicio)
                         : undefined,
+                    previsaoTermino: previsaoTermino
+                        ? new Date(previsaoTermino)
+                        : undefined,
                     dataTermino: data.dataTermino
                         ? new Date(data.dataTermino)
                         : undefined,
-                        dataPrevisao: data.dataPrevisao ? new Date(data.dataPrevisao) : undefined,
-                    statusProducao: data.statusProducao,
+                    statusProducao: data.statusProducao as PrismaStatusProducao | undefined,
                     tipoEquipamentoId: data.tipoEquipamentoId,
                     modelo: data.modelo,
                     descricao: this.montarDescricao(
@@ -455,6 +590,15 @@ export class ProducoesService {
                     historicoEquipamento: data.historicoEquipamento,
                     procedimentoTesteInspecaoMontagem:
                         data.procedimentoTestes,
+                    itensSeriados:
+                        data.itensSeriados !== undefined
+                            ? {
+                                deleteMany: {},
+                                create: data.itensSeriados.map((item) => ({
+                                    descricao: item.descricao,
+                                })),
+                            }
+                            : undefined,
                 },
                 include: {
                     tipoEquipamento: true,
@@ -612,11 +756,169 @@ export class ProducoesService {
         });
     }
 
+    async listHistoricoEquipamento(id: string) {
+        await this.findOne(id);
+
+        return this.prisma.historicoEquipamentoRegistro.findMany({
+            where: {
+                equipmentId: id,
+            },
+            orderBy: {
+                data: 'desc',
+            },
+        });
+    }
+
+    async addHistoricoEquipamento(id: string, data: CreateHistoricoEquipamentoDto) {
+        await this.findOne(id);
+
+        return this.prisma.historicoEquipamentoRegistro.create({
+            data: {
+                equipmentId: id,
+                data: new Date(data.data),
+                historico: data.historico,
+                assinatura: data.assinatura,
+            },
+        });
+    }
+
+    async exportExcel(filters: FilterProducaoDto) {
+        const where = this.montarWhere(filters);
+
+        const sortBy = filters.sortBy ?? 'criadoEm';
+        const sortOrder = filters.sortOrder ?? 'desc';
+
+        const producoes = await this.prisma.equipment.findMany({
+            where,
+            include: {
+            tipoEquipamento: true,
+            itensSeriados: true,
+            },
+            orderBy: {
+            [sortBy]: sortOrder,
+            },
+        });
+
+        const dados = producoes.map((producao) =>
+            this.adicionarDiasProducao(producao),
+        );
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Produções');
+
+        worksheet.columns = [
+            { header: 'Número da Ordem', key: 'numeroOrdem', width: 18 },
+            { header: 'Número de Série', key: 'numeroSerie', width: 26 },
+            { header: 'Tipo de Equipamento', key: 'tipoEquipamentoNome', width: 26 },
+            { header: 'Modelo', key: 'modelo', width: 24 },
+            { header: 'Descrição', key: 'descricao', width: 36 },
+            { header: 'Solicitante', key: 'solicitante', width: 24 },
+            { header: 'Data de Solicitação', key: 'dataSolicitacao', width: 22 },
+            { header: 'Dias de Solicitação', key: 'diasSolicitacao', width: 22 },
+            { header: 'Data de Início', key: 'dataInicio', width: 18 },
+            { header: 'Previsão de Término', key: 'previsaoTermino', width: 22 },
+            { header: 'Data de Término', key: 'dataTermino', width: 18 },
+            { header: 'Dias de Produção', key: 'diasProducao', width: 20 },
+            { header: 'Status da Produção', key: 'statusProducao', width: 22 },
+            { header: 'Situação do Prazo', key: 'situacaoPrazo', width: 22 },
+            { header: 'Resultado do Prazo', key: 'resultadoPrazo', width: 26 },
+            { header: 'TAG', key: 'tag', width: 18 },
+            { header: 'Lista de Peças', key: 'listaPecas', width: 16 },
+            { header: 'Sequência de Montagem', key: 'sequenciaMontagem', width: 24 },
+            { header: 'Inspeção de Montagem', key: 'inspecaoMontagem', width: 24 },
+            { header: 'Histórico do Equipamento', key: 'historicoEquipamento', width: 26 },
+            { header: 'Procedimento de Teste', key: 'procedimentoTesteInspecaoMontagem', width: 26 },
+            { header: 'Itens Seriados', key: 'itensSeriados', width: 45 },
+            { header: 'Criado em', key: 'criadoEm', width: 20 },
+        ];
+
+        dados.forEach((producao) => {
+            worksheet.addRow({
+            numeroOrdem: producao.numeroOrdem,
+            numeroSerie: producao.numeroSerie,
+            tipoEquipamentoNome: producao.tipoEquipamento?.nome,
+            modelo: producao.modelo,
+            descricao: producao.descricao,
+            solicitante: producao.solicitante,
+            dataSolicitacao: producao.dataSolicitacao,
+            diasSolicitacao: producao.diasSolicitacao,
+            dataInicio: producao.dataInicio,
+            previsaoTermino: producao.previsaoTermino,
+            dataTermino: producao.dataTermino,
+            diasProducao: producao.diasProducao,
+            statusProducao: producao.statusProducao,
+            situacaoPrazo: producao.situacaoPrazo,
+            resultadoPrazo: producao.resultadoPrazo,
+            tag: producao.tag,
+            listaPecas: producao.listaPecas ? 'Sim' : 'Não',
+            sequenciaMontagem: producao.sequenciaMontagem ? 'Sim' : 'Não',
+            inspecaoMontagem: producao.inspecaoMontagem ? 'Sim' : 'Não',
+            historicoEquipamento: producao.historicoEquipamento ? 'Sim' : 'Não',
+            procedimentoTesteInspecaoMontagem:
+                producao.procedimentoTesteInspecaoMontagem ? 'Sim' : 'Não',
+            itensSeriados: producao.itensSeriados
+                ?.map((item) => item.descricao)
+                .join(' | '),
+            criadoEm: producao.criadoEm,
+            });
+        });
+
+        worksheet.getRow(1).font = {
+            bold: true,
+        };
+
+        worksheet.getRow(1).alignment = {
+            vertical: 'middle',
+            horizontal: 'center',
+        };
+
+        worksheet.getRow(1).height = 22;
+
+        worksheet.eachRow((row) => {
+            row.eachCell((cell) => {
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' },
+            };
+
+            cell.alignment = {
+                vertical: 'middle',
+                wrapText: true,
+            };
+            });
+        });
+
+        worksheet.getColumn('dataSolicitacao').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('dataInicio').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('previsaoTermino').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('dataTermino').numFmt = 'dd/mm/yyyy';
+        worksheet.getColumn('criadoEm').numFmt = 'dd/mm/yyyy hh:mm';
+
+        worksheet.autoFilter = {
+            from: 'A1',
+            to: 'W1',
+        };
+
+        worksheet.views = [
+            {
+            state: 'frozen',
+            ySplit: 1,
+            },
+        ];
+
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        return buffer;
+    }
+
     async remove(id: string) {
         await this.findOne(id);
         return this.prisma.equipment.update({
             where: { id },
             data: {
+                ativo: false,
                 excluidoEm: new Date(),
             },
         });

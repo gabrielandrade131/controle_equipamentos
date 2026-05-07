@@ -8,16 +8,21 @@ type ApiListResponse<T> = {
 
 const formatRegistro = (registro: any) => ({
   id: registro.id,
-  data: registro.criadoEm,
-  historico: `${registro.campo}: ${registro.valorAnterior ?? 'vazio'} -> ${registro.valorNovo ?? 'vazio'}`,
-  assinatura: registro.alteradoPor || 'Sistema',
+  data: toDateInput(registro.data ?? registro.criadoEm),
+  historico: registro.historico ?? '',
+  assinatura: registro.assinatura ?? '',
 });
+
+const toDateInput = (value?: string | null) => {
+  if (!value) return new Date().toISOString().split('T')[0];
+  return value.split('T')[0];
+};
 
 const mapApiToHistorico = (producao: any): HistoricoEquipamentoData => ({
   id: producao.id,
   numeroSerie: producao.numeroSerie ?? '',
   modelo: producao.modelo ?? '',
-  registros: (producao.historicoAlteracoes ?? []).map(formatRegistro),
+  registros: (producao.historicoEquipamentoRegistros ?? []).map(formatRegistro),
   notas: producao.descricao ?? '',
   createdAt: producao.criadoEm,
   updatedAt: producao.atualizadoEm,
@@ -43,11 +48,21 @@ export const useHistorico = () => {
     carregarHistoricos();
   }, []);
 
-  const criarHistorico = async (_novoHistorico: CreateHistoricoDto) => {
-    await carregarHistoricos();
-  };
+  const salvarHistoricoEquipamento = async (id: string, historico: HistoricoEquipamentoData | CreateHistoricoDto) => {
+    const registrosNovos = historico.registros.filter(
+      (registro) => !registro.id || registro.id.startsWith('novo-'),
+    );
 
-  const atualizarHistorico = async (_id: string, _historico: HistoricoEquipamentoData) => {
+    await Promise.all(
+      registrosNovos.map((registro) =>
+        axiosInstance.post(`/producoes/${id}/historico-equipamento`, {
+          data: registro.data,
+          historico: registro.historico,
+          assinatura: registro.assinatura,
+        }),
+      ),
+    );
+
     await carregarHistoricos();
   };
 
@@ -58,8 +73,7 @@ export const useHistorico = () => {
   return {
     historicos,
     loading,
-    criarHistorico,
-    atualizarHistorico,
+    salvarHistoricoEquipamento,
     deletarHistorico,
   };
 };

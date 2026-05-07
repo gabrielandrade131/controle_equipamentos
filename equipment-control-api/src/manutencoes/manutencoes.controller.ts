@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { SynchroIntegrationGuard } from '../auth/synchro-integration.guard';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { Response } from 'express';
 
 @ApiTags('Manutenções')
 @Controller('manutencoes')
@@ -50,6 +52,25 @@ export class ManutencoesController {
   @ApiOperation({ summary: 'Listar manutenções com filtros opcionais' })
   findAll(@Query() filters: FilterManutencaoDto) {
     return this.manutencoesService.findAll(filters);
+  }
+
+  @Get('export/excel')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Exportar manutenções para Excel' })
+  async exportExcel(
+    @Query() filters: FilterManutencaoDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.manutencoesService.exportExcel(filters);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+
+    );
+
+    res.send(buffer);
   }
 
   @Get(':id')

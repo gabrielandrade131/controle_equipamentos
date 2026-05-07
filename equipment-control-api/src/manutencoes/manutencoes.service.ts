@@ -5,23 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { OrigemManutencao, Prisma, StatusManutencao } from '@prisma/client';
 import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto';
 import { CreateManutencaoDto } from './dto/create-manutencao.dto';
 import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
-
-enum OrigemManutencao {
-  SYNCHRO = 'SYNCHRO',
-  MANUAL = 'MANUAL',
-}
-
-enum StatusManutencao {
-  PENDENTE = 'PENDENTE',
-  EM_MANUTENCAO = 'EM_MANUTENCAO',
-  PARALISADA = 'PARALISADA',
-  CONCLUIDA = 'CONCLUIDA',
-}
+import * as ExcelJS from 'exceljs';
 
 type UsuarioHistorico = {
   nome?: string | null;
@@ -98,6 +87,40 @@ export class ManutencoesService {
       : null,
     };
   }
+
+  private montarWhere(filters: FilterManutencaoDto): Prisma.ManutencaoWhereInput {
+    const where: Prisma.ManutencaoWhereInput = {
+      ativo: true,
+    };
+
+    if (filters.statusManutencao) {
+      where.statusManutencao = filters.statusManutencao;
+    }
+
+    if (filters.tag) {
+      where.tag = {
+        contains: filters.tag,
+        mode: 'insensitive',
+      };
+    }
+
+    if (filters.numeroSerie) {
+      where.numeroSerie = {
+        contains: filters.numeroSerie,
+        mode: 'insensitive',
+      };
+    }
+
+    if (filters.tipoEquipamentoNome) {
+      where.tipoEquipamentoNome = {
+        contains: filters.tipoEquipamentoNome,
+        mode: 'insensitive',
+      };
+    }
+
+    return where;
+  }
+
 
 
   async createFromSynchro(data: CreateManutencaoSynchroDto) {
@@ -177,32 +200,7 @@ export class ManutencoesService {
   }
 
   async findAll(filters: FilterManutencaoDto) {
-    const where: Prisma.ManutencaoWhereInput = {
-      ativo: true,
-    };
-
-    if (filters.statusManutencao) {
-      where.statusManutencao = filters.statusManutencao;
-    }
-
-    if (filters.tag) {
-      where.tag = {
-        contains: filters.tag,
-      };
-    }
-
-    if (filters.numeroSerie) {
-      where.numeroSerie = {
-        contains: filters.numeroSerie,
-      };
-    }
-
-    if (filters.tipoEquipamentoNome) {
-      where.tipoEquipamentoNome = {
-        contains: filters.tipoEquipamentoNome,
-      };
-    }
-
+    const where = this.montarWhere(filters);
     const page = filters.page ?? 1;
     const limit = filters.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -228,13 +226,6 @@ export class ManutencoesService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
-
-    return this.prisma.manutencao.findMany({
-      where,
-      orderBy: {
-        criadoEm: 'desc',
-      },
-    });
   }
 
   async findOne(id: string) {
@@ -334,6 +325,109 @@ export class ManutencoesService {
     }
 
     return this.findOne(manutencaoAtualizada.id);
+  }
+
+  async exportExcel(filters: FilterManutencaoDto) {
+    const where = this.montarWhere(filters);
+
+    const sortBy = filters.sortBy ?? 'criadoEm';
+    const sortOrder = filters.sortOrder ?? 'desc';
+
+    const manutencoes = await this.prisma.manutencao.findMany({
+      where,
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+    });
+
+    const dados = manutencoes.map((manutencao) =>
+      this.adicionarDiasManutencao(manutencao), 
+    );
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Manutenções');
+
+    worksheet.columns = [
+      { header: 'Tipo de Equipamento', key: 'tipoEquipamentoNome', width: 24 },
+      { header: 'Modelo', key: 'modeloEquipamento', width: 28 },
+      { header: 'Número de Série', key: 'numeroSerie', width: 24 },
+      { header: 'TAG', key: 'tag', width: 18 },
+      { header: 'Situação do Equipamento', key: 'situacaoEquipamento', width: 26 },
+      { header: 'Data de Retorno à Base', key: 'dataRetornoBase', width: 22 },
+      { header: 'Data de Início', key: 'dataInicio', width: 18 },
+      { header: 'Data de Término', key: 'dataTermino', width: 18 },
+      { header: 'Dias de Manutenção', key: 'diasManutencao', width: 20 },
+      { header: 'Status da Manutenção', key: 'statusManutencao', width: 24 },
+      { header: 'Responsável', key: 'responsavelManutencao', width: 24 },
+      { header: 'Diagnóstico', key: 'diagnostico', width: 45 },
+      { header: 'Origem', key: 'origem', width: 14 },
+      { header: 'Criado em', key: 'criadoEm', width: 20 },
+    ];
+
+    dados.forEach((manutencao) => {
+      worksheet.addRow({
+        tipoEquipamentoNome: manutencao.tipoEquipamentoNome,
+        modeloEquipamento: manutencao.modeloEquipamento,
+        numeroSerie: manutencao.numeroSerie,
+        tag: manutencao.tag,
+        situacaoEquipamento: manutencao.situacaoEquipamento,
+        dataRetornoBase: manutencao.dataRetornoBase,
+        dataInicio: manutencao.dataInicio,
+        dataTermino: manutencao.dataTermino,
+        diasManutencao: manutencao.diasManutencao,
+        statusManutencao: manutencao.statusManutencao,
+        responsavelManutencao: manutencao.responsavelManutencao,
+        diagnostico: manutencao.diagnostico,
+        origem: manutencao.origem,
+        criadoEm: manutencao.criadoEm,
+      });
+    });
+
+    worksheet.getRow(1).font = {
+      bold: true,
+    };
+    worksheet.getRow(1).alignment = {
+      vertical: 'middle',
+      horizontal: 'center',
+    };
+
+    worksheet.getRow(1).height = 22;
+
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
+
+        cell.alignment = {
+          vertical: 'middle',
+          wrapText: true,
+        };
+      });
+    });
+    worksheet.getColumn('dataRetornoBase').numFmt = 'dd/MM/yyyy';
+    worksheet.getColumn('dataInicio').numFmt = 'dd/MM/yyyy';
+    worksheet.getColumn('dataTermino').numFmt = 'dd/MM/yyyy';
+    worksheet.getColumn('criadoEm').numFmt = 'dd/MM/yyyy HH:mm:ss';
+
+    worksheet.autoFilter = {
+      from: 'A1',
+      to: 'N1',
+    };
+
+    worksheet.views = [
+      {
+        state: 'frozen',
+        ySplit: 1,
+      },
+    ];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    return buffer;
   }
 
   async remove(id: string) {

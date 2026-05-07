@@ -52,6 +52,7 @@ export class FilterProducaoDto extends PaginationProducaoDto {
             'criadoEm',
             'dataSolicitacao',
             'dataInicio',
+            'previsaoTermino',
             'dataTermino',
             'numeroOrdem',
             'modelo',
@@ -63,6 +64,7 @@ export class FilterProducaoDto extends PaginationProducaoDto {
         'criadoEm',
         'dataSolicitacao',
         'dataInicio',
+        'previsaoTermino',
         'dataTermino',
         'numeroOrdem',
         'modelo',
@@ -72,6 +74,7 @@ export class FilterProducaoDto extends PaginationProducaoDto {
     |'criadoEm'
     |'dataSolicitacao'
     |'dataInicio'
+    |'previsaoTermino'
     |'dataTermino'
     |'numeroOrdem'
     |'modelo'

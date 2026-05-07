@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { StatusManutencao } from '@prisma/client';
 
 export class UpdateManutencaoDto {
     @ApiPropertyOptional({
@@ -15,12 +16,13 @@ export class UpdateManutencaoDto {
     responsavelManutencao?: string;
 
     @ApiPropertyOptional({
-        example: 'EM_MANUTENCAO',
-        description: 'Status: PENDENTE, PARALISADA, EM_MANUTENCAO, CONCLUIDA'
+        enum: StatusManutencao,
+        example: StatusManutencao.EM_MANUTENCAO,
+        description: 'Status: PENDENTE, PARALISADA, EM_MANUTENCAO, CONCLUIDA',
     })
     @IsOptional()
-    @IsString()
-    statusManutencao?: string;
+    @IsEnum(StatusManutencao)
+    statusManutencao?: StatusManutencao;
 
     @ApiPropertyOptional({ example: '2026-04-20' })
     @IsOptional()

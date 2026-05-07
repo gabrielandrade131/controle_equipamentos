@@ -8,22 +8,22 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Equipment {
   id                                String                                    @id @default(uuid())
-  numeroOrdem                       Int                                       @unique
+  numeroOrdem                       Int                                       @unique @default(autoincrement())
   numeroSerie                       String?   
   tag                               String?                                   @unique
   dataSolicitacao                   DateTime?
   solicitante                       String?   
 
   dataInicio                        DateTime?
+  previsaoTermino                   DateTime?
   dataTermino                       DateTime?
-  dataPrevisao                      DateTime?
-  statusProducao                    String                                @default("PROGRAMADA")  
+  statusProducao                    StatusProducao                           @default(PROGRAMADA)
   tipoEquipamentoId                 String?
   tipoEquipamento                   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
   modelo                            String? 
@@ -42,6 +42,7 @@ model Equipment {
   observacoes                       ObservacaoProducao[]
   registrosInspecaoMontagem         RegistroInspecaoMontagem[]
   historicoAlteracoes               HistoricoProducao[]
+  historicoEquipamentoRegistros     HistoricoEquipamentoRegistro[]
 
   ativo                             Boolean           @default(true)
   excluidoEm                        DateTime?         
@@ -55,6 +56,20 @@ model HistoricoProducao {
   valorNovo         String?
   alteradoPor       String?
   criadoEm          DateTime      @default(now())
+
+  equipment         Equipment     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId])
+}
+
+model HistoricoEquipamentoRegistro {
+  id                String        @id @default(uuid())
+  equipmentId       String
+  data              DateTime
+  historico         String
+  assinatura        String
+  criadoEm          DateTime      @default(now())
+  atualizadoEm      DateTime      @updatedAt
 
   equipment         Equipment     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
@@ -117,7 +132,7 @@ model RegistroInspecaoMontagem {
 
 model Manutencao {
   id                      String        @id @default(uuid())
-  origem                  String      @default("SYNCHRO")
+  origem                  OrigemManutencao      @default(SYNCHRO)
 
   tipoEquipamentoNome     String?
   modeloEquipamento       String?
@@ -129,7 +144,7 @@ model Manutencao {
   dataInicio              DateTime?
   dataTermino             DateTime?
 
-  statusManutencao        String    @default("PENDENTE")
+  statusManutencao        StatusManutencao    @default(PENDENTE)
   diagnostico             String?
   responsavelManutencao   String?
 
@@ -157,4 +172,23 @@ model HistoricoManutencao {
   manutencao        Manutencao          @relation(fields: [manutencaoId], references: [id], onDelete: Cascade)
 
   @@index([manutencaoId])
+}
+
+enum OrigemManutencao {
+  SYNCHRO
+  MANUAL
+}
+
+enum StatusManutencao {
+  PENDENTE
+  EM_MANUTENCAO
+  CONCLUIDA
+  PARALISADA
+}
+
+enum StatusProducao {
+  PROGRAMADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  PARALISADA
 }

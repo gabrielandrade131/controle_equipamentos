@@ -1,13 +1,15 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
+import { CreateHistoricoEquipamentoDto } from './dto/create-historico-equipamento.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
 import { ProducoesService } from './producoes.service';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { Response } from 'express';
 
 @ApiTags('Produções')
 @UseGuards(JwtAuthGuard)
@@ -50,6 +52,31 @@ export class ProducoesController {
         return this.producoesService.findByNumeroOrdem(numeroOrdem);
     }
 
+    @Get('export/excel')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Exportar produções para Excel' })
+    async exportExcel(
+        @Query() filters: FilterProducaoDto,
+        @Res() res: Response,
+    ) {
+        const buffer = await this.producoesService.exportExcel(filters);
+
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            
+        );
+        res.setHeader(
+            'Content-Disposition',
+            'attachment; filename=producoes.xlsx',
+
+        );
+
+        res.send(buffer);
+
+    }
+
     @Get(':id')
     @ApiOperation({ summary: 'Buscar produção por ID' })
     @ApiParam({ name: 'id', example: '1' })
@@ -67,6 +94,21 @@ export class ProducoesController {
     @ApiOperation({ summary: 'Listar o historico de alteracoes do equipamento'})
     listHistorico(@Param('id') id: string) {
         return this.producoesService.listHistorico(id);
+    }
+
+    @Get(':id/historico-equipamento')
+    @ApiOperation({ summary: 'Listar o historico manual do equipamento' })
+    listHistoricoEquipamento(@Param('id') id: string) {
+        return this.producoesService.listHistoricoEquipamento(id);
+    }
+
+    @Post(':id/historico-equipamento')
+    @ApiOperation({ summary: 'Adicionar registro manual ao historico do equipamento' })
+    addHistoricoEquipamento(
+        @Param('id') id: string,
+        @Body() body: CreateHistoricoEquipamentoDto,
+    ) {
+        return this.producoesService.addHistoricoEquipamento(id, body);
     }
 
     @Put(':id')

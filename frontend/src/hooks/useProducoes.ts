@@ -38,6 +38,8 @@ export const mapApiToProducao = (producao: any): Producao => ({
   numeroOrdem: String(producao.numeroOrdem ?? ''),
   numeroSerie: producao.numeroSerie ?? '',
   dataSolicitacao: toDateInput(producao.dataSolicitacao),
+  dataInicio: toDateInput(producao.dataInicio),
+  dataPrevisao: toDateInput(producao.dataPrevisao),
   dataTermino: toDateInput(producao.dataTermino),
   modelo: producao.modelo ?? '',
   descricao: producao.descricao ?? '',
@@ -60,6 +62,8 @@ export const mapApiToProducao = (producao: any): Producao => ({
 
 export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   dataSolicitacao: producao.dataSolicitacao || undefined,
+  dataInicio: producao.dataInicio || undefined,
+  dataPrevisao: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,
   modelo: producao.modelo || undefined,
   descricaoComplemento: producao.descricao || undefined,

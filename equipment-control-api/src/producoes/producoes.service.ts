@@ -137,6 +137,7 @@ export class ProducoesService {
                 dataTermino: data.dataTermino
                 ? new Date(data.dataTermino)
                 : null,
+                    dataPrevisao: data.dataPrevisao ? new Date(data.dataPrevisao) : null,
                 tipoEquipamentoId: data.tipoEquipamentoId || null,
                 modelo: data.modelo,
                 descricao: this.montarDescricao(
@@ -378,6 +379,7 @@ export class ProducoesService {
             solicitante: data.solicitante,
             dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
             dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
+              dataPrevisao: data.dataPrevisao ? new Date(data.dataPrevisao) : undefined,
             listaPecas: data.listaPecas,
             sequenciaMontagem: data.sequenciaMontagem,
             inspecaoMontagem: data.inspecaoMontagem,
@@ -439,6 +441,7 @@ export class ProducoesService {
                     dataTermino: data.dataTermino
                         ? new Date(data.dataTermino)
                         : undefined,
+                        dataPrevisao: data.dataPrevisao ? new Date(data.dataPrevisao) : undefined,
                     statusProducao: data.statusProducao,
                     tipoEquipamentoId: data.tipoEquipamentoId,
                     modelo: data.modelo,

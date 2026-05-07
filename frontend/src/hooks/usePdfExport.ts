@@ -143,8 +143,8 @@ export const usePdfExport = () => {
                     
                     const listaPecasLines = pdf.splitTextToSize(producao.listaPecas, maxWidth - 6);
                     listaPecasLines.forEach((line: string) => {
-                        pdf.text(line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
+                            pdf.text(line, marginLeft + 3, yPosition);
+                            yPosition += 5.5;
                     });
                     yPosition += 2;
                 }
@@ -159,8 +159,8 @@ export const usePdfExport = () => {
                     
                     const seqLines = pdf.splitTextToSize(producao.sequencialMontagem, maxWidth - 6);
                     seqLines.forEach((line: string) => {
-                        pdf.text(line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
+                            pdf.text(line, marginLeft + 3, yPosition);
+                            yPosition += 5.5;
                     });
                     yPosition += 2;
                 }
@@ -175,8 +175,8 @@ export const usePdfExport = () => {
                     
                     const inspecaoLines = pdf.splitTextToSize(producao.inspecaoMontagem, maxWidth - 6);
                     inspecaoLines.forEach((line: string) => {
-                        pdf.text(line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
+                            pdf.text(line, marginLeft + 3, yPosition);
+                            yPosition += 5.5;
                     });
                     yPosition += 2;
                 }
@@ -191,8 +191,8 @@ export const usePdfExport = () => {
                     
                     const historicooLines = pdf.splitTextToSize(producao.historicoEquipamento, maxWidth - 6);
                     historicooLines.forEach((line: string) => {
-                        pdf.text(line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
+                            pdf.text(line, marginLeft + 3, yPosition);
+                            yPosition += 5.5;
                     });
                     yPosition += 2;
                 }
@@ -204,9 +204,9 @@ export const usePdfExport = () => {
                     pdf.text('Procedimento para Testes e Inspeção de Montagem:', marginLeft + 3, yPosition);
                     yPosition += 4;
                     pdf.setFont(undefined, 'normal');
-                    pdf.text('Código: ' + producao.procedimentoTestes, marginLeft + 5, yPosition);
-                    yPosition += 4;
-                }
+                    pdf.text('Código: ' + producao.procedimentoTestes, marginLeft + 3, yPosition);
+                    yPosition += 5.5;
+                    }
             }
 
             // Assinaturas

@@ -51,27 +51,41 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
     }));
   };
 
+  const novoRegistroTemConteudo = () =>
+    Boolean(novoRegistro.historico.trim() || novoRegistro.assinatura.trim());
+
+  const novoRegistroEstaCompleto = () =>
+    Boolean(novoRegistro.data && novoRegistro.historico.trim() && novoRegistro.assinatura.trim());
+
+  const criarRegistroComId = (): RegistroHistorico => ({
+    ...novoRegistro,
+    historico: novoRegistro.historico.trim(),
+    assinatura: novoRegistro.assinatura.trim(),
+    id: `novo-${Date.now()}`
+  });
+
+  const limparNovoRegistro = () => {
+    setNovoRegistro({
+      data: new Date().toISOString().split('T')[0],
+      historico: '',
+      assinatura: ''
+    });
+  };
+
   const adicionarRegistro = () => {
-    if (!novoRegistro.data || !novoRegistro.historico || !novoRegistro.assinatura) {
+    if (!novoRegistroEstaCompleto()) {
       alert('Preencha todos os campos do registro');
       return;
     }
 
-    const registroComId = {
-      ...novoRegistro,
-      id: Date.now().toString()
-    };
+    const registroComId = criarRegistroComId();
 
     setFormData(prev => ({
       ...prev,
       registros: [...prev.registros, registroComId]
     }));
 
-    setNovoRegistro({
-      data: new Date().toISOString().split('T')[0],
-      historico: '',
-      assinatura: ''
-    });
+    limparNovoRegistro();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -82,15 +96,31 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
       return;
     }
 
-    if (formData.registros.length === 0) {
+    const registrosParaSalvar = [...formData.registros];
+
+    if (novoRegistroTemConteudo()) {
+      if (!novoRegistroEstaCompleto()) {
+        alert('Preencha todos os campos do registro');
+        return;
+      }
+
+      registrosParaSalvar.push(criarRegistroComId());
+    }
+
+    if (registrosParaSalvar.length === 0) {
       alert('Adicione pelo menos um registro');
       return;
     }
 
+    const dadosAtualizados = {
+      ...formData,
+      registros: registrosParaSalvar
+    };
+
     if (isEditing) {
-      onSalvar(formData);
+      onSalvar(dadosAtualizados);
     } else {
-      const { id, createdAt, updatedAt, ...dados } = formData;
+      const { id, createdAt, updatedAt, ...dados } = dadosAtualizados;
       onSalvar(dados as CreateHistoricoDto);
     }
   };
@@ -143,7 +173,6 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
                 name="data"
                 value={novoRegistro.data}
                 onChange={handleRegistroInputChange}
-                required
               />
             </div>
 
@@ -155,7 +184,6 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
                 onChange={handleRegistroInputChange}
                 placeholder="Descreva o histórico do equipamento..."
                 rows={4}
-                required
               />
             </div>
 
@@ -167,7 +195,6 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
                 value={novoRegistro.assinatura}
                 onChange={handleRegistroInputChange}
                 placeholder="Nome de quem responsável"
-                required
               />
             </div>
 

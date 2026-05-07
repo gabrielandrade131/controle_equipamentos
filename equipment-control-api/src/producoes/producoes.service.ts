@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
+import { CreateHistoricoEquipamentoDto } from './dto/create-historico-equipamento.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
 import { Prisma, StatusProducao as PrismaStatusProducao } from '@prisma/client';
@@ -377,6 +378,11 @@ export class ProducoesService {
                         criadoEm: 'desc',
                     },
                 },
+                historicoEquipamentoRegistros: {
+                    orderBy: {
+                        data: 'desc',
+                    },
+                },
             },
             orderBy: {
                 [sortBy]: sortOrder,
@@ -416,6 +422,11 @@ export class ProducoesService {
                     },
                 },
                 historicoAlteracoes: true,
+                historicoEquipamentoRegistros: {
+                    orderBy: {
+                        data: 'desc',
+                    },
+                },
             },
         });
     if (!producao) {
@@ -741,6 +752,32 @@ export class ProducoesService {
             },
             orderBy: {
                 criadoEm: 'desc',
+            },
+        });
+    }
+
+    async listHistoricoEquipamento(id: string) {
+        await this.findOne(id);
+
+        return this.prisma.historicoEquipamentoRegistro.findMany({
+            where: {
+                equipmentId: id,
+            },
+            orderBy: {
+                data: 'desc',
+            },
+        });
+    }
+
+    async addHistoricoEquipamento(id: string, data: CreateHistoricoEquipamentoDto) {
+        await this.findOne(id);
+
+        return this.prisma.historicoEquipamentoRegistro.create({
+            data: {
+                equipmentId: id,
+                data: new Date(data.data),
+                historico: data.historico,
+                assinatura: data.assinatura,
             },
         });
     }

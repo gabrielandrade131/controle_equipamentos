@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
+import { CreateHistoricoEquipamentoDto } from './dto/create-historico-equipamento.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
 import { ProducoesService } from './producoes.service';
@@ -93,6 +94,21 @@ export class ProducoesController {
     @ApiOperation({ summary: 'Listar o historico de alteracoes do equipamento'})
     listHistorico(@Param('id') id: string) {
         return this.producoesService.listHistorico(id);
+    }
+
+    @Get(':id/historico-equipamento')
+    @ApiOperation({ summary: 'Listar o historico manual do equipamento' })
+    listHistoricoEquipamento(@Param('id') id: string) {
+        return this.producoesService.listHistoricoEquipamento(id);
+    }
+
+    @Post(':id/historico-equipamento')
+    @ApiOperation({ summary: 'Adicionar registro manual ao historico do equipamento' })
+    addHistoricoEquipamento(
+        @Param('id') id: string,
+        @Body() body: CreateHistoricoEquipamentoDto,
+    ) {
+        return this.producoesService.addHistoricoEquipamento(id, body);
     }
 
     @Put(':id')

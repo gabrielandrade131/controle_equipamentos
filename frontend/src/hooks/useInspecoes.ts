@@ -109,17 +109,10 @@ export const useInspecoes = () => {
     carregarInspecoes();
   }, []);
 
-  const criarInspecao = async (novaInspecao: InspecaoMontagem) => {
-    const response = await axiosInstance.post('/producoes', {
-      dataSolicitacao: novaInspecao.data || novaInspecao.dataInspecao,
-      modelo: novaInspecao.modelo || undefined,
-      descricaoComplemento: novaInspecao.numeroSerie || undefined,
-      inspecaoMontagem: true,
-    });
-
+  const salvarRegistrosInspecao = async (producaoId: string, inspecao: InspecaoMontagem) => {
     await Promise.all(
-      (novaInspecao.verificacoesGeraisPremontagem || []).slice(0, 16).map((item, index) =>
-        axiosInstance.patch(`/producoes/${response.data.id}/inspecao-montagem/${index + 1}`, {
+      (inspecao.verificacoesGeraisPremontagem || []).slice(0, 16).map((item, index) =>
+        axiosInstance.patch(`/producoes/${producaoId}/inspecao-montagem/${index + 1}`, {
           valorObservado: item.valorObservado || undefined,
           instrumentoMedicao: item.instrumentoMedicao || undefined,
           conformidades: conformidadeToApi(item.conformidade),
@@ -131,16 +124,7 @@ export const useInspecoes = () => {
   };
 
   const atualizarInspecao = async (id: string, inspecaoAtualizada: InspecaoMontagem) => {
-    await Promise.all(
-      (inspecaoAtualizada.verificacoesGeraisPremontagem || []).slice(0, 16).map((item, index) =>
-        axiosInstance.patch(`/producoes/${id}/inspecao-montagem/${index + 1}`, {
-          valorObservado: item.valorObservado || undefined,
-          instrumentoMedicao: item.instrumentoMedicao || undefined,
-          conformidades: conformidadeToApi(item.conformidade),
-        }),
-      ),
-    );
-    await carregarInspecoes();
+    await salvarRegistrosInspecao(id, inspecaoAtualizada);
   };
 
   const deletarInspecao = async (id: string) => {
@@ -151,7 +135,7 @@ export const useInspecoes = () => {
   return {
     inspecoes,
     loading,
-    criarInspecao,
+    salvarRegistrosInspecao,
     atualizarInspecao,
     deletarInspecao,
   };

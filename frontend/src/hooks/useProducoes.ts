@@ -17,8 +17,9 @@ const buildDocumentos = (producao: any): Documento[] => {
   if (producao.listaPecas && String(producao.listaPecas).trim() !== '') {
     documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Pecas', codigo: String(producao.listaPecas) });
   }
-  if (producao.sequencialMontagem && String(producao.sequencialMontagem).trim() !== '') {
-    documentos.push({ id: `${producao.id}-sequencialMontagem`, nome: 'Sequencial de Montagem', codigo: String(producao.sequencialMontagem) });
+  const sequencialMontagem = producao.sequenciaMontagem ?? producao.sequencialMontagem;
+  if (sequencialMontagem && String(sequencialMontagem).trim() !== '') {
+    documentos.push({ id: `${producao.id}-sequencialMontagem`, nome: 'Sequencial de Montagem', codigo: String(sequencialMontagem) });
   }
   if (producao.inspecaoMontagem && String(producao.inspecaoMontagem).trim() !== '') {
     documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspecao de Montagem', codigo: String(producao.inspecaoMontagem) });
@@ -26,29 +27,73 @@ const buildDocumentos = (producao: any): Documento[] => {
   if (producao.historicoEquipamento && String(producao.historicoEquipamento).trim() !== '') {
     documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Historico do Equipamento', codigo: String(producao.historicoEquipamento) });
   }
-  if (producao.procedimentoTestes && String(producao.procedimentoTestes).trim() !== '') {
-    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: String(producao.procedimentoTestes) });
+  const procedimentoTestes = producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes;
+  if (procedimentoTestes && String(procedimentoTestes).trim() !== '') {
+    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: String(procedimentoTestes) });
   }
 
   return documentos;
+};
+
+const getDescricaoComplementar = (producao: any): string => {
+  const descricao = producao.descricao ?? '';
+  const tipoNome = producao.tipoEquipamento?.nome;
+
+  if (!tipoNome || !descricao.startsWith(tipoNome)) {
+    return descricao;
+  }
+
+  return descricao.slice(tipoNome.length).trim();
+};
+
+const getDescricaoItemSeriado = (item: { numero?: string; descricao?: string; numeroSerie?: string }) => {
+  const descricao = item.descricao?.trim() ?? '';
+
+  if (descricao.startsWith('Numero:') || descricao.includes(' - Serie:')) {
+    return descricao;
+  }
+
+  const partes = [
+    item.numero ? `Numero: ${item.numero.trim()}` : '',
+    descricao,
+    item.numeroSerie ? `Serie: ${item.numeroSerie.trim()}` : '',
+  ].filter(Boolean);
+
+  return partes.join(' - ');
+};
+
+const parseItemSeriado = (item: { id: string; descricao?: string | null }, index: number) => {
+  const descricaoCompleta = item.descricao ?? '';
+  const partes = descricaoCompleta.split(' - ');
+  const numeroPart = partes.find((parte) => parte.startsWith('Numero: '));
+  const seriePart = partes.find((parte) => parte.startsWith('Serie: '));
+  const descricao = partes
+    .filter((parte) => !parte.startsWith('Numero: ') && !parte.startsWith('Serie: '))
+    .join(' - ');
+
+  return {
+    id: item.id,
+    numero: numeroPart?.replace('Numero: ', '') || String(index + 1),
+    descricao: descricao || descricaoCompleta,
+    numeroSerie: seriePart?.replace('Serie: ', '') || '',
+  };
 };
 
 export const mapApiToProducao = (producao: any): Producao => ({
   id: producao.id,
   numeroOrdem: String(producao.numeroOrdem ?? ''),
   numeroSerie: producao.numeroSerie ?? '',
+  tag: producao.tag ?? '',
   dataSolicitacao: toDateInput(producao.dataSolicitacao),
   dataInicio: toDateInput(producao.dataInicio),
   dataPrevisao: toDateInput(producao.dataPrevisao ?? producao.previsaoTermino),
   dataTermino: toDateInput(producao.dataTermino),
+  statusProducao: producao.statusProducao ?? 'PROGRAMADA',
+  tipoEquipamentoId: producao.tipoEquipamentoId ?? '',
+  tipoEquipamentoNome: producao.tipoEquipamento?.nome ?? '',
   modelo: producao.modelo ?? '',
-  descricao: producao.descricao ?? '',
-  itensSeriados: (producao.itensSeriados ?? []).map((item: any, index: number) => ({
-    id: item.id,
-    numero: String(index + 1),
-    descricao: item.descricao ?? '',
-    numeroSerie: '',
-  })),
+  descricao: getDescricaoComplementar(producao),
+  itensSeriados: (producao.itensSeriados ?? []).map(parseItemSeriado),
   documentos: buildDocumentos(producao),
   observacoes: (producao.observacoes ?? []).map((observacao: any) => observacao.descricao).join('\n'),
   listaPecas: producao.listaPecas ?? '',
@@ -58,6 +103,10 @@ export const mapApiToProducao = (producao: any): Producao => ({
   procedimentoTestes: producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes ?? '',
   createdAt: producao.criadoEm,
   updatedAt: producao.atualizadoEm,
+  diasSolicitacao: producao.diasSolicitacao ?? null,
+  diasProducao: producao.diasProducao ?? null,
+  situacaoPrazo: producao.situacaoPrazo ?? null,
+  resultadoPrazo: producao.resultadoPrazo ?? null,
 });
 
 export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
@@ -65,6 +114,8 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   dataInicio: producao.dataInicio || undefined,
   previsaoTermino: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,
+  statusProducao: producao.statusProducao || undefined,
+  tipoEquipamentoId: producao.tipoEquipamentoId || undefined,
   modelo: producao.modelo || undefined,
   descricaoComplemento: producao.descricao || undefined,
   listaPecas: producao.listaPecas || undefined,
@@ -72,9 +123,11 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   inspecaoMontagem: producao.inspecaoMontagem || undefined,
   historicoEquipamento: producao.historicoEquipamento || undefined,
   procedimentoTestes: producao.procedimentoTestes || undefined,
-  itensSeriados: producao.itensSeriados?.map((item) => ({
-    descricao: item.descricao,
-  })),
+  itensSeriados: producao.itensSeriados
+    ?.map((item) => ({
+      descricao: getDescricaoItemSeriado(item),
+    }))
+    .filter((item) => item.descricao),
 });
 
 export const useProducoes = () => {
@@ -103,12 +156,19 @@ export const useProducoes = () => {
 
   const criarProducao = async (novaProducao: CreateProducaoDto) => {
     const response = await axiosInstance.post('/producoes', mapProducaoToApi(novaProducao));
-    const producaoCriada = mapApiToProducao(response.data);
+    let producaoCriada = mapApiToProducao(response.data);
 
     if (novaProducao.observacoes) {
       await axiosInstance.post(`/producoes/${producaoCriada.id}/observacoes`, {
         descricao: novaProducao.observacoes,
       });
+    }
+
+    if (novaProducao.tag && producaoCriada.statusProducao === 'CONCLUIDA') {
+      const tagResponse = await axiosInstance.patch(`/producoes/${producaoCriada.id}/tag`, {
+        tag: novaProducao.tag,
+      });
+      producaoCriada = mapApiToProducao(tagResponse.data);
     }
 
     await carregarProducoes();
@@ -117,7 +177,15 @@ export const useProducoes = () => {
 
   const atualizarProducao = async (id: string, producaoAtualizada: Producao) => {
     const response = await axiosInstance.put(`/producoes/${id}`, mapProducaoToApi(producaoAtualizada));
-    const producao = mapApiToProducao(response.data);
+    let producao = mapApiToProducao(response.data);
+
+    if (producaoAtualizada.tag && producao.statusProducao === 'CONCLUIDA') {
+      const tagResponse = await axiosInstance.patch(`/producoes/${id}/tag`, {
+        tag: producaoAtualizada.tag,
+      });
+      producao = mapApiToProducao(tagResponse.data);
+    }
+
     setProducoes((prev) => prev.map((item) => (item.id === id ? producao : item)));
     return producao;
   };

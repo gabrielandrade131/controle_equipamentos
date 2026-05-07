@@ -1,4 +1,3 @@
-// Item Seriado
 export interface ItemSeriado {
   id: string;
   numero: string;
@@ -6,21 +5,35 @@ export interface ItemSeriado {
   numeroSerie: string;
 }
 
-// Documento Relacionado
 export interface Documento {
   id: string;
   nome: string;
   codigo: string;
 }
 
-// Para ENVIAR (criar novo)
+export type StatusProducao =
+  | 'PROGRAMADA'
+  | 'EM_ANDAMENTO'
+  | 'CONCLUIDA'
+  | 'PARALISADA';
+
+export interface TipoEquipamento {
+  id: string;
+  nome: string;
+  ativo: boolean;
+}
+
 export interface CreateProducaoDto {
   numeroOrdem: string;
   numeroSerie: string;
+  tag?: string;
   dataSolicitacao: string;
   dataInicio?: string;
   dataPrevisao?: string;
   dataTermino?: string;
+  statusProducao?: StatusProducao;
+  tipoEquipamentoId?: string;
+  tipoEquipamentoNome?: string;
   modelo: string;
   descricao: string;
   itensSeriados: ItemSeriado[];
@@ -33,9 +46,12 @@ export interface CreateProducaoDto {
   procedimentoTestes?: string;
 }
 
-// Para RECEBER (resposta do backend)
 export interface Producao extends CreateProducaoDto {
-  id: string;              // ← Obrigatório quando recebe!
+  id: string;
   createdAt?: string;
   updatedAt?: string;
+  diasSolicitacao?: number | null;
+  diasProducao?: number | null;
+  situacaoPrazo?: 'NO_PRAZO' | 'ATENCAO' | 'ATRASADA' | 'CONCLUIDA' | null;
+  resultadoPrazo?: 'CONCLUIDA_NO_PRAZO' | 'CONCLUIDA_COM_ATRASO' | null;
 }

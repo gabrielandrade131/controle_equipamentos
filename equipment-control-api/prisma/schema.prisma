@@ -42,6 +42,7 @@ model Equipment {
   observacoes                       ObservacaoProducao[]
   registrosInspecaoMontagem         RegistroInspecaoMontagem[]
   historicoAlteracoes               HistoricoProducao[]
+  historicoEquipamentoRegistros     HistoricoEquipamentoRegistro[]
 
   ativo                             Boolean           @default(true)
   excluidoEm                        DateTime?         
@@ -55,6 +56,20 @@ model HistoricoProducao {
   valorNovo         String?
   alteradoPor       String?
   criadoEm          DateTime      @default(now())
+
+  equipment         Equipment     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId])
+}
+
+model HistoricoEquipamentoRegistro {
+  id                String        @id @default(uuid())
+  equipmentId       String
+  data              DateTime
+  historico         String
+  assinatura        String
+  criadoEm          DateTime      @default(now())
+  atualizadoEm      DateTime      @updatedAt
 
   equipment         Equipment     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 

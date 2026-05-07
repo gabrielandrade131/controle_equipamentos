@@ -17,8 +17,8 @@ const buildDocumentos = (producao: any): Documento[] => {
   if (producao.listaPecas && String(producao.listaPecas).trim() !== '') {
     documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Pecas', codigo: String(producao.listaPecas) });
   }
-  if (producao.sequenciaMontagem && String(producao.sequenciaMontagem).trim() !== '') {
-    documentos.push({ id: `${producao.id}-sequenciaMontagem`, nome: 'Sequencia de Montagem', codigo: String(producao.sequenciaMontagem) });
+  if (producao.sequencialMontagem && String(producao.sequencialMontagem).trim() !== '') {
+    documentos.push({ id: `${producao.id}-sequencialMontagem`, nome: 'Sequencial de Montagem', codigo: String(producao.sequencialMontagem) });
   }
   if (producao.inspecaoMontagem && String(producao.inspecaoMontagem).trim() !== '') {
     documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspecao de Montagem', codigo: String(producao.inspecaoMontagem) });
@@ -26,8 +26,8 @@ const buildDocumentos = (producao: any): Documento[] => {
   if (producao.historicoEquipamento && String(producao.historicoEquipamento).trim() !== '') {
     documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Historico do Equipamento', codigo: String(producao.historicoEquipamento) });
   }
-  if (producao.procedimentoTesteInspecaoMontagem && String(producao.procedimentoTesteInspecaoMontagem).trim() !== '') {
-    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: String(producao.procedimentoTesteInspecaoMontagem) });
+  if (producao.procedimentoTestes && String(producao.procedimentoTestes).trim() !== '') {
+    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: String(producao.procedimentoTestes) });
   }
 
   return documentos;
@@ -52,10 +52,10 @@ export const mapApiToProducao = (producao: any): Producao => ({
   documentos: buildDocumentos(producao),
   observacoes: (producao.observacoes ?? []).map((observacao: any) => observacao.descricao).join('\n'),
   listaPecas: producao.listaPecas ?? '',
-  sequencialMontagem: producao.sequenciaMontagem ?? '',
+  sequencialMontagem: producao.sequenciaMontagem ?? producao.sequencialMontagem ?? '',
   inspecaoMontagem: producao.inspecaoMontagem ?? '',
   historicoEquipamento: producao.historicoEquipamento ?? '',
-  procedimentoTestes: producao.procedimentoTesteInspecaoMontagem ?? '',
+  procedimentoTestes: producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes ?? '',
   createdAt: producao.criadoEm,
   updatedAt: producao.atualizadoEm,
 });
@@ -68,10 +68,10 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   modelo: producao.modelo || undefined,
   descricaoComplemento: producao.descricao || undefined,
   listaPecas: producao.listaPecas || undefined,
-  sequenciaMontagem: producao.sequencialMontagem || undefined,
+  sequencialMontagem: producao.sequencialMontagem || undefined,
   inspecaoMontagem: producao.inspecaoMontagem || undefined,
   historicoEquipamento: producao.historicoEquipamento || undefined,
-  procedimentoTesteInspecaoMontagem: producao.procedimentoTestes || undefined,
+  procedimentoTestes: producao.procedimentoTestes || undefined,
   itensSeriados: producao.itensSeriados?.map((item) => ({
     descricao: item.descricao,
   })),

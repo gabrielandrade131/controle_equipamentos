@@ -16,7 +16,7 @@
 }
 
 .dados-equipamento h2 {
-  color: #0d4c94;
+  color: #B2CC21;
   margin: 0 0 20px 0;
   font-size: 18px;
   font-weight: 600;
@@ -79,7 +79,7 @@
 }
 
 .titulo-secao {
-  color: #0d4c94;
+  color: #B2CC21;
   font-size: 14px;
   margin: 0 0 15px 0;
   padding: 0;
@@ -130,7 +130,7 @@
   margin: 0;
   width: 16px;
   height: 16px;
-  accent-color: #0d4c94;
+  accent-color: #B2CC21;
   appearance: auto;
   -webkit-appearance: radio;
   -moz-appearance: radio;
@@ -160,7 +160,7 @@
 }
 
 .avaliacao-final h3 {
-  color: #0d4c94;
+  color: #B2CC21;
   font-size: 14px;
   margin: 0 0 15px 0;
   padding: 0;
@@ -182,7 +182,7 @@
 }
 
 .observacoes-gerais h3 {
-  color: #0d4c94;
+  color: #B2CC21;
   margin: 0 0 10px 0;
   font-size: 14px;
   font-weight: 600;
@@ -213,7 +213,7 @@
 }
 
 .assinatura h3 {
-  color: #0d4c94;
+  color: #B2CC21;
   margin: 0 0 10px 0;
   font-size: 14px;
   font-weight: 600;

@@ -125,7 +125,7 @@
 }
 
 .formulario-inspecao .btn-add:hover {
-  background: #0D4C94;
+  background: #B2CC21;
 }
 
 .formulario-inspecao .form-buttons {
@@ -151,7 +151,7 @@
 }
 
 .formulario-inspecao .btn-salvar:hover {
-  background: #0D4C94;
+  background: #B2CC21;
 }
 
 .formulario-inspecao .btn-cancelar {
@@ -174,7 +174,7 @@
 }
 
 .formulario-inspecao .verificacoes-table thead {
-  background: #0D4C94;
+  background: #B2CC21;
   color: white;
 }
 
@@ -218,7 +218,7 @@
 
 .formulario-inspecao .verificacoes-table input[type="text"]:focus {
   outline: none;
-  border-color: #0D4C94;
+  border-color: #B2CC21;
   box-shadow: 0 0 3px rgba(13, 76, 148, 0.3);
 }
 

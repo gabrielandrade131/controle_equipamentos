@@ -177,12 +177,9 @@ export const usePdfExportInspecao = () => {
             pdf.setFont(undefined, 'normal');
             yPosition += 8;
 
-            pdf.text('Nome do Assinante:', marginLeft + 3, yPosition);
+            // Apenas exibir a linha para assinatura — não mostrar o nome do assinante
+            pdf.text('Assinatura:', marginLeft + 3, yPosition);
             pdf.line(marginLeft + 35, yPosition + 1, marginLeft + 110, yPosition + 1);
-            pdf.text(inspecao.nomeAssinante || '-', marginLeft + 3, yPosition + 10);
-
-            pdf.text('Assinatura:', marginLeft + 120, yPosition);
-            pdf.line(marginLeft + 140, yPosition + 1, marginLeft + 210, yPosition + 1);
             yPosition += 14;
 
             pdf.save(filename);

@@ -8,14 +8,14 @@
 }
 
 .form-header {
-  border-bottom: 2px solid #0d4c94;
+  border-bottom: 2px solid #B2CC21;
   padding-bottom: 16px;
   margin-bottom: 24px;
 }
 
 .form-header h2 {
   margin: 0;
-  color: #0d4c94;
+  color: #B2CC21;
   font-size: 24px;
 }
 
@@ -24,7 +24,7 @@
 }
 
 .form-section h3 {
-  color: #0d4c94;
+  color: #B2CC21;
   font-size: 16px;
   margin: 0 0 16px 0;
   padding-bottom: 8px;
@@ -67,7 +67,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #0d4c94;
+  border-color: #B2CC21;
   box-shadow: 0 0 0 2px rgba(13, 76, 148, 0.1);
 }
 
@@ -129,7 +129,7 @@
 
 .item-info strong {
   display: block;
-  color: #0d4c94;
+  color: #B2CC21;
   margin-bottom: 4px;
 }
 

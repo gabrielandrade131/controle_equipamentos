@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CreateProducaoDto, Producao } from '../types/producao';
 import './FormularioOrdem.css';
 
@@ -18,7 +18,9 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   const initialFormData = producao || {
     numeroOrdem: '',
     numeroSerie: '',
-    dataSolicitacao: '',
+    dataSolicitacao: new Date().toISOString().split('T')[0],
+    dataInicio: '',
+    dataPrevisao: '',
     dataTermino: '',
     modelo: '',
     descricao: '',
@@ -117,6 +119,29 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
             value={formData.dataSolicitacao}
             onChange={handleInputChange}
             required
+            readOnly
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="dataInicio">Data Início:</label>
+          <input
+            type="date"
+            id="dataInicio"
+            name="dataInicio"
+            value={formData.dataInicio || ''}
+            onChange={handleInputChange}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="dataPrevisao">Data Previsão:</label>
+          <input
+            type="date"
+            id="dataPrevisao"
+            name="dataPrevisao"
+            value={formData.dataPrevisao || ''}
+            onChange={handleInputChange}
           />
         </div>
 

@@ -15,7 +15,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
   );
-  const { exportInspecaoToPdf } = usePdfExportManutencao();
+  usePdfExportManutencao();
 
   const handleInputChange = (campo: keyof Omit<InspecaoManutencao, 'certificacoes' | 'estruturaMecanica' | 'sistemaHidraulico' | 'sistemaPneumatico' | 'sistemaEletrico' | 'dispositivoSeguranca' | 'componentesOperacionais' | 'acessorios' | 'testesOperacionais'>, valor: string) => {
     setInspecao((prev) => ({
@@ -71,15 +71,6 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
         </div>
       </div>
     );
-  };
-
-  const handleExportarPDF = async () => {
-    try {
-      const nomeArquivo = `inspecao_manutencao_${inspecao.numeroSerie || 'equipamento'}_${new Date().toISOString().split('T')[0]}.pdf`;
-      await exportInspecaoToPdf(inspecao, nomeArquivo);
-    } catch (error) {
-      alert('Erro ao gerar PDF: ' + error);
-    }
   };
 
   const handleSalvar = () => {

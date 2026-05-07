@@ -112,6 +112,10 @@ export class ProducoesService {
         return String(value);
     }
 
+    private obterPrevisaoTermino(data: CreateProducaoDto | UpdateProducaoDto): string | undefined {
+        return data.previsaoTermino ?? data.dataPrevisao;
+    }
+
     private calcularPrazoProducao(
         statusProducao?: string | null,
         previsaoTermino?: Date | null,
@@ -238,6 +242,8 @@ export class ProducoesService {
         });
         const nextNumeroOrdem = (lastEquipment?.numeroOrdem ?? 0) + 1;
 
+        const previsaoTermino = this.obterPrevisaoTermino(data);
+
         const producaoCriada = await this.prisma.equipment.create({
             data: {
                 numeroOrdem: nextNumeroOrdem,
@@ -248,8 +254,8 @@ export class ProducoesService {
                 dataInicio: data.dataInicio
                 ? new Date(data.dataInicio)
                 : null,
-                previsaoTermino: data.previsaoTermino
-                ? new Date(data.previsaoTermino)
+                previsaoTermino: previsaoTermino
+                ? new Date(previsaoTermino)
                 : null,
                 dataTermino: data.dataTermino
                 ? new Date(data.dataTermino)
@@ -484,6 +490,8 @@ export class ProducoesService {
             alteradoPor: string | null;
         }[] = [];
 
+        const previsaoTermino = this.obterPrevisaoTermino(data);
+
         const camposMonitorados = {
             tipoEquipamentoId: data.tipoEquipamentoId,
             modelo: data.modelo,
@@ -492,7 +500,7 @@ export class ProducoesService {
             dataSolicitacao: data.dataSolicitacao ? new Date(data.dataSolicitacao) : undefined,
             solicitante: data.solicitante,
             dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
-            previsaoTermino: data.previsaoTermino ? new Date(data.previsaoTermino) : undefined,
+            previsaoTermino: previsaoTermino ? new Date(previsaoTermino) : undefined,
             dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
             listaPecas: data.listaPecas,
             sequenciaMontagem: data.sequenciaMontagem,
@@ -552,8 +560,8 @@ export class ProducoesService {
                     dataInicio: data.dataInicio
                         ? new Date(data.dataInicio)
                         : undefined,
-                    previsaoTermino: data.previsaoTermino
-                        ? new Date(data.previsaoTermino)
+                    previsaoTermino: previsaoTermino
+                        ? new Date(previsaoTermino)
                         : undefined,
                     dataTermino: data.dataTermino
                         ? new Date(data.dataTermino)

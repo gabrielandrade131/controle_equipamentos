@@ -10,10 +10,10 @@ interface SelectedProducao {
   data: Producao;
 }
 
-const calcularDiasProducao = (dataSolicitacao: string, dataTermino?: string): number | null => {
+const calcularDiasProducao = (dataInicio: string, dataTermino?: string): number | null => {
   if (!dataTermino) return null;
   
-  const inicio = new Date(dataSolicitacao);
+  const inicio = new Date(dataInicio);
   const fim = new Date(dataTermino);
   const differenceInMs = fim.getTime() - inicio.getTime();
   const dias = Math.ceil(differenceInMs / (1000 * 60 * 60 * 24));
@@ -40,11 +40,17 @@ const OrdemProducao: React.FC = () => {
   };
 
   const handleEditarOrdem = (producaoAtualizada: Producao | CreateProducaoDto) => {
-    if (selected && 'id' in producaoAtualizada) {
-      atualizarProducao(selected.id, producaoAtualizada as Producao);
-      setSelected(null);
-      setModo('lista');
-      alert('Ordem de produção atualizada com sucesso!');
+    if (selected) {
+      atualizarProducao(selected.id, producaoAtualizada as Producao)
+        .then(() => {
+          setSelected(null);
+          setModo('lista');
+          alert('Ordem de produção atualizada com sucesso!');
+        })
+        .catch((error) => {
+          console.error('Erro ao atualizar ordem de produção:', error);
+          alert('Não foi possível atualizar a ordem de produção.');
+        });
     }
   };
 
@@ -133,6 +139,14 @@ const OrdemProducao: React.FC = () => {
                   <label>Data Solicitação:</label>
                   <p>{selected.data.dataSolicitacao}</p>
                 </div>
+                <div className="detail-item">
+                  <label>Data Início:</label>
+                  <p>{selected.data.dataInicio || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Data Previsão:</label>
+                  <p>{selected.data.dataPrevisao || '-'}</p>
+                </div>
                 {selected.data.dataTermino && (
                   <>
                     <div className="detail-item">
@@ -141,7 +155,7 @@ const OrdemProducao: React.FC = () => {
                     </div>
                     <div className="detail-item">
                       <label>Dias de Produção:</label>
-                      <p><strong>{calcularDiasProducao(selected.data.dataSolicitacao, selected.data.dataTermino)}</strong></p>
+                      <p>{calcularDiasProducao(selected.data.dataInicio || selected.data.dataSolicitacao, selected.data.dataTermino)}</p>
                     </div>
                   </>
                 )}

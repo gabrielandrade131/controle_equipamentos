@@ -1,14 +1,10 @@
 import jsPDF from 'jspdf';
-import { InspecaoMontagem } from '../types/inspecao';
+import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
 
 export const usePdfExportInspecao = () => {
     const exportInspecaoToPdf = async (inspecao: InspecaoMontagem, filename: string, logoPath?: string) => {
         try {
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4',
-            });
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
@@ -17,15 +13,15 @@ export const usePdfExportInspecao = () => {
             const maxWidth = pageWidth - marginLeft - marginRight;
             const pageBottomMargin = 15;
             const maxYPosition = pageHeight - pageBottomMargin;
-            
             let yPosition = 15;
 
-            // Função para gerenciar quebra de página automática
             const checkPageBreak = (spaceNeeded: number) => {
                 if (yPosition + spaceNeeded > maxYPosition) {
                     pdf.addPage();
                     yPosition = 15;
+                    return true; // new page started
                 }
+                return false;
             };
 
             // Logo
@@ -33,33 +29,24 @@ export const usePdfExportInspecao = () => {
                 try {
                     const img = new Image();
                     img.src = logoPath;
-                    await new Promise((resolve) => {
-                        img.onload = () => {
-                            pdf.addImage(img, 'PNG', marginLeft, yPosition + 2, 27, 20);
-                            resolve(undefined);
-                        };
-                    });
-                    yPosition += 15;
+                    await new Promise((resolve) => (img.onload = () => resolve(undefined)));
+                    pdf.addImage(img, 'PNG', marginLeft, yPosition + 2, 27, 20);
+                    yPosition += 18;
                 } catch (e) {
                     console.error('Erro ao adicionar logo:', e);
                 }
             }
 
-            // Cabeçalho
+            // Cabeçalho (padrão visual atual)
             pdf.setFontSize(14);
             pdf.text('INSPEÇÃO DE MONTAGEM', pageWidth / 2, yPosition, { align: 'center' });
-            
             pdf.setFontSize(9);
             pdf.text('FOR-MAN-006 - Rev. 5', pageWidth - marginRight - 5, yPosition, { align: 'right' });
-            
             yPosition += 8;
-
-            // Linha divisória
             pdf.setDrawColor(0, 0, 0);
             pdf.line(marginLeft, yPosition, pageWidth - marginRight, yPosition);
             yPosition += 7;
 
-            // Função auxiliar para seções
             const addSection = (title: string) => {
                 pdf.setFontSize(10);
                 pdf.setFillColor(178, 204, 33);
@@ -68,197 +55,135 @@ export const usePdfExportInspecao = () => {
                 yPosition += 12;
             };
 
-            const addField = (label: string, value: string | number) => {
+            const addField = (label: string, value?: string) => {
                 pdf.setFontSize(9);
                 const labelWidth = maxWidth * 0.35;
                 const valueX = marginLeft + labelWidth;
-                
                 pdf.text(label + ':', marginLeft + 3, yPosition);
-                pdf.text(String(value), valueX, yPosition);
-                
+                pdf.text(value || '-', valueX, yPosition);
                 yPosition += 6;
             };
 
-            // DESCRIÇÃO
-            addSection('DESCRIÇÃO');
+            // Informações principais
+            addSection('INFORMAÇÕES');
             addField('Número de Série', inspecao.numeroSerie);
             addField('Modelo', inspecao.modelo);
-            addField('Data', inspecao.data);
+            addField('Data da Inspeção', inspecao.dataInspecao || inspecao.data || '');
             addField('Responsável', inspecao.responsavel);
+            if (inspecao.observacoes) {
+                yPosition += 2;
+                addSection('OBSERVAÇÕES');
+                const obsLines = pdf.splitTextToSize(inspecao.observacoes || '', maxWidth - 6);
+                obsLines.forEach((ln: string) => {
+                    checkPageBreak(6);
+                    pdf.text(ln, marginLeft + 3, yPosition);
+                    yPosition += 5;
+                });
+            }
 
-            // INSTRUMENTOS DE AFEIÇÃO
+            // Instrumentos de aferição
             if (inspecao.instrumentosAferição && inspecao.instrumentosAferição.length > 0) {
                 checkPageBreak(25);
-                addSection('VERIFICAÇÕES NOS INSTRUMENTOS DE AFERIÇÃO');
-                
-                // Tabela com linhas
-                const colWidths = [maxWidth * 0.75, maxWidth * 0.25];
-                const rowHeight = 6;
-                
-                // Cabeçalho da tabela
-                pdf.setFillColor(240, 240, 240);
-                pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight, 'F');
-                pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight, 'F');
-                pdf.setDrawColor(0, 0, 0);
-                pdf.setFont(undefined, 'bold');
-                pdf.setFontSize(8);
-                pdf.text('Item', marginLeft + 2, yPosition + 4);
-                pdf.text('Conformidade', marginLeft + colWidths[0] + 2, yPosition + 4);
-                yPosition += rowHeight;
-                
-                // Linhas de dados
-                pdf.setFont(undefined, 'normal');
-                inspecao.instrumentosAferição.forEach((item, idx) => {
-                    checkPageBreak(8);
-                    const conformidade = item.conformidade || '—';
-                    pdf.setDrawColor(200, 200, 200);
-                    pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight);
-                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight);
-                    
-                    const itemText = pdf.splitTextToSize(item.nome, colWidths[0] - 4);
+                addSection('INSTRUMENTOS DE AFERIÇÃO');
+                const colWidths = [maxWidth * 0.65, maxWidth * 0.35];
+                const rowH = 7;
+                const drawInstrumentsHeader = () => {
+                    pdf.setFillColor(240, 240, 240);
+                    pdf.rect(marginLeft, yPosition, colWidths[0], rowH, 'F');
+                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH, 'F');
+                    pdf.setFont(undefined, 'bold');
+                    pdf.setFontSize(8);
+                    pdf.text('Instrumento', marginLeft + 2, yPosition + 4);
+                    pdf.text('Conformidade', marginLeft + colWidths[0] + 2, yPosition + 4);
+                    yPosition += rowH;
+                    pdf.setFont(undefined, 'normal');
+                };
+
+                drawInstrumentsHeader();
+                inspecao.instrumentosAferição.forEach((it: VerificacaoItem) => {
+                    const startedNew = checkPageBreak(rowH);
+                    if (startedNew) drawInstrumentsHeader();
+                    pdf.rect(marginLeft, yPosition, colWidths[0], rowH);
+                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH);
                     pdf.setFontSize(7);
-                    pdf.text(itemText[0] || '', marginLeft + 2, yPosition + 3);
-                    pdf.text(conformidade, marginLeft + colWidths[0] + 2, yPosition + 3);
-                    yPosition += rowHeight;
+                    const parts = pdf.splitTextToSize(it.nome, colWidths[0] - 4);
+                    pdf.text(parts[0] || '', marginLeft + 2, yPosition + 4);
+                    pdf.text(it.conformidade || '-', marginLeft + colWidths[0] + 2, yPosition + 4);
+                    yPosition += rowH;
                 });
-                yPosition += 3;
+                yPosition += 4;
             }
 
-            // VERIFICAÇÕES GERAIS PRÉ MONTAGEM
-            if (inspecao.verificacoesGeraisPremontagem && inspecao.verificacoesGeraisPremontagem.length > 0) {
+            // Verificações gerais (pré e pós montagem)
+            const renderVerificacoes = (title: string, items?: VerificacaoItem[]) => {
+                if (!items || items.length === 0) return;
                 checkPageBreak(25);
-                addSection('VERIFICAÇÕES GERAIS PRÉ MONTAGEM');
-                
-                // Tabela com linhas
-                const colWidths = [maxWidth * 0.40, maxWidth * 0.20, maxWidth * 0.20, maxWidth * 0.20];
-                const rowHeight = 6;
-                
-                // Cabeçalho
-                pdf.setFillColor(240, 240, 240);
-                pdf.setDrawColor(0, 0, 0);
-                pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight, 'F');
-                pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight, 'F');
-                pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, 'F');
-                pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight, 'F');
-                
-                pdf.setFont(undefined, 'bold');
-                pdf.setFontSize(7);
-                pdf.text('Item', marginLeft + 2, yPosition + 3.5);
-                pdf.text('Valor', marginLeft + colWidths[0] + 2, yPosition + 3.5);
-                pdf.text('Instrumento', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 3.5);
-                pdf.text('Conformidade', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 3.5);
-                yPosition += rowHeight;
-                
-                // Dados
-                pdf.setFont(undefined, 'normal');
-                inspecao.verificacoesGeraisPremontagem.forEach((item) => {
-                    checkPageBreak(8);
-                    if (item.nome.startsWith('@SECTION:')) {
-                        // Linha de seção
-                        pdf.setFillColor(255, 255, 255);
-                        pdf.rect(marginLeft, yPosition, maxWidth, rowHeight, 'F');
-                        pdf.setDrawColor(0, 0, 0);
-                        pdf.rect(marginLeft, yPosition, maxWidth, rowHeight);
+                addSection(title);
+                const colWidths = [maxWidth * 0.50, maxWidth * 0.18, maxWidth * 0.16, maxWidth * 0.16];
+                const rowH = 7;
+                const drawVerificacoesHeader = () => {
+                    pdf.setFillColor(240, 240, 240);
+                    pdf.rect(marginLeft, yPosition, colWidths[0], rowH, 'F');
+                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH, 'F');
+                    pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowH, 'F');
+                    pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowH, 'F');
+                    pdf.setFont(undefined, 'bold');
+                    pdf.setFontSize(7);
+                    pdf.text('Item', marginLeft + 2, yPosition + 4);
+                    pdf.text('Valor', marginLeft + colWidths[0] + 2, yPosition + 4);
+                    pdf.text('Instrumento', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 4);
+                    pdf.text('Conformidade', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 4);
+                    yPosition += rowH;
+                    pdf.setFont(undefined, 'normal');
+                };
+
+                drawVerificacoesHeader();
+                items.forEach((it: VerificacaoItem) => {
+                    const startedNew = checkPageBreak(rowH);
+                    if (startedNew) drawVerificacoesHeader();
+                    if (it.nome.startsWith('@SECTION:')) {
                         pdf.setFont(undefined, 'bold');
-                        pdf.setFontSize(8);
-                        const sectionTitle = item.nome.replace('@SECTION:', '');
-                        pdf.text(sectionTitle, marginLeft + 2, yPosition + 3.5);
-                        yPosition += rowHeight;
-                    } else {
-                        // Linha de item
-                        pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight);
-                        pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight);
-                        pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
-                        pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight);
-                        
+                        const sectionTitle = it.nome.replace('@SECTION:', '');
+                        pdf.text(sectionTitle, marginLeft + 2, yPosition + 4);
+                        yPosition += rowH;
                         pdf.setFont(undefined, 'normal');
-                        pdf.setFontSize(6);
-                        const itemText = pdf.splitTextToSize(item.nome, colWidths[0] - 4);
-                        pdf.text(itemText[0] || '', marginLeft + 2, yPosition + 3);
-                        pdf.text(item.valorObservado || '', marginLeft + colWidths[0] + 2, yPosition + 3);
-                        pdf.text(item.instrumentoMedicao || '', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 3);
-                        pdf.text(item.conformidade || '—', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 3);
-                        yPosition += rowHeight;
+                    } else {
+                        pdf.rect(marginLeft, yPosition, colWidths[0], rowH);
+                        pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH);
+                        pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowH);
+                        pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowH);
+                        pdf.setFontSize(7);
+                        const txt = pdf.splitTextToSize(it.nome, colWidths[0] - 4);
+                        pdf.text(txt[0] || '', marginLeft + 2, yPosition + 4);
+                        pdf.text(it.valorObservado || '-', marginLeft + colWidths[0] + 2, yPosition + 4);
+                        pdf.text(it.instrumentoMedicao || '-', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 4);
+                        pdf.text(it.conformidade || '-', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 4);
+                        yPosition += rowH;
                     }
                 });
-                yPosition += 3;
-            }
+                yPosition += 4;
+            };
 
-            // VERIFICAÇÃO PÓS MONTAGEM
-            if (inspecao.verificacaoPosmontagem && inspecao.verificacaoPosmontagem.length > 0) {
-                checkPageBreak(25);
-                addSection('VERIFICAÇÕES GERAIS PÓS MONTAGEM');
-                
-                // Tabela com linhas
-                const colWidths = [maxWidth * 0.40, maxWidth * 0.20, maxWidth * 0.20, maxWidth * 0.20];
-                const rowHeight = 6;
-                
-                // Cabeçalho
-                pdf.setFillColor(240, 240, 240);
-                pdf.setDrawColor(0, 0, 0);
-                pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight, 'F');
-                pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight, 'F');
-                pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, 'F');
-                pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight, 'F');
-                
-                pdf.setFont(undefined, 'bold');
-                pdf.setFontSize(7);
-                pdf.text('Item', marginLeft + 2, yPosition + 3.5);
-                pdf.text('Valor', marginLeft + colWidths[0] + 2, yPosition + 3.5);
-                pdf.text('Instrumento', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 3.5);
-                pdf.text('Conformidade', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 3.5);
-                yPosition += rowHeight;
-                
-                // Dados
-                pdf.setFont(undefined, 'normal');
-                inspecao.verificacaoPosmontagem.forEach((item) => {
-                    checkPageBreak(8);
-                    pdf.setDrawColor(0, 0, 0);
-                    pdf.rect(marginLeft, yPosition, colWidths[0], rowHeight);
-                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowHeight);
-                    pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
-                    pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight);
-                    
-                    pdf.setFont(undefined, 'normal');
-                    pdf.setFontSize(6);
-                    const itemText = pdf.splitTextToSize(item.nome, colWidths[0] - 4);
-                    pdf.text(itemText[0] || '', marginLeft + 2, yPosition + 3);
-                    pdf.text(item.valorObservado || '', marginLeft + colWidths[0] + 2, yPosition + 3);
-                    pdf.text(item.instrumentoMedicao || '', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 3);
-                    pdf.text(item.conformidade || '—', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 3);
-                    yPosition += rowHeight;
-                });
-                yPosition += 3;
-            }
+            renderVerificacoes('VERIFICAÇÕES GERAIS PRÉ MONTAGEM', inspecao.verificacoesGeraisPremontagem);
+            renderVerificacoes('VERIFICAÇÕES GERAIS PÓS MONTAGEM', inspecao.verificacaoPosmontagem);
 
-            // RESULTADO DE INSPEÇÃO
-            if (inspecao.resultadoFinal) {
-                checkPageBreak(10);
-                // Seção removida conforme solicitação
-            }
-
-            // ASSINATURA E APROVAÇÃO
-            checkPageBreak(25);
-            addSection('RESULTADO DA INSPEÇÃO');
-            
+            // Resultado e assinatura
+            checkPageBreak(30);
+            addSection('RESULTADO E ASSINATURAS');
             pdf.setFontSize(9);
-            pdf.setFont(undefined, 'normal');
-            
-            // Aprovado (lado esquerdo)
-            pdf.text('Aprovado:', marginLeft + 3, yPosition);
-            const aprovadoText = inspecao.aprovado ? 'SIM' : 'NÃO';
-            const aprovadoColor = inspecao.aprovado ? [76, 175, 80] : [244, 67, 54];
-            pdf.setTextColor(aprovadoColor[0], aprovadoColor[1], aprovadoColor[2]);
+            pdf.text('Resultado Final:', marginLeft + 3, yPosition);
             pdf.setFont(undefined, 'bold');
-            pdf.text(aprovadoText, marginLeft + 26, yPosition);
-            pdf.setTextColor(0, 0, 0);
+            pdf.text(inspecao.resultadoFinal || (inspecao.aprovado ? 'APROVADO' : 'REPROVADO') || '-', marginLeft + 30, yPosition);
             pdf.setFont(undefined, 'normal');
-            
-            // Resultado (lado direito)
-            const signatureX = marginLeft + 100;
-            pdf.text('Resultado:', signatureX, yPosition);
-            pdf.setDrawColor(0, 0, 0);
-            pdf.line(signatureX + 25, yPosition + 1, signatureX + 70, yPosition + 1);
+            yPosition += 8;
+
+            pdf.text('Nome do Assinante:', marginLeft + 3, yPosition);
+            pdf.line(marginLeft + 35, yPosition + 1, marginLeft + 110, yPosition + 1);
+            pdf.text(inspecao.nomeAssinante || '-', marginLeft + 3, yPosition + 10);
+
+            pdf.text('Assinatura:', marginLeft + 120, yPosition);
+            pdf.line(marginLeft + 140, yPosition + 1, marginLeft + 210, yPosition + 1);
+            yPosition += 14;
 
             pdf.save(filename);
         } catch (error) {

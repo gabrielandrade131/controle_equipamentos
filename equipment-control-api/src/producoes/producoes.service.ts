@@ -864,6 +864,7 @@ export class ProducoesService {
         return this.prisma.equipment.update({
             where: { id },
             data: {
+                ativo: false,
                 excluidoEm: new Date(),
             },
         });

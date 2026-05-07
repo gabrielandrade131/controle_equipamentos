@@ -18,6 +18,8 @@ export interface CreateProducaoDto {
   numeroOrdem: string;
   numeroSerie: string;
   dataSolicitacao: string;
+  dataInicio?: string;
+  dataPrevisao?: string;
   dataTermino?: string;
   modelo: string;
   descricao: string;

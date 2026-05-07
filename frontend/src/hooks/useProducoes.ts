@@ -14,20 +14,20 @@ const toDateInput = (value?: string | null) => {
 const buildDocumentos = (producao: any): Documento[] => {
   const documentos: Documento[] = [];
 
-  if (producao.listaPecas) {
-    documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Pecas', codigo: 'Sim' });
+  if (producao.listaPecas && String(producao.listaPecas).trim() !== '') {
+    documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Pecas', codigo: String(producao.listaPecas) });
   }
-  if (producao.sequenciaMontagem) {
-    documentos.push({ id: `${producao.id}-sequenciaMontagem`, nome: 'Sequencia de Montagem', codigo: 'Sim' });
+  if (producao.sequencialMontagem && String(producao.sequencialMontagem).trim() !== '') {
+    documentos.push({ id: `${producao.id}-sequencialMontagem`, nome: 'Sequencial de Montagem', codigo: String(producao.sequencialMontagem) });
   }
-  if (producao.inspecaoMontagem) {
-    documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspecao de Montagem', codigo: 'Sim' });
+  if (producao.inspecaoMontagem && String(producao.inspecaoMontagem).trim() !== '') {
+    documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspecao de Montagem', codigo: String(producao.inspecaoMontagem) });
   }
-  if (producao.historicoEquipamento) {
-    documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Historico do Equipamento', codigo: 'Sim' });
+  if (producao.historicoEquipamento && String(producao.historicoEquipamento).trim() !== '') {
+    documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Historico do Equipamento', codigo: String(producao.historicoEquipamento) });
   }
-  if (producao.procedimentoTesteInspecaoMontagem) {
-    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: 'Sim' });
+  if (producao.procedimentoTestes && String(producao.procedimentoTestes).trim() !== '') {
+    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: String(producao.procedimentoTestes) });
   }
 
   return documentos;
@@ -51,11 +51,11 @@ export const mapApiToProducao = (producao: any): Producao => ({
   })),
   documentos: buildDocumentos(producao),
   observacoes: (producao.observacoes ?? []).map((observacao: any) => observacao.descricao).join('\n'),
-  listaPecas: producao.listaPecas ? 'Sim' : '',
-  sequencialMontagem: producao.sequenciaMontagem ? 'Sim' : '',
-  inspecaoMontagem: producao.inspecaoMontagem ? 'Sim' : '',
-  historicoEquipamento: producao.historicoEquipamento ? 'Sim' : '',
-  procedimentoTestes: producao.procedimentoTesteInspecaoMontagem ? 'Sim' : '',
+  listaPecas: producao.listaPecas ?? '',
+  sequencialMontagem: producao.sequenciaMontagem ?? producao.sequencialMontagem ?? '',
+  inspecaoMontagem: producao.inspecaoMontagem ?? '',
+  historicoEquipamento: producao.historicoEquipamento ?? '',
+  procedimentoTestes: producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes ?? '',
   createdAt: producao.criadoEm,
   updatedAt: producao.atualizadoEm,
 });
@@ -67,11 +67,11 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   dataTermino: producao.dataTermino || undefined,
   modelo: producao.modelo || undefined,
   descricaoComplemento: producao.descricao || undefined,
-  listaPecas: Boolean(producao.listaPecas),
-  sequenciaMontagem: Boolean(producao.sequencialMontagem),
-  inspecaoMontagem: Boolean(producao.inspecaoMontagem),
-  historicoEquipamento: Boolean(producao.historicoEquipamento),
-  procedimentoTesteInspecaoMontagem: Boolean(producao.procedimentoTestes),
+  listaPecas: producao.listaPecas || undefined,
+  sequencialMontagem: producao.sequencialMontagem || undefined,
+  inspecaoMontagem: producao.inspecaoMontagem || undefined,
+  historicoEquipamento: producao.historicoEquipamento || undefined,
+  procedimentoTestes: producao.procedimentoTestes || undefined,
   itensSeriados: producao.itensSeriados?.map((item) => ({
     descricao: item.descricao,
   })),

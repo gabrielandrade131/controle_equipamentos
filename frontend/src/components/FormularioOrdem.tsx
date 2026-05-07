@@ -51,18 +51,32 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   };
 
   const handleAdicionarItem = () => {
-    if (novoItem.numero && novoItem.descricao) {
-      const novoItemComId = {
-        id: `item-${Date.now()}`,
-        ...novoItem,
-      };
-
-      setFormData({
-        ...formData,
-        itensSeriados: [...formData.itensSeriados, novoItemComId],
-      });
-      setNovoItem({ numero: '', descricao: '', numeroSerie: '' });
+    if (!novoItem.numero || !novoItem.descricao) {
+      return;
     }
+
+    const linhasDescricao = novoItem.descricao
+      .split(/\r?\n/)
+      .map((linha) => linha.trim())
+      .filter((linha) => linha !== '');
+
+    if (linhasDescricao.length === 0) {
+      return;
+    }
+
+    const numeroBase = Number.parseInt(novoItem.numero, 10);
+    const itensNovos = linhasDescricao.map((descricao, index) => ({
+      id: `item-${Date.now()}-${index}`,
+      numero: Number.isNaN(numeroBase) ? novoItem.numero : String(numeroBase + index),
+      descricao,
+      numeroSerie: index === 0 ? novoItem.numeroSerie : '',
+    }));
+
+    setFormData({
+      ...formData,
+      itensSeriados: [...formData.itensSeriados, ...itensNovos],
+    });
+    setNovoItem({ numero: '', descricao: '', numeroSerie: '' });
   };
 
   const handleRemoverItem = (id: string) => {

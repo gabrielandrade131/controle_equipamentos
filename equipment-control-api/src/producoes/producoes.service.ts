@@ -266,12 +266,12 @@ export class ProducoesService {
                     tipoEquipamentoNome,
                     data.descricaoComplemento,
                 ),
-                listaPecas: data.listaPecas ?? false,
-                sequenciaMontagem: data.sequenciaMontagem ?? false,
-                inspecaoMontagem: data.inspecaoMontagem ?? false,
-                historicoEquipamento: data.historicoEquipamento ?? false,
+                listaPecas: data.listaPecas ?? '',
+                sequenciaMontagem: data.sequencialMontagem ?? '',
+                inspecaoMontagem: data.inspecaoMontagem ?? '',
+                historicoEquipamento: data.historicoEquipamento ?? '',
                 procedimentoTesteInspecaoMontagem:
-                    data.procedimentoTesteInspecaoMontagem ?? false,
+                    data.procedimentoTestes ?? '',
                 itensSeriados: {
                     create:
                     data.itensSeriados?.map((item) => ({
@@ -503,10 +503,10 @@ export class ProducoesService {
             previsaoTermino: previsaoTermino ? new Date(previsaoTermino) : undefined,
             dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
             listaPecas: data.listaPecas,
-            sequenciaMontagem: data.sequenciaMontagem,
+            sequenciaMontagem: data.sequencialMontagem,
             inspecaoMontagem: data.inspecaoMontagem,
             historicoEquipamento: data.historicoEquipamento,
-            procedimentoTesteInspecaoMontagem: data.procedimentoTesteInspecaoMontagem,
+            procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
         };
 
         for (const [campo, novoValor] of Object.entries(camposMonitorados)) {
@@ -574,11 +574,20 @@ export class ProducoesService {
                         data.descricaoComplemento,
                     ),
                     listaPecas: data.listaPecas,
-                    sequenciaMontagem: data.sequenciaMontagem,
+                    sequenciaMontagem: data.sequencialMontagem,
                     inspecaoMontagem: data.inspecaoMontagem,
                     historicoEquipamento: data.historicoEquipamento,
                     procedimentoTesteInspecaoMontagem:
-                        data.procedimentoTesteInspecaoMontagem,
+                        data.procedimentoTestes,
+                    itensSeriados:
+                        data.itensSeriados !== undefined
+                            ? {
+                                deleteMany: {},
+                                create: data.itensSeriados.map((item) => ({
+                                    descricao: item.descricao,
+                                })),
+                            }
+                            : undefined,
                 },
                 include: {
                     tipoEquipamento: true,

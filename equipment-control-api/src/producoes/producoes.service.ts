@@ -144,12 +144,12 @@ export class ProducoesService {
                     tipoEquipamentoNome,
                     data.descricaoComplemento,
                 ),
-                listaPecas: data.listaPecas ?? false,
-                sequenciaMontagem: data.sequenciaMontagem ?? false,
-                inspecaoMontagem: data.inspecaoMontagem ?? false,
-                historicoEquipamento: data.historicoEquipamento ?? false,
+                listaPecas: data.listaPecas ?? '',
+                sequenciaMontagem: data.sequencialMontagem ?? '',
+                inspecaoMontagem: data.inspecaoMontagem ?? '',
+                historicoEquipamento: data.historicoEquipamento ?? '',
                 procedimentoTesteInspecaoMontagem:
-                    data.procedimentoTesteInspecaoMontagem ?? false,
+                    data.procedimentoTestes ?? '',
                 itensSeriados: {
                     create:
                     data.itensSeriados?.map((item) => ({
@@ -370,7 +370,7 @@ export class ProducoesService {
             alteradoPor: string | null;
         }[] = [];
 
-        const camposMonitorados = {
+                        const camposMonitorados = {
             tipoEquipamentoId: data.tipoEquipamentoId,
             modelo: data.modelo,
             descricao: data.descricaoComplemento,
@@ -380,11 +380,11 @@ export class ProducoesService {
             dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
             dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
               dataPrevisao: data.dataPrevisao ? new Date(data.dataPrevisao) : undefined,
-            listaPecas: data.listaPecas,
-            sequenciaMontagem: data.sequenciaMontagem,
-            inspecaoMontagem: data.inspecaoMontagem,
-            historicoEquipamento: data.historicoEquipamento,
-            procedimentoTesteInspecaoMontagem: data.procedimentoTesteInspecaoMontagem,
+                        listaPecas: data.listaPecas,
+                        sequenciaMontagem: data.sequencialMontagem,
+                        inspecaoMontagem: data.inspecaoMontagem,
+                        historicoEquipamento: data.historicoEquipamento,
+                        procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
         };
 
         for (const [campo, novoValor] of Object.entries(camposMonitorados)) {
@@ -450,11 +450,11 @@ export class ProducoesService {
                         data.descricaoComplemento,
                     ),
                     listaPecas: data.listaPecas,
-                    sequenciaMontagem: data.sequenciaMontagem,
+                    sequenciaMontagem: data.sequencialMontagem,
                     inspecaoMontagem: data.inspecaoMontagem,
                     historicoEquipamento: data.historicoEquipamento,
                     procedimentoTesteInspecaoMontagem:
-                        data.procedimentoTesteInspecaoMontagem,
+                        data.procedimentoTestes,
                 },
                 include: {
                     tipoEquipamento: true,

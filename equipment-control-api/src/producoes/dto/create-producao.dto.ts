@@ -1,6 +1,5 @@
 import {
     IsArray,
-    IsBoolean,
     IsDateString,
     IsOptional,
     IsString,
@@ -60,30 +59,30 @@ export class CreateProducaoDto {
     @IsString()
     descricaoComplemento?: string;
 
-    @ApiPropertyOptional({ example: true })
+    @ApiPropertyOptional({ example: 'Descrição ou "Sim"/"Não"' })
     @IsOptional()
-    @IsBoolean()
-    listaPecas?: boolean;
+    @IsString()
+    listaPecas?: string;
 
-    @ApiPropertyOptional({ example: true })
+    @ApiPropertyOptional({ example: 'Descrição ou "Sim"/"Não"' })
     @IsOptional()
-    @IsBoolean()
-    sequenciaMontagem?: boolean;
+    @IsString()
+    sequencialMontagem?: string;
 
-    @ApiPropertyOptional({ example: true })
+    @ApiPropertyOptional({ example: 'Descrição ou "Sim"/"Não"' })
     @IsOptional()
-    @IsBoolean()
-    inspecaoMontagem?: boolean;
+    @IsString()
+    inspecaoMontagem?: string;
 
-    @ApiPropertyOptional({ example: true })
+    @ApiPropertyOptional({ example: 'Descrição ou "Sim"/"Não"' })
     @IsOptional()
-    @IsBoolean()
-    historicoEquipamento?: boolean;
+    @IsString()
+    historicoEquipamento?: string;
 
-    @ApiPropertyOptional({ example: true })
+    @ApiPropertyOptional({ example: 'Descrição do procedimento, ex: PR-MAN-003' })
     @IsOptional()
-    @IsBoolean()
-    procedimentoTesteInspecaoMontagem?: boolean;
+    @IsString()
+    procedimentoTestes?: string;
 
     @ApiPropertyOptional({
         type: [CreateItemSeriadoDto],

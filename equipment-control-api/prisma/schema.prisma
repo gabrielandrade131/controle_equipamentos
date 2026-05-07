@@ -29,11 +29,11 @@ model Equipment {
   modelo                            String? 
   descricao                         String?
 
-  listaPecas                        Boolean                                   @default(false)
-  sequenciaMontagem                 Boolean                                   @default(false)
-  inspecaoMontagem                  Boolean                                   @default(false)
-  historicoEquipamento              Boolean                                   @default(false)
-  procedimentoTesteInspecaoMontagem Boolean                                   @default(false)
+  listaPecas                        String?
+  sequenciaMontagem                 String?
+  inspecaoMontagem                  String?
+  historicoEquipamento              String?
+  procedimentoTesteInspecaoMontagem String?
 
   criadoEm                          DateTime                                  @default(now())
   atualizadoEm                      DateTime                                  @updatedAt

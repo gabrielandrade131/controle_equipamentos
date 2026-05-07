@@ -11,7 +11,7 @@
 .login-background {
   grid-column: 1 / 2;
   grid-row: 1 / -1;
-  width: 700px;
+  width: 80%;
   min-height: 100vh;
   animation: fadeIn 0.8s ease-in-out;
   background-position: center center;
@@ -45,11 +45,10 @@
 
 .login-card {
   pointer-events: auto;
-  margin-right: 60px;
-  position: relative;
+  margin-right: 8%;
+  position: fixed;
   width: 100%;
   max-width: 420px;
-  padding: 40px;
   border-radius: 0;
   background: #ffffff;
   display: flex;

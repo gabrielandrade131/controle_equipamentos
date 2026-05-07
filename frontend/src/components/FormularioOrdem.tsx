@@ -37,7 +37,6 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   const [formData, setFormData] = useState<CreateProducaoDto | Producao>(initialFormData);
 
   const [novoItem, setNovoItem] = useState({
-    numero: '',
     descricao: '',
     numeroSerie: '',
   });
@@ -51,7 +50,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   };
 
   const handleAdicionarItem = () => {
-    if (!novoItem.numero || !novoItem.descricao) {
+    if (!novoItem.descricao) {
       return;
     }
 
@@ -64,10 +63,10 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
       return;
     }
 
-    const numeroBase = Number.parseInt(novoItem.numero, 10);
+    const numeroBase = formData.itensSeriados.length + 1;
     const itensNovos = linhasDescricao.map((descricao, index) => ({
       id: `item-${Date.now()}-${index}`,
-      numero: Number.isNaN(numeroBase) ? novoItem.numero : String(numeroBase + index),
+      numero: String(numeroBase + index),
       descricao,
       numeroSerie: index === 0 ? novoItem.numeroSerie : '',
     }));
@@ -76,7 +75,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
       ...formData,
       itensSeriados: [...formData.itensSeriados, ...itensNovos],
     });
-    setNovoItem({ numero: '', descricao: '', numeroSerie: '' });
+    setNovoItem({ descricao: '', numeroSerie: '' });
   };
 
   const handleRemoverItem = (id: string) => {
@@ -200,17 +199,6 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
       <div className="form-section">
         <h3>Itens Seriados</h3>
         
-        <div className="form-group">
-          <label htmlFor="numero">Número do Item:</label>
-          <input
-            type="text"
-            id="numero"
-            value={novoItem.numero}
-            onChange={(e) => setNovoItem({ ...novoItem, numero: e.target.value })}
-            placeholder="Número do item"
-          />
-        </div>
-
         <div className="form-group">
           <label htmlFor="descItem">Descrição do Item:</label>
           <input

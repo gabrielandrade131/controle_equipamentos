@@ -117,14 +117,25 @@ export const usePdfExport = () => {
                 addSection('ITENS SERIALIZADOS');
                 
                 producao.itensSeriados.forEach((item) => {
-                    const itemDescLines = pdf.splitTextToSize(item.descricao, maxWidth - 4);
-                    
                     pdf.setFontSize(8);
-                    itemDescLines.forEach((line: string) => {
-                        pdf.text('• ' + line, marginLeft + 5, yPosition);
-                        yPosition += 3.5;
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(`Item ${item.numero}:`, marginLeft + 3, yPosition);
+                    yPosition += 4;
+
+                    pdf.setFont(undefined, 'normal');
+
+                    const descricaoLines = pdf.splitTextToSize(item.descricao, maxWidth - 6);
+                    descricaoLines.forEach((line: string) => {
+                        pdf.text(line, marginLeft + 3, yPosition);
+                        yPosition += 4;
                     });
-                    yPosition += 1;
+
+                    if (item.numeroSerie) {
+                        pdf.text(`Série: ${item.numeroSerie}`, marginLeft + 3, yPosition);
+                        yPosition += 4;
+                    }
+
+                    yPosition += 2;
                 });
                 yPosition += 2;
             }

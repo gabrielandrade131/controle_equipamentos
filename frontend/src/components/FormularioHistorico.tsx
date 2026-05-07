@@ -74,21 +74,6 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
     });
   };
 
-  const removerRegistro = (id: string | undefined) => {
-    if (!id) return;
-    
-    // Em modo edição, bloquear remoção de registros originais
-    if (isEditing && registrosOriginaisIds.has(id)) {
-      alert('Registros já criados não podem ser removidos. Eles são imutáveis.');
-      return;
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      registros: prev.registros.filter(r => r.id !== id)
-    }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 

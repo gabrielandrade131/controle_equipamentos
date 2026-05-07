@@ -17,6 +17,11 @@ export class CreateProducaoDto {
     @IsDateString()
     dataSolicitacao?: string;
 
+    @ApiPropertyOptional({ example: '2026-05-20' })
+    @IsOptional()
+    @IsDateString()
+    dataPrevisao?: string;
+
     @ApiPropertyOptional({ example: 'João Junior' })
     @IsOptional()
     @IsString()

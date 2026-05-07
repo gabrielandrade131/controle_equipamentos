@@ -22,6 +22,7 @@ model Equipment {
 
   dataInicio                        DateTime?
   dataTermino                       DateTime?
+  dataPrevisao                      DateTime?
   statusProducao                    String                                @default("PROGRAMADA")  
   tipoEquipamentoId                 String?
   tipoEquipamento                   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])

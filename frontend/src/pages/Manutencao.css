@@ -12,7 +12,7 @@
 }
 
 .manutencao-page h2 {
-  color: #0d4c94;
+  color: #B2CC21;
   margin-bottom: 20px;
   font-size: 22px;
 }
@@ -62,7 +62,7 @@
 .page-list-section h3 {
   font-size: 16px;
   margin-bottom: 15px;
-  color: #0d4c94;
+  color: #B2CC21;
   font-weight: 600;
 }
 
@@ -118,7 +118,7 @@
 }
 
 .manutencao-detail h2 {
-  color: #0d4c94;
+  color: #B2CC21;
   margin-top: 0;
   margin-bottom: 20px;
   font-size: 18px;
@@ -138,7 +138,7 @@
 
 .detail-item label {
   font-weight: 600;
-  color: #0d4c94;
+  color: #B2CC21;
   font-size: 12px;
   margin-bottom: 4px;
   text-transform: uppercase;
@@ -162,7 +162,7 @@
 }
 
 .documents-section h3 {
-  color: #0d4c94;
+  color: #B2CC21;
   font-size: 14px;
   margin: 0 0 10px 0;
   font-weight: 600;
@@ -199,7 +199,7 @@
 
 .btn-secondary {
   padding: 10px 16px;
-  background-color: #0d4c94;
+  background-color: #B2CC21;
   color: white;
   border: none;
   border-radius: 4px;

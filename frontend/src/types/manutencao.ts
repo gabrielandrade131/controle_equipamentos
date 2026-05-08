@@ -27,9 +27,12 @@ export interface InspecaoManutencao {
   numeroSerie: string;
   tag: string;
   destino: string;
+  dataRetornoBase?: string;
+  previsaoTermino?: string;
   responsavel: string;
   statusManutencao: StatusManutencao;
   dataTermino?: string;
+  diasEsperaManutencao?: number | null;
   diasManutencao?: number | null;
   
   // Certificações e Documentação
@@ -77,6 +80,8 @@ export const criarInspecaoVazia = (): InspecaoManutencao => ({
   numeroSerie: '',
   tag: '',
   destino: '',
+  dataRetornoBase: '',
+  previsaoTermino: '',
   responsavel: '',
   statusManutencao: 'EM_MANUTENCAO',
   dataTermino: '',

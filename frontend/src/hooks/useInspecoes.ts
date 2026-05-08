@@ -6,10 +6,15 @@ type ApiListResponse<T> = {
   data: T[];
 };
 
-const NAO = 'N' + String.fromCharCode(195, 131) + 'O';
+const NAO = 'NÃO';
 const INSTRUMENTOS_KEY = 'instrumentosAferi' + String.fromCharCode(231) + String.fromCharCode(227) + 'o';
 
-const NOMES_REGISTROS = [
+const NOMES_INSTRUMENTOS_AFERICAO = [
+  'Os instrumentos encontram-se limpos e em perfeitas condições de uso? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
+  'Os instrumentos encontram-se com seus certificados de calibração em dia? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
+];
+
+const NOMES_VERIFICACOES_PREMONTAGEM = [
   'Check dos Itens dos Seriados',
   'Analise Dimensional de Carcaca',
   'Resultado Esperado: Modelo CSEX420RM entre 415 e 430mm',
@@ -45,11 +50,15 @@ const conformidadeToApi = (value: string) => {
   return undefined;
 };
 
-const mapRegistros = (registros: any[] = []): VerificacaoItem[] => {
+const mapRegistros = (
+  registros: any[] = [],
+  nomes: string[],
+  ordemInicial: number,
+): VerificacaoItem[] => {
   const porOrdem = new Map(registros.map((registro) => [registro.ordem, registro]));
 
-  return NOMES_REGISTROS.map((nome, index) => {
-    const ordem = index + 1;
+  return nomes.map((nome, index) => {
+    const ordem = ordemInicial + index;
     const registro = porOrdem.get(ordem);
 
     return {
@@ -63,9 +72,19 @@ const mapRegistros = (registros: any[] = []): VerificacaoItem[] => {
 };
 
 const mapApiToInspecao = (producao: any): InspecaoMontagem => {
-  const verificacoesGeraisPremontagem = mapRegistros(producao.registrosInspecaoMontagem);
-  const reprovado = verificacoesGeraisPremontagem.some((item) => item.conformidade === NAO);
-  const preenchido = verificacoesGeraisPremontagem.some(
+  const instrumentosAfericao = mapRegistros(
+    producao.registrosInspecaoMontagem,
+    NOMES_INSTRUMENTOS_AFERICAO,
+    1,
+  );
+  const verificacoesGeraisPremontagem = mapRegistros(
+    producao.registrosInspecaoMontagem,
+    NOMES_VERIFICACOES_PREMONTAGEM,
+    3,
+  );
+  const registros = [...instrumentosAfericao, ...verificacoesGeraisPremontagem];
+  const reprovado = registros.some((item) => item.conformidade === NAO);
+  const preenchido = registros.some(
     (item) => item.valorObservado || item.instrumentoMedicao || item.conformidade,
   );
 
@@ -74,7 +93,7 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
     numeroSerie: producao.numeroSerie ?? '',
     dataInspecao: toDateInput(producao.atualizadoEm || producao.criadoEm),
     modelo: producao.modelo ?? '',
-    [INSTRUMENTOS_KEY]: [],
+    [INSTRUMENTOS_KEY]: instrumentosAfericao,
     verificacoesGeraisPremontagem,
     verificacaoPosmontagem: [],
     resultadoFinal: preenchido ? (reprovado ? 'REPROVADO' : 'APROVADO') : '',
@@ -110,8 +129,11 @@ export const useInspecoes = () => {
   }, []);
 
   const salvarRegistrosInspecao = async (producaoId: string, inspecao: InspecaoMontagem) => {
+    const instrumentos = (inspecao.instrumentosAferição || []).slice(0, 2);
+    const verificacoes = (inspecao.verificacoesGeraisPremontagem || []).slice(0, 16);
+
     await Promise.all(
-      (inspecao.verificacoesGeraisPremontagem || []).slice(0, 16).map((item, index) =>
+      [...instrumentos, ...verificacoes].map((item, index) =>
         axiosInstance.patch(`/producoes/${producaoId}/inspecao-montagem/${index + 1}`, {
           valorObservado: item.valorObservado || undefined,
           instrumentoMedicao: item.instrumentoMedicao || undefined,

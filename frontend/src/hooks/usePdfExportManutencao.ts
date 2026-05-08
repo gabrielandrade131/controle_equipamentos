@@ -1,6 +1,11 @@
 import jsPDF from 'jspdf';
 import { InspecaoManutencao } from '../types/manutencao';
 
+type ItemChecklist = {
+  titulo: string;
+  resposta: string;
+};
+
 export const usePdfExportManutencao = () => {
   const exportInspecaoToPdf = async (
     inspecao: InspecaoManutencao,
@@ -15,199 +20,210 @@ export const usePdfExportManutencao = () => {
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const marginLeft = 15;
-      const marginRight = 15;
-      const maxWidth = pageWidth - marginLeft - marginRight;
+      const marginX = 14;
+      const marginBottom = 14;
+      const contentWidth = pageWidth - marginX * 2;
+      const green = { r: 178, g: 204, b: 33 };
+      const border = { r: 220, g: 220, b: 220 };
 
-      let yPosition = 15;
+      let y = 14;
 
-      const greenColor = [173, 216, 59];
+      const formatDate = (value?: string) => {
+        if (!value) return '-';
 
-      const verificarNovaLinhaOuPagina = (altura: number) => {
-        if (yPosition + altura > pageHeight - 15) {
-          pdf.addPage();
-          yPosition = 15;
-        }
+        const date = new Date(`${value}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
       };
 
-      const desenharBoxSecao = (titulo: string) => {
-        verificarNovaLinhaOuPagina(10);
+      const normalizeResposta = (value?: string) =>
+        String(value ?? '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase();
 
-        pdf.setFillColor(greenColor[0], greenColor[1], greenColor[2]);
-        pdf.rect(marginLeft, yPosition, maxWidth, 7, 'F');
-        pdf.setFontSize(11);
-        pdf.setFont(undefined, 'bold');
+      const ensureSpace = (height: number) => {
+        if (y + height <= pageHeight - marginBottom) return;
+
+        pdf.addPage();
+        y = 14;
+      };
+
+      const sectionHeader = (title: string) => {
+        ensureSpace(12);
+        y += 4;
+        pdf.setFillColor(green.r, green.g, green.b);
+        pdf.rect(marginX, y, contentWidth, 8, 'F');
         pdf.setTextColor(0, 0, 0);
-        pdf.text(titulo, marginLeft + 2, yPosition + 5);
-
-        yPosition += 8;
-      };
-
-      // CABEÇALHO
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('HISTORICO DE INSPECAO DE MANUTENCAO', marginLeft, yPosition);
-      yPosition += 8;
-
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-
-      // DADOS
-      desenharBoxSecao('DADOS DA MANUTENCAO');
-
-      const dadosManutencao = [
-        { label: 'Data da Manutencao:', valor: inspecao.dataManutencao },
-        { label: 'Local da Manutencao:', valor: inspecao.localManutencao },
-        {
-          label: 'Fabricante / Modelo:',
-          valor: `${inspecao.fabricante} / ${inspecao.modelo}`,
-        },
-        {
-          label: 'No de Serie / TAG:',
-          valor: `${inspecao.numeroSerie} / ${inspecao.tag}`,
-        },
-        { label: 'Destino:', valor: inspecao.destino },
-        { label: 'Responsavel:', valor: inspecao.responsavel },
-      ];
-
-      dadosManutencao.forEach((desc) => {
-        const linha = `${desc.label} ${desc.valor}`;
-        const linhas = pdf.splitTextToSize(linha, maxWidth);
-
-        linhas.forEach((l: string) => {
-          verificarNovaLinhaOuPagina(4);
-          pdf.text(l, marginLeft, yPosition);
-          yPosition += 4;
-        });
-      });
-
-      yPosition += 5;
-
-      // ✅ FUNÇÃO CORRETA (ÚNICA)
-      const desenharSecao = (
-        titulo: string,
-        itens: Array<{ titulo: string; resposta: string }>
-      ) => {
-        if (itens.length === 0) return;
-
-        desenharBoxSecao(titulo);
-
+        pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-
-        itens.forEach((item) => {
-          const checkboxSize = 3;
-
-          const checkboxAreaWidth = 55; // espaço reservado à direita
-          const textWidth = maxWidth - checkboxAreaWidth;
-
-          const linhas = pdf.splitTextToSize(item.titulo, textWidth);
-
-          const alturaBloco = linhas.length * 4 + 6;
-          verificarNovaLinhaOuPagina(alturaBloco);
-
-          const startY = yPosition;
-
-          // TEXTO
-          linhas.forEach((linha: string, index: number) => {
-            pdf.text(linha, marginLeft, startY + index * 4);
-          });
-
-          // CHECKBOX
-          let xCheckbox = marginLeft + textWidth + 5;
-          const yCheckbox = startY - 2;
-
-          ['SIM', 'NAO', 'N/A'].forEach((option) => {
-            pdf.rect(xCheckbox, yCheckbox, checkboxSize, checkboxSize);
-
-            if (item.resposta === option) {
-              pdf.text('X', xCheckbox + 0.5, yCheckbox + 2.5);
-            }
-
-            pdf.text(option, xCheckbox + 5, yCheckbox + 2.5);
-            xCheckbox += 20;
-          });
-
-          yPosition += alturaBloco;
-        });
-
-        yPosition += 2;
+        pdf.text(title, marginX + 2, y + 5.5);
+        y += 12;
       };
 
-      // CHAMADAS DAS SEÇÕES
-      desenharSecao('CERTIFICACOES E DOCUMENTACAO', inspecao.certificacoes);
-      desenharSecao('ESTRUTURA E INTEGRIDADE MECANICA', inspecao.estruturaMecanica);
-      desenharSecao('SISTEMA HIDRAULICO', inspecao.sistemaHidraulico);
-      desenharSecao('SISTEMA PNEUMATICO', inspecao.sistemaPneumatico);
-      desenharSecao('SISTEMA ELETRICO', inspecao.sistemaEletrico);
-      desenharSecao('DISPOSITIVOS DE SEGURANCA', inspecao.dispositivoSeguranca);
-      desenharSecao('COMPONENTES OPERACIONAIS', inspecao.componentesOperacionais);
-      desenharSecao('ACESSORIOS E ITENS ESPECIFICOS', inspecao.acessorios);
-      desenharSecao('TESTES OPERACIONAIS', inspecao.testesOperacionais);
+      const drawText = (
+        text: string,
+        x: number,
+        currentY: number,
+        options?: { bold?: boolean; size?: number }
+      ) => {
+        pdf.setFont('helvetica', options?.bold ? 'bold' : 'normal');
+        pdf.setFontSize(options?.size ?? 9);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(text, x, currentY);
+      };
 
-      // AVALIAÇÃO FINAL
-      desenharBoxSecao('AVALIACAO FINAL');
+      const drawDataGrid = () => {
+        const rows = [
+          [
+            { label: 'Data de retorno a base', value: formatDate(inspecao.dataRetornoBase) },
+            { label: 'Data de inicio', value: formatDate(inspecao.dataManutencao) },
+          ],
+          [
+            { label: 'Previsao de termino', value: formatDate(inspecao.previsaoTermino) },
+            { label: 'Data de termino', value: formatDate(inspecao.dataTermino) },
+          ],
+          [
+            { label: 'Status', value: inspecao.statusManutencao || '-' },
+            { label: 'Responsavel', value: inspecao.responsavel || '-' },
+          ],
+          [
+            { label: 'Fabricante', value: inspecao.fabricante || '-' },
+            { label: 'Modelo', value: inspecao.modelo || '-' },
+          ],
+          [
+            { label: 'Numero de serie', value: inspecao.numeroSerie || '-' },
+            { label: 'TAG', value: inspecao.tag || '-' },
+          ],
+          [
+            { label: 'Destino', value: inspecao.destino || '-' },
+            { label: 'Local da manutencao', value: inspecao.localManutencao || '-' },
+          ],
+        ];
 
-      const checkboxSize = 3;
-      let xPosAval = marginLeft;
+        const colGap = 4;
+        const colWidth = (contentWidth - colGap) / 2;
+        const rowHeight = 11;
+        const gridHeight = rows.length * rowHeight;
+        ensureSpace(gridHeight + 2);
 
-      ['CONFORME', 'NAO CONFORME'].forEach((option) => {
-        pdf.rect(xPosAval, yPosition - 2, checkboxSize, checkboxSize);
+        rows.forEach((row, rowIndex) => {
+          row.forEach((cell, colIndex) => {
+            const x = marginX + colIndex * (colWidth + colGap);
+            const rowY = y + rowIndex * rowHeight;
 
-        if (inspecao.avaliacaoFinal === option) {
-          pdf.text('X', xPosAval + 0.5, yPosition);
+            pdf.setDrawColor(border.r, border.g, border.b);
+            pdf.rect(x, rowY, colWidth, rowHeight);
+            drawText(cell.label, x + 2, rowY + 4, { bold: true, size: 7.5 });
+
+            const valueLines = pdf.splitTextToSize(cell.value, colWidth - 4);
+            drawText(valueLines[0] || '-', x + 2, rowY + 8.5, { size: 8.5 });
+          });
+        });
+
+        y += gridHeight + 4;
+      };
+
+      const drawCheckbox = (x: number, currentY: number, selected: boolean, label: string) => {
+        const size = 3.2;
+        pdf.setDrawColor(0, 0, 0);
+        pdf.rect(x, currentY - 2.6, size, size);
+
+        if (selected) {
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(8);
+          pdf.text('X', x + 0.6, currentY);
         }
 
-        pdf.text(option, xPosAval + 5, yPosition);
-        xPosAval += 50;
-      });
+        drawText(label, x + 5, currentY, { size: 8.5 });
+      };
 
-      yPosition += 10;
+      const drawSection = (title: string, items: ItemChecklist[]) => {
+        if (!items.length) return;
 
-      // OBS
-      if (inspecao.observacoes) {
-        desenharBoxSecao('OBSERVACOES');
+        sectionHeader(title);
 
-        const obsLinhas = pdf.splitTextToSize(inspecao.observacoes, maxWidth - 4);
+        const questionWidth = contentWidth - 58;
+        const optionStartX = marginX + questionWidth + 6;
 
-        obsLinhas.forEach((linha: string) => {
-          verificarNovaLinhaOuPagina(4);
-          pdf.text(linha, marginLeft + 2, yPosition);
-          yPosition += 4;
+        items.forEach((item) => {
+          const lines = pdf.splitTextToSize(item.titulo, questionWidth);
+          const rowHeight = Math.max(9, lines.length * 4 + 5);
+          ensureSpace(rowHeight + 2);
+
+          const rowTop = y;
+          pdf.setDrawColor(238, 238, 238);
+          pdf.line(marginX, rowTop + rowHeight, marginX + contentWidth, rowTop + rowHeight);
+
+          drawText(lines[0], marginX, y + 4, { size: 8.5 });
+          lines.slice(1).forEach((line: string, index: number) => {
+            drawText(line, marginX, y + 8 + index * 4, { size: 8.5 });
+          });
+
+          const answer = normalizeResposta(item.resposta);
+          const optionY = y + 4;
+          drawCheckbox(optionStartX, optionY, answer === 'SIM', 'SIM');
+          drawCheckbox(optionStartX + 20, optionY, answer === 'NAO', 'NAO');
+          drawCheckbox(optionStartX + 40, optionY, answer === 'N/A', 'N/A');
+
+          y += rowHeight;
         });
 
-        yPosition += 5;
-      }
+        y += 4;
+      };
 
-      // INSTRUÇÕES
-      desenharBoxSecao('INSTRUCOES IMPORTANTES');
+      const drawLongTextSection = (title: string, value?: string) => {
+        if (!value) return;
 
-      const instrucoes = [
-        '1) Todas as alteracoes no equipamento devem ser documentadas',
-        '2) Eventos devem ser registrados',
-        '3) Em caso de venda, registrar NF e cliente',
-        '4) Historico deve ser preservado',
-      ];
+        sectionHeader(title);
+        const lines = pdf.splitTextToSize(value, contentWidth - 4);
+        const height = Math.max(14, lines.length * 4 + 6);
+        ensureSpace(height);
 
-      instrucoes.forEach((instr) => {
-        const linhas = pdf.splitTextToSize(instr, maxWidth - 4);
-
-        linhas.forEach((linha: string) => {
-          verificarNovaLinhaOuPagina(4);
-          pdf.text(linha, marginLeft + 2, yPosition);
-          yPosition += 4;
+        pdf.setDrawColor(border.r, border.g, border.b);
+        pdf.rect(marginX, y, contentWidth, height);
+        lines.forEach((line: string, index: number) => {
+          drawText(line, marginX + 2, y + 5 + index * 4, { size: 8.5 });
         });
 
-        yPosition += 2;
+        y += height + 3;
+      };
+
+      drawText('HISTORICO DE INSPECAO DE MANUTENCAO', marginX, y, {
+        bold: true,
+        size: 14,
       });
+      y += 10;
 
-      // ASSINATURA
-      yPosition += 10;
-      verificarNovaLinhaOuPagina(15);
+      sectionHeader('DADOS DA MANUTENCAO');
+      drawDataGrid();
 
-      pdf.text('Assinatura: _________________________________', marginLeft, yPosition);
-      yPosition += 8;
-      pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, marginLeft, yPosition);
+      drawSection('CERTIFICACOES E DOCUMENTACAO', inspecao.certificacoes);
+      drawSection('ESTRUTURA E INTEGRIDADE MECANICA', inspecao.estruturaMecanica);
+      drawSection('SISTEMA HIDRAULICO', inspecao.sistemaHidraulico);
+      drawSection('SISTEMA PNEUMATICO', inspecao.sistemaPneumatico);
+      drawSection('SISTEMA ELETRICO', inspecao.sistemaEletrico);
+      drawSection('DISPOSITIVOS DE SEGURANCA', inspecao.dispositivoSeguranca);
+      drawSection('COMPONENTES OPERACIONAIS', inspecao.componentesOperacionais);
+      drawSection('ACESSORIOS E ITENS ESPECIFICOS', inspecao.acessorios);
+      drawSection('TESTES OPERACIONAIS', inspecao.testesOperacionais);
+
+      sectionHeader('AVALIACAO FINAL');
+      ensureSpace(10);
+      const finalAnswer = normalizeResposta(inspecao.avaliacaoFinal);
+      drawCheckbox(marginX, y + 2, finalAnswer === 'CONFORME', 'CONFORME');
+      drawCheckbox(marginX + 55, y + 2, finalAnswer === 'NAO CONFORME', 'NAO CONFORME');
+      y += 11;
+
+      drawLongTextSection('OBSERVACOES', inspecao.observacoes);
+
+      sectionHeader('ASSINATURA');
+      ensureSpace(24);
+      drawText(`Responsavel: ${inspecao.responsavel || '-'}`, marginX, y + 2, { size: 9 });
+      y += 12;
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(marginX, y, marginX + 85, y);
+      drawText('Assinatura', marginX, y + 5, { size: 8 });
+      drawText(`Data: ${new Date().toLocaleDateString('pt-BR')}`, marginX + 105, y + 2, { size: 9 });
 
       pdf.save(filename);
     } catch (error) {

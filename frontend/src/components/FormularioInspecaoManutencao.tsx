@@ -10,6 +10,21 @@ interface FormularioInspecaoManutencaoProps {
   isEditing?: boolean;
 }
 
+type SecaoInspecaoKey = keyof Pick<
+  InspecaoManutencao,
+  | 'certificacoes'
+  | 'estruturaMecanica'
+  | 'sistemaHidraulico'
+  | 'sistemaPneumatico'
+  | 'sistemaEletrico'
+  | 'dispositivoSeguranca'
+  | 'componentesOperacionais'
+  | 'acessorios'
+  | 'testesOperacionais'
+>;
+
+type CampoInspecao = keyof Omit<InspecaoManutencao, SecaoInspecaoKey>;
+
 export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencaoProps> = ({
   onSalvar,
   onCancelar,
@@ -23,7 +38,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
 
   const documentoBloqueado = inspecao.statusManutencao !== 'CONCLUIDA';
 
-  const handleInputChange = (campo: keyof Omit<InspecaoManutencao, 'certificacoes' | 'estruturaMecanica' | 'sistemaHidraulico' | 'sistemaPneumatico' | 'sistemaEletrico' | 'dispositivoSeguranca' | 'componentesOperacionais' | 'acessorios' | 'testesOperacionais'>, valor: string) => {
+  const handleInputChange = (campo: CampoInspecao, valor: string) => {
     setInspecao((prev) => ({
       ...prev,
       [campo]: valor,
@@ -31,7 +46,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleRespostaChange = (
-    secao: keyof Pick<InspecaoManutencao, 'certificacoes' | 'estruturaMecanica' | 'sistemaHidraulico' | 'sistemaPneumatico' | 'sistemaEletrico' | 'dispositivoSeguranca' | 'componentesOperacionais' | 'acessorios' | 'testesOperacionais'>,
+    secao: SecaoInspecaoKey,
     itemId: string,
     resposta: RespostaBinaria
   ) => {
@@ -48,7 +63,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const renderSecao = (
-    secao: keyof Pick<InspecaoManutencao, 'certificacoes' | 'estruturaMecanica' | 'sistemaHidraulico' | 'sistemaPneumatico' | 'sistemaEletrico' | 'dispositivoSeguranca' | 'componentesOperacionais' | 'acessorios' | 'testesOperacionais'>,
+    secao: SecaoInspecaoKey,
     titulo: string,
     bloqueada = documentoBloqueado
   ) => {
@@ -77,7 +92,6 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
                   </label>
                 ))}
               </div>
-
             </div>
           ))}
         </div>
@@ -86,29 +100,37 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleSalvar = () => {
-    if (!inspecao.dataManutencao || !inspecao.responsavel) {
-      alert('Por favor, preencha os campos obrigatórios: Data da Manutenção e Responsável');
+    if (!inspecao.responsavel) {
+      alert('Por favor, preencha o campo obrigatório: Responsável');
       return;
     }
+
     onSalvar?.(inspecao);
   };
 
   return (
     <form
       className="formulario-inspecao-manutencao"
-      aria-label={isEditing ? 'Editar inspecao de manutencao' : 'Nova inspecao de manutencao'}
+      aria-label={isEditing ? 'Editar inspeção de manutenção' : 'Nova inspeção de manutenção'}
       onSubmit={(e) => e.preventDefault()}
     >
-      {/* Dados do Equipamento */}
       <div className="dados-equipamento">
         <h2>Dados da Manutenção</h2>
         <div className="grid-inputs">
           <div className="form-group">
-            <label>Data da Manutenção *</label>
+            <label>Data de Início da Manutenção</label>
             <input
               type="date"
               value={inspecao.dataManutencao}
               onChange={(e) => handleInputChange('dataManutencao', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Data de Retorno à Base</label>
+            <input
+              type="date"
+              value={inspecao.dataRetornoBase || ''}
+              onChange={(e) => handleInputChange('dataRetornoBase', e.target.value)}
             />
           </div>
           <div className="form-group">
@@ -168,30 +190,38 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
             />
           </div>
           <div className="form-group">
-            <label>Status da ManutenÃ§Ã£o</label>
+            <label>Status da Manutenção</label>
             <select
               value={inspecao.statusManutencao}
               onChange={(e) => handleInputChange('statusManutencao', e.target.value)}
             >
               <option value="PENDENTE">Pendente</option>
-              <option value="EM_MANUTENCAO">Em manutenÃ§Ã£o</option>
+              <option value="EM_MANUTENCAO">Em manutenção</option>
               <option value="PARALISADA">Paralisada</option>
-              <option value="CONCLUIDA">ConcluÃ­da</option>
+              <option value="CONCLUIDA">Concluída</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Data de TÃ©rmino</label>
+            <label>Data de Término</label>
             <input
               type="date"
               value={inspecao.dataTermino || ''}
               onChange={(e) => handleInputChange('dataTermino', e.target.value)}
             />
           </div>
+          <div className="form-group">
+            <label>Previsão de Término</label>
+            <input
+              type="date"
+              value={inspecao.previsaoTermino || ''}
+              onChange={(e) => handleInputChange('previsaoTermino', e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
       <div className="inspecoes">
-        {renderSecao('certificacoes', 'CERTIFICAÇÕES E DOCUMENTAÇÃO', documentoBloqueado)}
+        {renderSecao('certificacoes', 'CERTIFICAÇÕES E DOCUMENTAÇÃO')}
         {renderSecao('estruturaMecanica', 'ESTRUTURA E INTEGRIDADE MECÂNICA')}
         {renderSecao('sistemaHidraulico', 'SISTEMA HIDRÁULICO')}
         {renderSecao('sistemaPneumatico', 'SISTEMA PNEUMÁTICO')}

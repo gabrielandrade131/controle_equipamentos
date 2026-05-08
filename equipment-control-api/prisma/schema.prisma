@@ -142,6 +142,7 @@ model Manutencao {
 
   dataRetornoBase         DateTime?
   dataInicio              DateTime?
+  previsaoTermino         DateTime?
   dataTermino             DateTime?
 
   statusManutencao        StatusManutencao    @default(PENDENTE)

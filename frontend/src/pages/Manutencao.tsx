@@ -37,6 +37,12 @@ export const Manutencao: React.FC = () => {
   const handleEditarInspecao = (inspecao: InspecaoManutencao) => {
     if (!selected) return;
 
+    if (selected.data.statusManutencao === 'CONCLUIDA') {
+      alert('Manutencao concluida nao pode ser editada.');
+      setModo('lista');
+      return;
+    }
+
     atualizarInspecao(selected.id, inspecao)
       .then((inspecaoAtualizada) => {
         setSelected({ id: inspecaoAtualizada.id || selected.id, data: inspecaoAtualizada });
@@ -49,7 +55,7 @@ export const Manutencao: React.FC = () => {
       });
   };
 
-  if (modo === 'editar' && selected) {
+  if (modo === 'editar' && selected && selected.data.statusManutencao !== 'CONCLUIDA') {
     return (
       <div className="manutencao-container">
         <FormularioInspecaoManutencao
@@ -120,7 +126,15 @@ export const Manutencao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Data da Manutencao:</label>
-                  <p>{new Date(selected.data.dataManutencao).toLocaleDateString('pt-BR')}</p>
+                  <p>{selected.data.dataManutencao ? new Date(selected.data.dataManutencao).toLocaleDateString('pt-BR') : '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Retorno a Base:</label>
+                  <p>{selected.data.dataRetornoBase ? new Date(selected.data.dataRetornoBase).toLocaleDateString('pt-BR') : '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Previsao de Termino:</label>
+                  <p>{selected.data.previsaoTermino ? new Date(selected.data.previsaoTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Responsavel:</label>
@@ -129,6 +143,10 @@ export const Manutencao: React.FC = () => {
                 <div className="detail-item">
                   <label>Status:</label>
                   <p>{selected.data.statusManutencao || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Dias em Espera:</label>
+                  <p>{selected.data.diasEsperaManutencao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias em Manutencao:</label>
@@ -151,12 +169,14 @@ export const Manutencao: React.FC = () => {
               )}
 
               <div className="action-buttons">
-                <button
-                  onClick={() => setModo('editar')}
-                  className="btn-primary"
-                >
-                  Editar
-                </button>
+                {selected.data.statusManutencao !== 'CONCLUIDA' && (
+                  <button
+                    onClick={() => setModo('editar')}
+                    className="btn-primary"
+                  >
+                    Editar
+                  </button>
+                )}
                 <button
                   onClick={() => handleExportarPDF(selected.data)}
                   className="btn-primary"

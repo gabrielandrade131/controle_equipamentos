@@ -11,7 +11,7 @@ interface FormularioInspecaoProps {
 
 // Itens FIXOS conforme FOR-MAN-006 Rev. 5 (Ambipar Response)
 const INSTRUMENTOS_AFERIÇÃO = [
-  'Os Instrumentos encontram-se limpos e em perfeitas condições de uso? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
+  'Os instrumentos encontram-se limpos e em perfeitas condições de uso? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
   'Os instrumentos encontram-se com seus certificados de calibração em dia? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)'
 ];
 
@@ -252,7 +252,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
       </div>
 
       {renderSecaoVerificacoes(
-        'Verificações nos Instrumentos de Afeição',
+        'Verificações nos Instrumentos de Aferição',
         'instrumentosAferição',
         false
       )}

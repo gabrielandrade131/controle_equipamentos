@@ -69,6 +69,7 @@ export class ManutencoesService {
   }
 
   private adicionarDiasManutencao<T extends { 
+    dataRetornoBase?: Date | null;
     dataInicio?: Date | null;
     dataTermino?: Date | null;
     statusManutencao?: string | null;
@@ -76,9 +77,18 @@ export class ManutencoesService {
     manutencao: T,
   ) {
     const deveCalcular = manutencao.statusManutencao === 'EM_MANUTENCAO';
+    const deveCalcularEspera =
+      Boolean(manutencao.dataRetornoBase) &&
+      (manutencao.statusManutencao === 'PENDENTE' || Boolean(manutencao.dataInicio));
 
     return {
       ...manutencao,
+      diasEsperaManutencao: deveCalcularEspera
+        ? this.calcularDias(
+          manutencao.dataRetornoBase ?? null,
+          manutencao.dataInicio ?? null,
+        )
+        : null,
       diasManutencao: deveCalcular
       ? this.calcularDias(
         manutencao.dataInicio ?? null,
@@ -190,6 +200,9 @@ export class ManutencoesService {
           ? new Date(data.dataRetornoBase)
           : null,
         dataInicio: data.dataInicio ? new Date(data.dataInicio) : null,
+        previsaoTermino: data.previsaoTermino
+          ? new Date(data.previsaoTermino)
+          : null,
         diagnostico: data.diagnostico,
         responsavelManutencao: data.responsavelManutencao,
         statusManutencao: data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
@@ -260,6 +273,12 @@ export class ManutencoesService {
       throw new NotFoundException('Manutenção não encontrada.');
     }
 
+    if (manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA) {
+      throw new BadRequestException(
+        'Manutencao concluida nao pode ser editada.',
+      );
+    }
+
     const novosDados = {
       tipoEquipamentoNome: data.tipoEquipamentoNome,
       modeloEquipamento: data.modeloEquipamento,
@@ -272,6 +291,7 @@ export class ManutencoesService {
       statusManutencao: data.statusManutencao,
       avaliacaoFinalConforme: data.avaliacaoFinalConforme,
       dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
+      previsaoTermino: data.previsaoTermino ? new Date(data.previsaoTermino) : undefined,
       dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
     };
 
@@ -299,6 +319,7 @@ export class ManutencoesService {
       'statusManutencao',
       'avaliacaoFinalConforme',
       'dataInicio',
+      'previsaoTermino',
       'dataTermino',
     ];
 

@@ -26,7 +26,7 @@ export const PdfExporterManutencao: React.FC<PdfExporterManutencaoProps> = ({
 
   return (
     <button onClick={handleExport} className="btn-exportar-pdf">
-      📄 Exportar PDF
+      Exportar PDF
     </button>
   );
 };

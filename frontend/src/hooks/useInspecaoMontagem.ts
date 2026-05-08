@@ -2,7 +2,7 @@ import { CreateInspecaoMontageDto, VerificacaoItem } from '../types/inspecao';
 
 // Arrays fixos conforme formulário (apenas constantes, sem dados de teste)
 const INSTRUMENTOS_AFERIÇÃO = [
-  'Os Instrumentos encontram-se limpos e em perfeitas condições de uso? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
+  'Os instrumentos encontram-se limpos e em perfeitas condições de uso? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
   'Os instrumentos encontram-se com seus certificados de calibração em dia? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)'
 ];
 

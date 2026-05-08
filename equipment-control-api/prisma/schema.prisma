@@ -145,6 +145,7 @@ model Manutencao {
   dataTermino             DateTime?
 
   statusManutencao        StatusManutencao    @default(PENDENTE)
+  avaliacaoFinalConforme  Boolean?
   diagnostico             String?
   responsavelManutencao   String?
 

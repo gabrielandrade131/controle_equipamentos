@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { InspecaoManutencao } from '../types/manutencao';
-import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
-import { useManutencao } from '../hooks/useManutencao';
 import { useNavigate } from 'react-router-dom';
+import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
+import { useManutencao } from '../hooks/useManutencao';
+import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
+import { InspecaoManutencao } from '../types/manutencao';
 import './Manutencao.css';
 
 interface SelectedInspecao {
@@ -13,7 +14,8 @@ interface SelectedInspecao {
 export const Manutencao: React.FC = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
-  const { historico } = useManutencao();
+  const [modo, setModo] = useState<'lista' | 'editar'>('lista');
+  const { historico, atualizarInspecao } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
 
   const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
@@ -32,25 +34,52 @@ export const Manutencao: React.FC = () => {
     }
   };
 
-  // Modo lista - mostrar layout split
+  const handleEditarInspecao = (inspecao: InspecaoManutencao) => {
+    if (!selected) return;
+
+    atualizarInspecao(selected.id, inspecao)
+      .then((inspecaoAtualizada) => {
+        setSelected({ id: inspecaoAtualizada.id || selected.id, data: inspecaoAtualizada });
+        setModo('lista');
+        alert('Manutencao atualizada com sucesso!');
+      })
+      .catch((error) => {
+        console.error('Erro ao atualizar manutencao:', error);
+        alert(error.response?.data?.message || 'Nao foi possivel atualizar a manutencao.');
+      });
+  };
+
+  if (modo === 'editar' && selected) {
+    return (
+      <div className="manutencao-container">
+        <FormularioInspecaoManutencao
+          inspecaoInicial={selected.data}
+          onSalvar={handleEditarInspecao}
+          onCancelar={() => setModo('lista')}
+          isEditing
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="manutencao-page">
-      <h2>Manutenção</h2>
-      
+      <h2>Manutencao</h2>
+
       <div className="page-toolbar">
-        <button 
+        <button
           onClick={() => navigate('/manutencao/criar')}
           className="btn-primary"
         >
-          Nova Inspeção
+          Nova Inspecao
         </button>
       </div>
-      
+
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Histórico de Manutenções ({historico.length})</h3>
+          <h3>Historico de Manutencoes ({historico.length})</h3>
           {historico.length === 0 ? (
-            <p>Nenhuma manutenção registrada</p>
+            <p>Nenhuma manutencao registrada</p>
           ) : (
             <ul className="page-list">
               {historico.map((inspecao) => (
@@ -59,8 +88,9 @@ export const Manutencao: React.FC = () => {
                   className={selected?.id === inspecao.id ? 'active' : ''}
                   onClick={() => handleSelectInspecao(inspecao)}
                 >
-                  <strong>{inspecao.numeroSerie || 'Sem série'}</strong>
-                  <small>{inspecao.fabricante || '—'}</small>
+                  <strong>{inspecao.numeroSerie || 'Sem serie'}</strong>
+                  <small>{inspecao.fabricante || '-'}</small>
+                  <small>{inspecao.statusManutencao || '-'}</small>
                 </li>
               ))}
             </ul>
@@ -70,50 +100,64 @@ export const Manutencao: React.FC = () => {
         <div className="page-detail-section">
           {selected ? (
             <div className="manutencao-detail">
-              <h2>Detalhes da Inspeção</h2>
+              <h2>Detalhes da Inspecao</h2>
               <div className="page-detail-grid">
                 <div className="detail-item">
-                  <label>Número de Série:</label>
-                  <p>{selected.data.numeroSerie || '—'}</p>
+                  <label>Numero de Serie:</label>
+                  <p>{selected.data.numeroSerie || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>TAG:</label>
-                  <p>{selected.data.tag || '—'}</p>
+                  <p>{selected.data.tag || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Fabricante:</label>
-                  <p>{selected.data.fabricante || '—'}</p>
+                  <p>{selected.data.fabricante || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Modelo:</label>
-                  <p>{selected.data.modelo || '—'}</p>
+                  <p>{selected.data.modelo || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data da Manutenção:</label>
+                  <label>Data da Manutencao:</label>
                   <p>{new Date(selected.data.dataManutencao).toLocaleDateString('pt-BR')}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Responsável:</label>
-                  <p>{selected.data.responsavel || '—'}</p>
+                  <label>Responsavel:</label>
+                  <p>{selected.data.responsavel || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Status:</label>
+                  <p>{selected.data.statusManutencao || '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Dias em Manutencao:</label>
+                  <p>{selected.data.diasManutencao ?? '-'}</p>
                 </div>
               </div>
 
               <div className="detail-item full">
-                <label>Avaliação Final:</label>
+                <label>Avaliacao Final:</label>
                 <span className={`badge badge-${selected.data.avaliacaoFinal === 'CONFORME' ? 'success' : 'danger'}`}>
-                  {selected.data.avaliacaoFinal || '—'}
+                  {selected.data.avaliacaoFinal || '-'}
                 </span>
               </div>
 
               {selected.data.observacoes && (
                 <div className="documents-section">
-                  <h3>Observações</h3>
+                  <h3>Observacoes</h3>
                   <p>{selected.data.observacoes}</p>
                 </div>
               )}
 
               <div className="action-buttons">
-                <button 
+                <button
+                  onClick={() => setModo('editar')}
+                  className="btn-primary"
+                >
+                  Editar
+                </button>
+                <button
                   onClick={() => handleExportarPDF(selected.data)}
                   className="btn-primary"
                 >

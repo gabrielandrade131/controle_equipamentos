@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 import { StatusManutencao } from '@prisma/client';
 
 export class CreateManutencaoDto {
@@ -56,4 +56,12 @@ export class CreateManutencaoDto {
   @IsOptional()
   @IsEnum(StatusManutencao)
   statusManutencao?: StatusManutencao;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Resultado da avaliacao final: true para conforme, false para nao conforme',
+  })
+  @IsOptional()
+  @IsBoolean()
+  avaliacaoFinalConforme?: boolean;
 }

@@ -280,7 +280,7 @@ export class ProducoesService {
                     })) ?? [],
                 },
                 registrosInspecaoMontagem: {
-                    create: Array.from({ length: 16 }, (_, index) => ({
+                    create: Array.from({ length: 18 }, (_, index) => ({
                         ordem: index + 1,
                     })),
                 }
@@ -823,7 +823,7 @@ export class ProducoesService {
             { header: 'Situação do Prazo', key: 'situacaoPrazo', width: 22 },
             { header: 'Resultado do Prazo', key: 'resultadoPrazo', width: 26 },
             { header: 'TAG', key: 'tag', width: 18 },
-            { header: 'Lista de Peças', key: 'listaPecas', width: 16 },
+            { header: 'Lista de Peças', key: 'listaPecas', width: 18 },
             { header: 'Sequência de Montagem', key: 'sequenciaMontagem', width: 24 },
             { header: 'Inspeção de Montagem', key: 'inspecaoMontagem', width: 24 },
             { header: 'Histórico do Equipamento', key: 'historicoEquipamento', width: 26 },

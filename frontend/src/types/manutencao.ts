@@ -2,6 +2,8 @@
 
 export type RespostaBinaria = 'SIM' | 'NÃO' | 'N/A' | '';
 
+export type StatusManutencao = 'PENDENTE' | 'EM_MANUTENCAO' | 'CONCLUIDA' | 'PARALISADA';
+
 export interface ItemInspecao {
   id: string;
   titulo: string;
@@ -26,6 +28,9 @@ export interface InspecaoManutencao {
   tag: string;
   destino: string;
   responsavel: string;
+  statusManutencao: StatusManutencao;
+  dataTermino?: string;
+  diasManutencao?: number | null;
   
   // Certificações e Documentação
   certificacoes: ItemInspecao[];
@@ -73,6 +78,8 @@ export const criarInspecaoVazia = (): InspecaoManutencao => ({
   tag: '',
   destino: '',
   responsavel: '',
+  statusManutencao: 'EM_MANUTENCAO',
+  dataTermino: '',
   certificacoes: [
     { id: 'cert_1', titulo: 'Placa de identificação e/ou TAG estão legíveis?', categoria: 'Certificações e Documentação', resposta: '' },
     { id: 'cert_2', titulo: 'Certificações do equipamento estão válidas?', categoria: 'Certificações e Documentação', resposta: '' },

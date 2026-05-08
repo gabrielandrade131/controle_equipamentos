@@ -193,6 +193,7 @@ export class ManutencoesService {
         diagnostico: data.diagnostico,
         responsavelManutencao: data.responsavelManutencao,
         statusManutencao: data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
+        avaliacaoFinalConforme: data.avaliacaoFinalConforme,
       },
     });
 
@@ -260,9 +261,16 @@ export class ManutencoesService {
     }
 
     const novosDados = {
+      tipoEquipamentoNome: data.tipoEquipamentoNome,
+      modeloEquipamento: data.modeloEquipamento,
+      numeroSerie: data.numeroSerie,
+      tag: data.tag,
+      situacaoEquipamento: data.situacaoEquipamento,
+      dataRetornoBase: data.dataRetornoBase ? new Date(data.dataRetornoBase) : undefined,
       diagnostico: data.diagnostico,
       responsavelManutencao: data.responsavelManutencao,
       statusManutencao: data.statusManutencao,
+      avaliacaoFinalConforme: data.avaliacaoFinalConforme,
       dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
       dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
     };
@@ -280,9 +288,16 @@ export class ManutencoesService {
     }[] = [];
 
     const camposMonitorados: Array<keyof typeof novosDados> = [
+      'tipoEquipamentoNome',
+      'modeloEquipamento',
+      'numeroSerie',
+      'tag',
+      'situacaoEquipamento',
+      'dataRetornoBase',
       'diagnostico',
       'responsavelManutencao',
       'statusManutencao',
+      'avaliacaoFinalConforme',
       'dataInicio',
       'dataTermino',
     ];

@@ -9,18 +9,15 @@ export const NovaManutencao: React.FC = () => {
   const { adicionarInspecao } = useManutencao();
 
   const handleSalvarInspecao = (inspecao: InspecaoManutencao) => {
-    const novoRegistro: InspecaoManutencao = {
-      ...inspecao,
-      id: Math.random().toString(36).substr(2, 9),
-      criadoEm: new Date().toISOString(),
-    };
-
-    adicionarInspecao(novoRegistro);
-    alert('Inspeção salva com sucesso!');
-
-    console.log('Inspeção salva:', novoRegistro);
-    
-    navigate('/manutencao');
+    adicionarInspecao(inspecao)
+      .then(() => {
+        alert('Inspecao salva com sucesso!');
+        navigate('/manutencao');
+      })
+      .catch((error) => {
+        console.error('Erro ao criar manutencao:', error);
+        alert(error.response?.data?.message || 'Nao foi possivel criar a manutencao.');
+      });
   };
 
   return (

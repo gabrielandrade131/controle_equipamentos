@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
+import {
+  NOMES_INSTRUMENTOS_AFERICAO,
+  NOMES_VERIFICACOES_GERAIS_PREMONTAGEM,
+} from '../constants/inspecaoMontagem';
 
 type ApiListResponse<T> = {
   data: T[];
@@ -8,30 +12,7 @@ type ApiListResponse<T> = {
 
 const NAO = 'NÃO';
 const INSTRUMENTOS_KEY = 'instrumentosAferi' + String.fromCharCode(231) + String.fromCharCode(227) + 'o';
-
-const NOMES_INSTRUMENTOS_AFERICAO = [
-  'Os instrumentos encontram-se limpos e em perfeitas condições de uso? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
-  'Os instrumentos encontram-se com seus certificados de calibração em dia? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
-];
-
-const NOMES_VERIFICACOES_PREMONTAGEM = [
-  'Check dos Itens dos Seriados',
-  'Analise Dimensional de Carcaca',
-  'Resultado Esperado: Modelo CSEX420RM entre 415 e 430mm',
-  'Resultado Esperado: Modelo CSC3420AC entre 415 e 430mm',
-  'Resultado Esperado: Modelo CSEX550AC entre 545 e 560mm',
-  'Resultado Esperado: Modelo CSEX550SS entre 545 e 560mm',
-  'Teste de Aterramento do Motor',
-  'Teste de Isolacao do Motor',
-  'Aplicacao e afericao de Torque do Motor M4',
-  'Aplicacao e afericao de Torque do Motor M5',
-  'Aplicacao e afericao de Torque da botoeira',
-  'Teste de Funcionamento do Motor',
-  'Teste de Rotacao do Motor - Modelo CSEX420RM',
-  'Teste de Rotacao do Motor - Modelo CSEX420AC',
-  'Teste de Rotacao do Motor - Modelo CSEX550AC',
-  'Teste de Rotacao do Motor - Modelo CSEX550SS',
-];
+const NOMES_VERIFICACOES_PREMONTAGEM = NOMES_VERIFICACOES_GERAIS_PREMONTAGEM;
 
 const toDateInput = (value?: string | null) => {
   if (!value) return new Date().toISOString().split('T')[0];

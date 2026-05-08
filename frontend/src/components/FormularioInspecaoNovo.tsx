@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { InspecaoMontagem, CreateInspecaoMontageDto } from '../types/inspecao';
+import { criarFormularioInspecaoMontagemVazio } from '../constants/inspecaoMontagem';
 import './FormularioInspecao.css';
 
 interface FormularioInspecaoProps {
@@ -9,84 +10,18 @@ interface FormularioInspecaoProps {
   titulo?: string;
 }
 
-// Itens FIXOS conforme FOR-MAN-006 Rev. 5 (Ambipar Response)
-const INSTRUMENTOS_AFERIÇÃO = [
-  'Os instrumentos encontram-se limpos e em perfeitas condições de uso? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)',
-  'Os instrumentos encontram-se com seus certificados de calibração em dia? (Megômetro, Multímetro, Torquímetro, Decibelímetro, Anemômetro e Alicate Amperímetro)'
-];
-
-const VERIFICACOES_GERAIS_PREMONTAGEM = [
-  'Check dos Itens dos Seriados (Números de série do motor, caixa elétrica e plug conferem com Ordem Produção?)',
-  '@SECTION:Análise Dimensional de Carcaça',
-  'Resultado Esperado: Modelo CSEX420RM entre 415 e 430mm',
-  'Resultado Esperado: Modelo CSC3420AC entre 415 e 430mm',
-  'Resultado Esperado: Modelo CSEX550AC entre 545 e 560mm',
-  'Resultado Esperado: Modelo CSEX550SS entre 545 e 560mm',
-  'Teste de Aterramento do Motor (Resultado Esperado: >=0)',
-  'Teste de Isolação do Motor(Resultado Esperado: >=0)',
-  'Aplicação e aferição de Torque do Motor (Resultado esperado para rosca M4: 1,5)',
-  'Aplicação e aferição de Torque do motor (Resultado esperado para rosca M5: 2)',
-  'Aplicação e aferição de Torque (botoeira) (Resultado esperado: 2Nm)',
-  'Teste de Funcionamento do Motor (Inspeção visual de estado de funcionamento do equipamento)',
-  'Teste de Rotação do Motor - Modelo CSEX420RM (3.390 rpm, com tolerância de -150 rpm)',
-  'Teste de Rotação do Motor - Modelo CSEX420AC (3.000 rpm, com tolerância de 150 rpm)',
-  'Teste de Rotação do Motor - Modelo CSEX550AC (1.800 rpm, com tolerância de -150 rpm)',
-  'Teste de Rotação do Motor - Modelo CSEX550SS (1.800 rpm, com tolerância de -150 rpm)'
-];
-
-const VERIFICACAO_POSMONTAGEM = [
-  'Teste de Aterramento (Resultado Esperado: >=0)',
-  'Teste de Isolação (Resultado Esperado: >=0)',
-  'Teste de Funcionamento (Inspeção visual de estado de funcionamento do equipamento)',
-  'Teste de Rotação - Modelo CSEX420RM (3.390 rpm, com tolerância de -150 rpm)',
-  'Teste de Rotação - Modelo CSEX42DAC (3.600 rpm, com tolerância de -150 rpm)',
-  'Teste de Rotação - Modelo CSEX550AC (1.800 rpm, com tolerância de -150 rpm)',
-  'Teste de Rotação - Modelo CSEX550SS (1.800 rpm, com tolerância de -150 rpm)',
-  'Teste de Temperatura (Range: 30 a 40 graus C)',
-  'Teste de Decibéis (Resultado Esperado: Modelo CSEX420RM ou T<=96.2 SPL(a) dB]',
-  'Teste de Decibéis (Resultado Esperado: Modelo CSEX420AC ou T<=97 SPL(a) dB]',
-  'Teste de Decibéis (Resultado Esperado: Modelo CSEX550AC ou T<=89 SPL(a) dB]',
-  'Teste de Decibéis (Resultado Esperado: Modelo CSEX550SS ou T<=89 SPL(a) dB]',
-  'Teste de Continuidade (Resultado: >=0)'
-];
-
 export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
   onSubmit,
   onCancel,
   inspecaoInicial,
   titulo = 'Inspecao de Montagem',
 }) => {
-  const [formData, setFormData] = useState<CreateInspecaoMontageDto>({
-    numeroSerie: '',
-    dataInspecao: new Date().toISOString().split('T')[0],
-    modelo: '',
-    instrumentosAferição: INSTRUMENTOS_AFERIÇÃO.map((nome, i) => ({
-      id: `inst-${i}`,
-      nome,
-      conformidade: ''
-    })),
-    verificacoesGeraisPremontagem: VERIFICACOES_GERAIS_PREMONTAGEM.map((nome, i) => ({
-      id: `vgpm-${i}`,
-      nome,
-      valorObservado: '',
-      instrumentoMedicao: '',
-      conformidade: ''
-    })),
-    verificacaoPosmontagem: VERIFICACAO_POSMONTAGEM.map((nome, i) => ({
-      id: `pos-${i}`,
-      nome,
-      valorObservado: '',
-      instrumentoMedicao: '',
-      conformidade: ''
-    })),
-    resultadoFinal: '',
-    observacoes: undefined,
-    responsavel: '',
-    data: new Date().toISOString().split('T')[0],
-    nomeAssinante: '',
-    aprovado: false,
+  const formularioPadrao = criarFormularioInspecaoMontagemVazio();
+
+  const [formData, setFormData] = useState<CreateInspecaoMontageDto>(() => ({
+    ...criarFormularioInspecaoMontagemVazio(),
     ...inspecaoInicial,
-  });
+  }));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -107,6 +42,29 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     }));
   };
 
+  const handleVerificacaoChangePorIndice = (
+    secao: 'verificacoesGeraisPremontagem' | 'verificacaoPosmontagem',
+    itemIndex: number,
+    field: 'conformidade' | 'valorObservado' | 'instrumentoMedicao',
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const itens = [...prev[secao]];
+      const itemAtual = itens[itemIndex] ?? formularioPadrao[secao][itemIndex];
+
+      if (!itemAtual) {
+        return prev;
+      }
+
+      itens[itemIndex] = { ...itemAtual, [field]: value };
+
+      return {
+        ...prev,
+        [secao]: itens,
+      };
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -124,6 +82,128 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 
     onSubmit(novaInspecao);
   };
+
+  const linhasPremontagem = [
+    {
+      itemIndex: 0,
+      titulo: 'Check dos Itens dos Seriados',
+      detalhes: ['(Números de série do motor, caixa elétrica e plug conferem com Ordem Produção?)'],
+      instrumentoMedicao: 'AVALIAÇÃO VISUAL',
+    },
+    {
+      itemIndex: 1,
+      titulo: 'Análise Dimensional da Carcaça',
+      detalhes: [
+        'Resultado Esperado: Modelo CSEX420RM entre 415 e 430mm',
+        'Resultado Esperado: Modelo CSEX420AC entre 415 e 430mm',
+        'Resultado Esperado: Modelo CSEX550AC entre 545 e 560mm',
+        'Resultado Esperado: Modelo CSEX550SS entre 545 e 560mm',
+      ],
+      instrumentoMedicao: 'TRENA / Nº Série',
+    },
+    {
+      itemIndex: 6,
+      titulo: 'Teste de Aterramento do Motor',
+      detalhes: ['Resultado Esperado: >=0'],
+      instrumentoMedicao: 'MEGÔMETRO / Nº Série',
+    },
+    {
+      itemIndex: 7,
+      titulo: 'Teste de Isolação do Motor',
+      detalhes: ['Resultado Esperado: >=0'],
+      instrumentoMedicao: 'MULTÍMETRO ( ) / MEGÔMETRO ( ) / Nº Série',
+    },
+    {
+      itemIndex: 8,
+      titulo: 'Aplicação e aferição de Torque do Motor',
+      detalhes: ['Resultado Esperado para rosca M4: 1,5'],
+      instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+    },
+    {
+      itemIndex: 9,
+      titulo: 'Aplicação e aferição de Torque do motor',
+      detalhes: ['Resultado Esperado para rosca M5: 2'],
+      instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+    },
+    {
+      itemIndex: 10,
+      titulo: 'Aplicação e aferição de Torque (botoeira)',
+      detalhes: ['Resultado esperado: 2Nm'],
+      instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+    },
+    {
+      itemIndex: 11,
+      titulo: 'Teste de Funcionamento do Motor',
+      detalhes: ['Inspeção visual do estado de funcionamento do equipamento'],
+      instrumentoMedicao: 'AMPERÍMETRO / Nº Série',
+    },
+    {
+      itemIndex: 12,
+      titulo: 'Teste de Rotação do Motor',
+      detalhes: [
+        'Resultado Esperado: Modelo CSEX420RM 3.390 rpm, com tolerância de -150 rpm',
+        'Resultado Esperado: Modelo CSEX420AC 3.600 rpm, com tolerância de -150 rpm',
+        'Resultado Esperado: Modelo CSEX550AC 1.800 rpm, com tolerância de -150 rpm',
+        'Resultado Esperado: Modelo CSEX550SS 1.800 rpm, com tolerância de -150 rpm',
+      ],
+      instrumentoMedicao: 'TACÔMETRO / Nº Série',
+    },
+  ] as const;
+
+  const linhasPosmontagem = [
+    {
+      itemIndex: 0,
+      titulo: 'Teste de Aterramento',
+      detalhes: ['Resultado Esperado: >=0'],
+      instrumentoMedicao: 'MULTÍMETRO ( ) / MEGÔMETRO ( ) / Nº Série',
+    },
+    {
+      itemIndex: 1,
+      titulo: 'Teste de Isolação',
+      detalhes: ['Resultado Esperado: >=0'],
+      instrumentoMedicao: 'MEGÔMETRO / Nº Série',
+    },
+    {
+      itemIndex: 2,
+      titulo: 'Teste de Funcionamento',
+      detalhes: ['Inspeção visual de estado de funcionamento do equipamento'],
+      instrumentoMedicao: 'AMPERÍMETRO / Nº Série',
+    },
+    {
+      itemIndex: 3,
+      titulo: 'Teste de Rotação',
+      detalhes: [
+        'Resultado Esperado: Modelo CSEX420RM 3.390 rpm, com tolerância de -150 rpm',
+        'Resultado Esperado: Modelo CSEX420AC 3.600 rpm, com tolerância de -150 rpm',
+        'Resultado Esperado: Modelo CSEX550AC 1.800 rpm, com tolerância de -150 rpm',
+        'Resultado Esperado: Modelo CSEX550SS 1.800 rpm, com tolerância de -150 rpm',
+      ],
+      instrumentoMedicao: 'TACÔMETRO / Nº Série',
+    },
+    {
+      itemIndex: 7,
+      titulo: 'Teste de Temperatura',
+      detalhes: ['Range: 30 a 40 graus celsius'],
+      instrumentoMedicao: 'TERMÔMETRO LASER / Nº Série',
+    },
+    {
+      itemIndex: 8,
+      titulo: 'Teste de Decibéis',
+      detalhes: [
+        'Resultado Esperado: Modelo CSEX420RM ou T <= 96.2 SPL(A) dB',
+        'Resultado Esperado: Modelo CSEX420AC ou T <= 97 SPL(A) dB',
+        'Resultado Esperado: Modelo CSEX550AC ou T <= 89 SPL(A) dB',
+        'Resultado Esperado: Modelo CSEX550SS ou T <= 89 SPL(A) dB',
+      ],
+      instrumentoMedicao: 'DECIBELÍMETRO / Nº Série',
+    },
+    {
+      itemIndex: 12,
+      titulo: 'Teste de Continuidade',
+      detalhes: ['Resultado Esperado: >=0'],
+      instrumentoMedicao: 'MULTÍMETRO / Nº Série',
+    },
+  ] as const;
 
   const renderSecaoVerificacoes = (
     titulo: string,
@@ -147,8 +227,8 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
             if (isSection) {
               const sectionTitle = item.nome.replace('@SECTION:', '');
               return (
-                <tr key={item.id} style={{ backgroundColor: '#e8e8e8' }}>
-                  <td colSpan={mostrarCampos ? 4 : 2} style={{ fontWeight: 'bold', padding: '10px', textAlign: 'left' }}>
+                <tr key={item.id} className="verificacoes-section-row">
+                  <td colSpan={mostrarCampos ? 4 : 2} className="verificacoes-section-cell">
                     {sectionTitle}
                   </td>
                 </tr>
@@ -217,6 +297,178 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     </div>
   );
 
+  const renderSecaoVerificacoesPremontagem = () => (
+    <div className="form-section">
+      <h3>Verificações Gerais Pré Montagem</h3>
+      <table className="verificacoes-table verificacoes-table-premontagem">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Valor Observado</th>
+            <th>Instrumento de Medição</th>
+            <th>Conformidades</th>
+          </tr>
+        </thead>
+        <tbody>
+          {linhasPremontagem.map((linha) => {
+            const item = formData.verificacoesGeraisPremontagem[linha.itemIndex] ?? formularioPadrao.verificacoesGeraisPremontagem[linha.itemIndex];
+
+            return (
+              <tr key={`premontagem-${linha.itemIndex}`}>
+                <td className="verificacoes-pm-item">
+                  <span className="verificacoes-pm-titulo">{linha.titulo}</span>
+                  {linha.detalhes.map((detalhe) => (
+                    <span key={detalhe} className="verificacoes-pm-detalhe">
+                      {detalhe}
+                    </span>
+                  ))}
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="verificacoes-pm-input"
+                    value={item.valorObservado || ''}
+                    onChange={(e) =>
+                      handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'valorObservado', e.target.value)
+                    }
+                    title="Valor observado"
+                    placeholder="Valor observado"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="verificacoes-pm-input"
+                    value={item.instrumentoMedicao || linha.instrumentoMedicao}
+                    onChange={(e) =>
+                      handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'instrumentoMedicao', e.target.value)
+                    }
+                    title="Instrumento de medição"
+                    placeholder="Instrumento de medição"
+                  />
+                </td>
+                <td>
+                  <div className="checkbox-group">
+                    <label>
+                      <input
+                        type="radio"
+                        name={`conf-premontagem-${linha.itemIndex}`}
+                        value="SIM"
+                        checked={item.conformidade === 'SIM'}
+                        onChange={(e) =>
+                          handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'conformidade', e.target.value)
+                        }
+                      />
+                      SIM
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name={`conf-premontagem-${linha.itemIndex}`}
+                        value="NÃO"
+                        checked={item.conformidade === 'NÃO'}
+                        onChange={(e) =>
+                          handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'conformidade', e.target.value)
+                        }
+                      />
+                      NÃO
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderSecaoVerificacoesPosmontagem = () => (
+    <div className="form-section">
+      <h3>Verificações Gerais Pós Montagem</h3>
+      <table className="verificacoes-table verificacoes-table-posmontagem">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Valor Observado</th>
+            <th>Instrumento de Medição</th>
+            <th>Conformidades</th>
+          </tr>
+        </thead>
+        <tbody>
+          {linhasPosmontagem.map((linha) => {
+            const item = formData.verificacaoPosmontagem[linha.itemIndex] ?? formularioPadrao.verificacaoPosmontagem[linha.itemIndex];
+
+            return (
+              <tr key={`posmontagem-${linha.itemIndex}`}>
+                <td className="verificacoes-pm-item">
+                  <span className="verificacoes-pm-titulo">{linha.titulo}</span>
+                  {linha.detalhes.map((detalhe) => (
+                    <span key={detalhe} className="verificacoes-pm-detalhe">
+                      {detalhe}
+                    </span>
+                  ))}
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="verificacoes-pm-input"
+                    value={item.valorObservado || ''}
+                    onChange={(e) =>
+                      handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'valorObservado', e.target.value)
+                    }
+                    title="Valor observado"
+                    placeholder="Valor observado"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="verificacoes-pm-input"
+                    value={item.instrumentoMedicao || linha.instrumentoMedicao}
+                    onChange={(e) =>
+                      handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'instrumentoMedicao', e.target.value)
+                    }
+                    title="Instrumento de medição"
+                    placeholder="Instrumento de medição"
+                  />
+                </td>
+                <td>
+                  <div className="checkbox-group">
+                    <label>
+                      <input
+                        type="radio"
+                        name={`conf-posmontagem-${linha.itemIndex}`}
+                        value="SIM"
+                        checked={item.conformidade === 'SIM'}
+                        onChange={(e) =>
+                          handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'conformidade', e.target.value)
+                        }
+                      />
+                      SIM
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name={`conf-posmontagem-${linha.itemIndex}`}
+                        value="NÃO"
+                        checked={item.conformidade === 'NÃO'}
+                        onChange={(e) =>
+                          handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'conformidade', e.target.value)
+                        }
+                      />
+                      NÃO
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <form onSubmit={handleSubmit} className="formulario-inspecao">
       <h2>{titulo}</h2>
@@ -257,17 +509,9 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         false
       )}
 
-      {renderSecaoVerificacoes(
-        'Verificações Gerais Pré Montagem',
-        'verificacoesGeraisPremontagem',
-        true
-      )}
+      {renderSecaoVerificacoesPremontagem()}
 
-      {renderSecaoVerificacoes(
-        'Verificações Gerais Pós Montagem',
-        'verificacaoPosmontagem',
-        true
-      )}
+      {renderSecaoVerificacoesPosmontagem()}
 
       <div className="form-section">
         <h3>Assinatura</h3>

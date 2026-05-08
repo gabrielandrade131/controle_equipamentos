@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
+import { LINHAS_PREMONTAGEM_INSPECAO_PDF, LINHAS_POSMONTAGEM_INSPECAO_PDF } from '../constants/inspecaoMontagem';
 
 export const usePdfExportInspecao = () => {
     const exportInspecaoToPdf = async (inspecao: InspecaoMontagem, filename: string, logoPath?: string) => {
@@ -130,7 +131,44 @@ export const usePdfExportInspecao = () => {
 
             // Verificações gerais (pré e pós montagem)
             const renderVerificacoes = (title: string, items?: VerificacaoItem[]) => {
-                if (!items || items.length === 0) return;
+                const cleanInstrument = (instr?: string) => {
+                    if (!instr) return instr;
+                    return instr.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim();
+                };
+                // Map to the same lines used by the form so PDF matches o formulário
+                const mapItemsFromTemplate = (): VerificacaoItem[] => {
+                    if (title === 'VERIFICAÇÕES GERAIS PRÉ MONTAGEM') {
+                        return LINHAS_PREMONTAGEM_INSPECAO_PDF.map((linha) => {
+                            const origem = inspecao.verificacoesGeraisPremontagem?.[linha.itemIndex];
+                            return {
+                                id: origem?.id ?? String(linha.itemIndex),
+                                nome: linha.titulo,
+                                valorObservado: origem?.valorObservado ?? '',
+                                instrumentoMedicao: origem?.instrumentoMedicao ?? linha.instrumentoPadrao,
+                                conformidade: origem?.conformidade ?? '',
+                            } as VerificacaoItem;
+                        });
+                    }
+
+                    if (title === 'VERIFICAÇÕES GERAIS PÓS MONTAGEM') {
+                        return LINHAS_POSMONTAGEM_INSPECAO_PDF.map((linha) => {
+                            const origem = inspecao.verificacaoPosmontagem?.[linha.itemIndex];
+                            return {
+                                id: origem?.id ?? String(linha.itemIndex),
+                                nome: linha.titulo,
+                                valorObservado: origem?.valorObservado ?? '',
+                                instrumentoMedicao: cleanInstrument(origem?.instrumentoMedicao ?? linha.instrumentoPadrao),
+                                conformidade: origem?.conformidade ?? '',
+                            } as VerificacaoItem;
+                        });
+                    }
+
+                    return items ?? [];
+                };
+
+                const effectiveItems = mapItemsFromTemplate();
+                if (!effectiveItems || effectiveItems.length === 0) return;
+
                 checkPageBreak(25);
                 addSection(title);
                 const colWidths = [maxWidth * 0.50, maxWidth * 0.18, maxWidth * 0.16, maxWidth * 0.16];
@@ -153,7 +191,7 @@ export const usePdfExportInspecao = () => {
                 };
 
                 drawVerificacoesHeader();
-                items.forEach((it: VerificacaoItem) => {
+                effectiveItems.forEach((it: VerificacaoItem) => {
                     const itemLines = wrapTextLines(it.nome || '-', colWidths[0] - 4);
                     const valorText = it.valorObservado?.trim() || '-';
                     const instrumentoText = it.instrumentoMedicao || '-';

@@ -257,7 +257,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                       onChange={(e) =>
                         handleVerificacaoChange(secao, item.id, 'instrumentoMedicao', e.target.value)
                       }
-                      placeholder="Ex: Paquímetro"
+                      
                     />
                   </td>
                 )}
@@ -339,12 +339,12 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                   <input
                     type="text"
                     className="verificacoes-pm-input"
-                    value={item.instrumentoMedicao || linha.instrumentoMedicao}
+                    value={item.instrumentoMedicao || ''}
                     onChange={(e) =>
                       handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'instrumentoMedicao', e.target.value)
                     }
                     title="Instrumento de medição"
-                    placeholder="Instrumento de medição"
+                    
                   />
                 </td>
                 <td>
@@ -425,12 +425,12 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                   <input
                     type="text"
                     className="verificacoes-pm-input"
-                    value={item.instrumentoMedicao || linha.instrumentoMedicao}
+                    value={item.instrumentoMedicao || ''}
                     onChange={(e) =>
                       handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'instrumentoMedicao', e.target.value)
                     }
                     title="Instrumento de medição"
-                    placeholder="Instrumento de medição"
+                    
                   />
                 </td>
                 <td>

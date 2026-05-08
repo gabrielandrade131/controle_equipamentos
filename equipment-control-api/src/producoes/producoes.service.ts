@@ -716,27 +716,22 @@ export class ProducoesService {
         data: UpdateRegistroInspecaoDto,
     ) {
         await this.findOne(equipmentId);
-
-        const registro = await this.prisma.registroInspecaoMontagem.findUnique({
-            where: {
-                equipmentId_ordem:{
-                    equipmentId,
-                    ordem,
-                },
-            },
-        });
-
-        if (!registro) {
-            throw new NotFoundException('Registro de inspeção não encontrada');
-        }
-        return this.prisma.registroInspecaoMontagem.update({
+        // Use upsert so PATCH succeeds even when the registro does not exist yet
+        return this.prisma.registroInspecaoMontagem.upsert({
             where: {
                 equipmentId_ordem: {
                     equipmentId,
                     ordem,
                 },
             },
-            data: {
+            create: {
+                equipmentId,
+                ordem,
+                valorObservado: data.valorObservado ?? undefined,
+                instrumentoMedicao: data.instrumentoMedicao ?? undefined,
+                conformidades: data.conformidades ?? undefined,
+            },
+            update: {
                 valorObservado: data.valorObservado,
                 instrumentoMedicao: data.instrumentoMedicao,
                 conformidades: data.conformidades,

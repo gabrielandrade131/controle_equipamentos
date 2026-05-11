@@ -2,6 +2,11 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class CreateManutencaoSynchroDto {
+    @ApiPropertyOptional({ example: 'SYNCHRO-12345' })
+    @IsOptional()
+    @IsString()
+    synchroId?: string;
+
     @ApiPropertyOptional({ example: 'Exaustor' })
     @IsOptional()
     @IsString()

@@ -22,6 +22,31 @@ type UsuarioHistorico = {
 export class ManutencoesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizarTexto(value?: string | null): string | null {
+    const texto = String(value ?? '').trim();
+    return texto.length > 0 ? texto : null;
+  }
+
+  private normalizarData(data?: string | Date | null): Date | null {
+    if (!data) {
+      return null;
+    }
+
+    return data instanceof Date ? data : new Date(data);
+  }
+
+  private mesmaData(a?: Date | null, b?: Date | null): boolean {
+    if (!a && !b) {
+      return true;
+    }
+
+    if (!a || !b) {
+      return false;
+    }
+
+    return a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
+  }
+
   private ehSituacaoRetornoBase(value?: string | null): boolean {
     const situacao = String(value ?? '')
       .trim()
@@ -103,6 +128,10 @@ export class ManutencoesService {
       ativo: true,
     };
 
+    if (filters.numeroOrdemManutencao) {
+      where.numeroOrdemManutencao = filters.numeroOrdemManutencao;
+    }
+
     if (filters.statusManutencao) {
       where.statusManutencao = filters.statusManutencao;
     }
@@ -131,23 +160,99 @@ export class ManutencoesService {
     return where;
   }
 
-
-
-  async createFromSynchro(data: CreateManutencaoSynchroDto) {
+  private async importarUmaManutencaoSynchro(data: CreateManutencaoSynchroDto) {
     if (!this.ehSituacaoRetornoBase(data.situacaoEquipamento)) {
       throw new BadRequestException(
         'A manutenção só pode ser criada quando a situação do equipamento for "Retornou para a base" ou "retornou_base".',
       );
     }
 
-    const condicoesDuplicidade: Prisma.ManutencaoWhereInput[] = [];
+    const synchroId = this.normalizarTexto(data.synchroId);
+    const numeroSerie = this.normalizarTexto(data.numeroSerie);
+    const tag = this.normalizarTexto(data.tag);
+    const dataRetornoBase = this.normalizarData(data.dataRetornoBase);
 
-    if (data.numeroSerie) {
-      condicoesDuplicidade.push({ numeroSerie: data.numeroSerie });
+    const manutencaoPorSynchroId = synchroId
+      ? await this.prisma.manutencao.findUnique({
+          where: { synchroId },
+        })
+      : null;
+
+    if (manutencaoPorSynchroId) {
+      const atualizada = await this.prisma.manutencao.update({
+        where: { id: manutencaoPorSynchroId.id },
+        data: {
+          ativo: true,
+          excluidoEm: null,
+          tipoEquipamentoNome: data.tipoEquipamentoNome,
+          modeloEquipamento: data.modeloEquipamento,
+          numeroSerie,
+          tag,
+          situacaoEquipamento: data.situacaoEquipamento,
+          dataRetornoBase,
+        },
+      });
+
+      return {
+        action: manutencaoPorSynchroId.ativo ? 'updated' : 'reactivated',
+        manutencao: atualizada,
+      } as const;
     }
 
-    if (data.tag) {
-      condicoesDuplicidade.push({ tag: data.tag });
+    const candidatos =
+      numeroSerie || tag
+        ? await this.prisma.manutencao.findMany({
+            where: {
+              origem: OrigemManutencao.SYNCHRO,
+              synchroId: null,
+              OR: [
+                ...(numeroSerie ? [{ numeroSerie }] : []),
+                ...(tag ? [{ tag }] : []),
+              ],
+            },
+            orderBy: {
+              criadoEm: 'desc',
+            },
+          })
+        : [];
+
+    const manutencaoExistente = candidatos.find(
+      (item) =>
+        this.normalizarTexto(item.numeroSerie) === numeroSerie &&
+        this.normalizarTexto(item.tag) === tag &&
+        this.mesmaData(item.dataRetornoBase, dataRetornoBase),
+    );
+
+    if (manutencaoExistente) {
+      const atualizada = await this.prisma.manutencao.update({
+        where: { id: manutencaoExistente.id },
+        data: {
+          ativo: true,
+          excluidoEm: null,
+          synchroId,
+          tipoEquipamentoNome: data.tipoEquipamentoNome,
+          modeloEquipamento: data.modeloEquipamento,
+          numeroSerie,
+          tag,
+          situacaoEquipamento: data.situacaoEquipamento,
+          dataRetornoBase,
+        },
+      });
+
+      return {
+        action: manutencaoExistente.ativo ? 'updated' : 'reactivated',
+        manutencao: atualizada,
+      } as const;
+    }
+
+    const condicoesDuplicidade: Prisma.ManutencaoWhereInput[] = [];
+
+    if (numeroSerie) {
+      condicoesDuplicidade.push({ numeroSerie });
+    }
+
+    if (tag) {
+      condicoesDuplicidade.push({ tag });
     }
 
     const manutencaoAberta =
@@ -155,12 +260,17 @@ export class ManutencoesService {
         ? await this.prisma.manutencao.findFirst({
             where: {
               OR: condicoesDuplicidade,
+              ativo: true,
               statusManutencao: {
                 in: [
                   StatusManutencao.PENDENTE,
                   StatusManutencao.EM_MANUTENCAO,
+                  StatusManutencao.PARALISADA,
                 ],
               },
+            },
+            orderBy: {
+              criadoEm: 'desc',
             },
           })
         : null;
@@ -171,20 +281,77 @@ export class ManutencoesService {
       );
     }
 
-    return this.prisma.manutencao.create({
+    const criada = await this.prisma.manutencao.create({
       data: {
+        synchroId,
         origem: OrigemManutencao.SYNCHRO,
         tipoEquipamentoNome: data.tipoEquipamentoNome,
         modeloEquipamento: data.modeloEquipamento,
-        numeroSerie: data.numeroSerie,
-        tag: data.tag,
+        numeroSerie,
+        tag,
         situacaoEquipamento: data.situacaoEquipamento,
-        dataRetornoBase: data.dataRetornoBase
-          ? new Date(data.dataRetornoBase)
-          : null,
+        dataRetornoBase,
         statusManutencao: StatusManutencao.PENDENTE,
       },
     });
+
+    return {
+      action: 'created',
+      manutencao: criada,
+    } as const;
+  }
+
+
+
+  async createFromSynchro(data: CreateManutencaoSynchroDto) {
+    const resultado = await this.importarUmaManutencaoSynchro(data);
+    return resultado.manutencao;
+  }
+
+  async createBulkFromSynchro(items: CreateManutencaoSynchroDto[]) {
+    const results: Array<{
+      index: number;
+      action: 'created' | 'updated' | 'reactivated' | 'error';
+      id?: string;
+      synchroId?: string | null;
+      numeroSerie?: string | null;
+      tag?: string | null;
+      message?: string;
+    }> = [];
+
+    for (const [index, item] of items.entries()) {
+      try {
+        const resultado = await this.importarUmaManutencaoSynchro(item);
+
+        results.push({
+          index,
+          action: resultado.action,
+          id: resultado.manutencao.id,
+          synchroId: resultado.manutencao.synchroId,
+          numeroSerie: resultado.manutencao.numeroSerie,
+          tag: resultado.manutencao.tag,
+        });
+      } catch (error) {
+        results.push({
+          index,
+          action: 'error',
+          synchroId: item.synchroId ?? null,
+          numeroSerie: item.numeroSerie ?? null,
+          tag: item.tag ?? null,
+          message:
+            error instanceof Error ? error.message : 'Falha ao importar manutenção.',
+        });
+      }
+    }
+
+    return {
+      total: items.length,
+      created: results.filter((item) => item.action === 'created').length,
+      updated: results.filter((item) => item.action === 'updated').length,
+      reactivated: results.filter((item) => item.action === 'reactivated').length,
+      errors: results.filter((item) => item.action === 'error').length,
+      results,
+    };
   }
 
   async create(data: CreateManutencaoDto) {
@@ -384,6 +551,7 @@ export class ManutencoesService {
     const worksheet = workbook.addWorksheet('Manutenções');
 
     worksheet.columns = [
+      { header: 'Ordem de Manutenção', key: 'numeroOrdemManutencao', width: 12 },
       { header: 'Tipo de Equipamento', key: 'tipoEquipamentoNome', width: 24 },
       { header: 'Modelo', key: 'modeloEquipamento', width: 28 },
       { header: 'Número de Série', key: 'numeroSerie', width: 24 },
@@ -402,6 +570,7 @@ export class ManutencoesService {
 
     dados.forEach((manutencao) => {
       worksheet.addRow({
+        numeroOrdemManutencao: manutencao.numeroOrdemManutencao,
         tipoEquipamentoNome: manutencao.tipoEquipamentoNome,
         modeloEquipamento: manutencao.modeloEquipamento,
         numeroSerie: manutencao.numeroSerie,
@@ -451,7 +620,7 @@ export class ManutencoesService {
 
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'N1',
+      to: 'O1',
     };
 
     worksheet.views = [

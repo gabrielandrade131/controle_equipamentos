@@ -14,6 +14,7 @@ import {
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ManutencoesService } from './manutencoes.service';
 import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto';
+import { CreateManutencoesSynchroBulkDto } from './dto/create-manutencoes-synchro-bulk.dto';
 import { CreateManutencaoDto } from './dto/create-manutencao.dto';
 import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { SynchroIntegrationGuard } from '../auth/synchro-integration.guard';
@@ -36,6 +37,18 @@ export class ManutencoesController {
   @ApiOperation({ summary: 'Criar manutenção automaticamente a partir do Synchro' })
   createFromSynchro(@Body() body: CreateManutencaoSynchroDto) {
     return this.manutencoesService.createFromSynchro(body);
+  }
+
+  @Post('synchro/bulk')
+  @UseGuards(SynchroIntegrationGuard)
+  @ApiHeader({
+    name: 'x-integration-key',
+    description: 'Chave de integração entre Synchro e Manutenção',
+    required: true,
+  })
+  @ApiOperation({ summary: 'Importar manutenções em lote a partir do Synchro' })
+  createBulkFromSynchro(@Body() body: CreateManutencoesSynchroBulkDto) {
+    return this.manutencoesService.createBulkFromSynchro(body.items);
   }
 
   @Post()

@@ -4,6 +4,14 @@ import { IsEnum, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator'
 import { StatusManutencao } from '@prisma/client';
 
 export class FilterManutencaoDto {
+
+    @ApiPropertyOptional({ example: 1 })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    numeroOrdemManutencao?: number;
+
     @ApiPropertyOptional({ 
         enum: StatusManutencao,
         example: StatusManutencao.PENDENTE,
@@ -49,11 +57,11 @@ export class FilterManutencaoDto {
 
     @ApiPropertyOptional({
         example: 'criadoEm',
-        enum: ['criadoEm', 'dataRetornoBase', 'dataInicio', 'dataTermino', 'statusManutencao'],
+        enum: ['numeroOrdemManutencao','criadoEm', 'dataRetornoBase', 'dataInicio', 'dataTermino', 'statusManutencao'],
     })
     @IsOptional()
-    @IsIn(['criadoEm', 'dataRetornoBase', 'dataInicio', 'dataTermino', 'statusManutencao'])
-    sortBy?: 'criadoEm' | 'dataRetornoBase' | 'dataInicio' | 'dataTermino' | 'statusManutencao';
+    @IsIn(['numeroOrdemManutencao','criadoEm', 'dataRetornoBase', 'dataInicio', 'dataTermino', 'statusManutencao'])
+    sortBy?: 'numeroOrdemManutencao' | 'criadoEm' | 'dataRetornoBase' | 'dataInicio' | 'dataTermino' | 'statusManutencao';
 
     @ApiPropertyOptional({
         example: 'desc',

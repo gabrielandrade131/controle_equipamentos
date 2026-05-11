@@ -203,6 +203,57 @@
   background: #f9f9f9;
 }
 
+.formulario-inspecao .verificacoes-section-row {
+  background: #e8e8e8;
+}
+
+.formulario-inspecao .verificacoes-section-cell {
+  font-weight: bold;
+  padding: 10px;
+  text-align: left;
+}
+
+.formulario-inspecao .verificacoes-table-premontagem .verificacoes-pm-item {
+  vertical-align: top;
+  line-height: 1.25;
+}
+
+.formulario-inspecao .verificacoes-pm-titulo {
+  display: block;
+  font-weight: 700;
+}
+
+.formulario-inspecao .verificacoes-pm-detalhe {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.formulario-inspecao .verificacoes-table-premontagem .verificacoes-pm-instrumento {
+  vertical-align: top;
+  white-space: pre-line;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.formulario-inspecao .verificacoes-table-premontagem .verificacoes-pm-input {
+  width: 100%;
+  padding: 2px 4px;
+  border: none;
+  border-bottom: 1px solid #c9c9c9;
+  border-radius: 0;
+  background: transparent;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.formulario-inspecao .verificacoes-table-premontagem .verificacoes-pm-input:focus {
+  outline: none;
+  border-bottom-color: #B2CC21;
+  box-shadow: none;
+}
+
 .formulario-inspecao .verificacoes-table tbody tr:hover {
   background: #f0f0f0;
 }

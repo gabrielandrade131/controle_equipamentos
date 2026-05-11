@@ -43,6 +43,7 @@
 }
 
 .form-group input,
+.form-group select,
 .form-group textarea {
   padding: 10px;
   border: 1px solid #ddd;
@@ -53,6 +54,7 @@
 }
 
 .form-group input:focus,
+.form-group select:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: #FF1C20;
@@ -76,6 +78,23 @@
 
 .secao-inspecao:last-child {
   margin-bottom: 0;
+}
+
+.secao-inspecao-bloqueada {
+  opacity: 0.55;
+}
+
+.secao-inspecao-bloqueada .checkbox-label {
+  cursor: not-allowed;
+}
+
+.secao-inspecao-bloqueada input[type="radio"] {
+  cursor: not-allowed;
+}
+
+.secao-inspecao-bloqueada textarea,
+.secao-inspecao-bloqueada input {
+  cursor: not-allowed;
 }
 
 .titulo-secao {
@@ -255,6 +274,23 @@
   background-color: #FF1C20;
   color: white;
   box-shadow: 0 2px 4px rgba(255, 28, 32, 0.2);
+}
+
+.btn-cancelar {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-cancelar:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
 }
 
 .btn-salvar:hover {

@@ -280,7 +280,7 @@ export class ProducoesService {
                     })) ?? [],
                 },
                 registrosInspecaoMontagem: {
-                    create: Array.from({ length: 16 }, (_, index) => ({
+                    create: Array.from({ length: 18 }, (_, index) => ({
                         ordem: index + 1,
                     })),
                 }
@@ -716,27 +716,22 @@ export class ProducoesService {
         data: UpdateRegistroInspecaoDto,
     ) {
         await this.findOne(equipmentId);
-
-        const registro = await this.prisma.registroInspecaoMontagem.findUnique({
-            where: {
-                equipmentId_ordem:{
-                    equipmentId,
-                    ordem,
-                },
-            },
-        });
-
-        if (!registro) {
-            throw new NotFoundException('Registro de inspeção não encontrada');
-        }
-        return this.prisma.registroInspecaoMontagem.update({
+        // Use upsert so PATCH succeeds even when the registro does not exist yet
+        return this.prisma.registroInspecaoMontagem.upsert({
             where: {
                 equipmentId_ordem: {
                     equipmentId,
                     ordem,
                 },
             },
-            data: {
+            create: {
+                equipmentId,
+                ordem,
+                valorObservado: data.valorObservado ?? undefined,
+                instrumentoMedicao: data.instrumentoMedicao ?? undefined,
+                conformidades: data.conformidades ?? undefined,
+            },
+            update: {
                 valorObservado: data.valorObservado,
                 instrumentoMedicao: data.instrumentoMedicao,
                 conformidades: data.conformidades,
@@ -823,7 +818,7 @@ export class ProducoesService {
             { header: 'Situação do Prazo', key: 'situacaoPrazo', width: 22 },
             { header: 'Resultado do Prazo', key: 'resultadoPrazo', width: 26 },
             { header: 'TAG', key: 'tag', width: 18 },
-            { header: 'Lista de Peças', key: 'listaPecas', width: 16 },
+            { header: 'Lista de Peças', key: 'listaPecas', width: 18 },
             { header: 'Sequência de Montagem', key: 'sequenciaMontagem', width: 24 },
             { header: 'Inspeção de Montagem', key: 'inspecaoMontagem', width: 24 },
             { header: 'Histórico do Equipamento', key: 'historicoEquipamento', width: 26 },

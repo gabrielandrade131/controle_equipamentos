@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
+import { LINHAS_PREMONTAGEM_INSPECAO_PDF, LINHAS_POSMONTAGEM_INSPECAO_PDF } from '../constants/inspecaoMontagem';
 
 export const usePdfExportInspecao = () => {
     const exportInspecaoToPdf = async (inspecao: InspecaoMontagem, filename: string, logoPath?: string) => {
@@ -64,6 +65,17 @@ export const usePdfExportInspecao = () => {
                 yPosition += 6;
             };
 
+            const wrapTextLines = (text: string, width: number) => {
+                const segments = (text || '-').split('\n');
+                return segments.flatMap((segment) => pdf.splitTextToSize(segment, width) as string[]);
+            };
+
+            const drawTextLines = (lines: string[], x: number, startY: number, lineHeight: number) => {
+                lines.forEach((line, index) => {
+                    pdf.text(line || '-', x, startY + index * lineHeight);
+                });
+            };
+
             // Informações principais
             addSection('INFORMAÇÕES');
             addField('Número de Série', inspecao.numeroSerie);
@@ -86,29 +98,32 @@ export const usePdfExportInspecao = () => {
                 checkPageBreak(25);
                 addSection('INSTRUMENTOS DE AFERIÇÃO');
                 const colWidths = [maxWidth * 0.65, maxWidth * 0.35];
-                const rowH = 7;
+                const rowLineHeight = 4;
+
                 const drawInstrumentsHeader = () => {
                     pdf.setFillColor(240, 240, 240);
-                    pdf.rect(marginLeft, yPosition, colWidths[0], rowH, 'F');
-                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH, 'F');
+                    pdf.rect(marginLeft, yPosition, colWidths[0], 7, 'F');
+                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], 7, 'F');
                     pdf.setFont(undefined, 'bold');
                     pdf.setFontSize(8);
                     pdf.text('Instrumento', marginLeft + 2, yPosition + 4);
                     pdf.text('Conformidade', marginLeft + colWidths[0] + 2, yPosition + 4);
-                    yPosition += rowH;
+                    yPosition += 7;
                     pdf.setFont(undefined, 'normal');
                 };
 
                 drawInstrumentsHeader();
                 inspecao.instrumentosAferição.forEach((it: VerificacaoItem) => {
+                    const instrumentLines = wrapTextLines(it.nome || '-', colWidths[0] - 4);
+                    const conformityLines = wrapTextLines(it.conformidade || '-', colWidths[1] - 4);
+                    const rowH = Math.max(instrumentLines.length, conformityLines.length, 1) * rowLineHeight + 4;
                     const startedNew = checkPageBreak(rowH);
                     if (startedNew) drawInstrumentsHeader();
                     pdf.rect(marginLeft, yPosition, colWidths[0], rowH);
                     pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH);
                     pdf.setFontSize(7);
-                    const parts = pdf.splitTextToSize(it.nome, colWidths[0] - 4);
-                    pdf.text(parts[0] || '', marginLeft + 2, yPosition + 4);
-                    pdf.text(it.conformidade || '-', marginLeft + colWidths[0] + 2, yPosition + 4);
+                    drawTextLines(instrumentLines, marginLeft + 2, yPosition + 4, rowLineHeight);
+                    drawTextLines(conformityLines, marginLeft + colWidths[0] + 2, yPosition + 4, rowLineHeight);
                     yPosition += rowH;
                 });
                 yPosition += 4;
@@ -116,50 +131,101 @@ export const usePdfExportInspecao = () => {
 
             // Verificações gerais (pré e pós montagem)
             const renderVerificacoes = (title: string, items?: VerificacaoItem[]) => {
-                if (!items || items.length === 0) return;
+                const cleanInstrument = (instr?: string) => {
+                    if (!instr) return instr;
+                    return instr.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim();
+                };
+                // Map to the same lines used by the form so PDF matches o formulário
+                const mapItemsFromTemplate = (): VerificacaoItem[] => {
+                    if (title === 'VERIFICAÇÕES GERAIS PRÉ MONTAGEM') {
+                        return LINHAS_PREMONTAGEM_INSPECAO_PDF.map((linha) => {
+                            const origem = inspecao.verificacoesGeraisPremontagem?.[linha.itemIndex];
+                            return {
+                                id: origem?.id ?? String(linha.itemIndex),
+                                nome: linha.titulo,
+                                valorObservado: origem?.valorObservado ?? '',
+                                instrumentoMedicao: origem?.instrumentoMedicao ?? linha.instrumentoPadrao,
+                                conformidade: origem?.conformidade ?? '',
+                            } as VerificacaoItem;
+                        });
+                    }
+
+                    if (title === 'VERIFICAÇÕES GERAIS PÓS MONTAGEM') {
+                        return LINHAS_POSMONTAGEM_INSPECAO_PDF.map((linha) => {
+                            const origem = inspecao.verificacaoPosmontagem?.[linha.itemIndex];
+                            return {
+                                id: origem?.id ?? String(linha.itemIndex),
+                                nome: linha.titulo,
+                                valorObservado: origem?.valorObservado ?? '',
+                                instrumentoMedicao: cleanInstrument(origem?.instrumentoMedicao ?? linha.instrumentoPadrao),
+                                conformidade: origem?.conformidade ?? '',
+                            } as VerificacaoItem;
+                        });
+                    }
+
+                    return items ?? [];
+                };
+
+                const effectiveItems = mapItemsFromTemplate();
+                if (!effectiveItems || effectiveItems.length === 0) return;
+
                 checkPageBreak(25);
                 addSection(title);
                 const colWidths = [maxWidth * 0.50, maxWidth * 0.18, maxWidth * 0.16, maxWidth * 0.16];
-                const rowH = 7;
+                const rowLineHeight = 4;
+
                 const drawVerificacoesHeader = () => {
                     pdf.setFillColor(240, 240, 240);
-                    pdf.rect(marginLeft, yPosition, colWidths[0], rowH, 'F');
-                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH, 'F');
-                    pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowH, 'F');
-                    pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowH, 'F');
+                    pdf.rect(marginLeft, yPosition, colWidths[0], 7, 'F');
+                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], 7, 'F');
+                    pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], 7, 'F');
+                    pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], 7, 'F');
                     pdf.setFont(undefined, 'bold');
                     pdf.setFontSize(7);
                     pdf.text('Item', marginLeft + 2, yPosition + 4);
                     pdf.text('Valor', marginLeft + colWidths[0] + 2, yPosition + 4);
                     pdf.text('Instrumento', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 4);
                     pdf.text('Conformidade', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 4);
-                    yPosition += rowH;
+                    yPosition += 7;
                     pdf.setFont(undefined, 'normal');
                 };
 
                 drawVerificacoesHeader();
-                items.forEach((it: VerificacaoItem) => {
+                effectiveItems.forEach((it: VerificacaoItem) => {
+                    const itemLines = wrapTextLines(it.nome || '-', colWidths[0] - 4);
+                    const valorText = it.valorObservado?.trim() || '-';
+                    const instrumentoText = it.instrumentoMedicao || '-';
+                    const valorLines = wrapTextLines(valorText, colWidths[1] - 4);
+                    const instrumentoLines = wrapTextLines(instrumentoText, colWidths[2] - 4);
+                    const conformidadeLines = wrapTextLines(it.conformidade || '-', colWidths[3] - 4);
+
+                    const rowH = Math.max(
+                        itemLines.length,
+                        valorLines.length,
+                        instrumentoLines.length,
+                        conformidadeLines.length,
+                        1,
+                    ) * rowLineHeight + 4;
+
                     const startedNew = checkPageBreak(rowH);
                     if (startedNew) drawVerificacoesHeader();
-                    if (it.nome.startsWith('@SECTION:')) {
-                        pdf.setFont(undefined, 'bold');
-                        const sectionTitle = it.nome.replace('@SECTION:', '');
-                        pdf.text(sectionTitle, marginLeft + 2, yPosition + 4);
-                        yPosition += rowH;
-                        pdf.setFont(undefined, 'normal');
-                    } else {
-                        pdf.rect(marginLeft, yPosition, colWidths[0], rowH);
-                        pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH);
-                        pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowH);
-                        pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowH);
-                        pdf.setFontSize(7);
-                        const txt = pdf.splitTextToSize(it.nome, colWidths[0] - 4);
-                        pdf.text(txt[0] || '', marginLeft + 2, yPosition + 4);
-                        pdf.text(it.valorObservado || '-', marginLeft + colWidths[0] + 2, yPosition + 4);
-                        pdf.text(it.instrumentoMedicao || '-', marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 4);
-                        pdf.text(it.conformidade || '-', marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 4);
-                        yPosition += rowH;
-                    }
+
+                    pdf.rect(marginLeft, yPosition, colWidths[0], rowH);
+                    pdf.rect(marginLeft + colWidths[0], yPosition, colWidths[1], rowH);
+                    pdf.rect(marginLeft + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowH);
+                    pdf.rect(marginLeft + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowH);
+
+                    pdf.setFontSize(7);
+                    pdf.setFont(undefined, 'bold');
+                    drawTextLines(itemLines, marginLeft + 2, yPosition + 4, rowLineHeight);
+                    pdf.setFont(undefined, 'normal');
+                    drawTextLines(valorLines, marginLeft + colWidths[0] + 2, yPosition + 4, rowLineHeight);
+                    pdf.setFont(undefined, 'bold');
+                    drawTextLines(instrumentoLines, marginLeft + colWidths[0] + colWidths[1] + 2, yPosition + 4, rowLineHeight);
+                    pdf.setFont(undefined, 'normal');
+                    drawTextLines(conformidadeLines, marginLeft + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 4, rowLineHeight);
+
+                    yPosition += rowH;
                 });
                 yPosition += 4;
             };

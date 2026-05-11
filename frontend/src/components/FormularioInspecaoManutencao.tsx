@@ -5,19 +5,40 @@ import './FormularioInspecaoManutencao.css';
 
 interface FormularioInspecaoManutencaoProps {
   onSalvar?: (inspecao: InspecaoManutencao) => void;
+  onCancelar?: () => void;
   inspecaoInicial?: InspecaoManutencao;
+  isEditing?: boolean;
 }
+
+type SecaoInspecaoKey = keyof Pick<
+  InspecaoManutencao,
+  | 'certificacoes'
+  | 'estruturaMecanica'
+  | 'sistemaHidraulico'
+  | 'sistemaPneumatico'
+  | 'sistemaEletrico'
+  | 'dispositivoSeguranca'
+  | 'componentesOperacionais'
+  | 'acessorios'
+  | 'testesOperacionais'
+>;
+
+type CampoInspecao = keyof Omit<InspecaoManutencao, SecaoInspecaoKey>;
 
 export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencaoProps> = ({
   onSalvar,
+  onCancelar,
   inspecaoInicial,
+  isEditing = false,
 }) => {
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
   );
   usePdfExportManutencao();
 
-  const handleInputChange = (campo: keyof Omit<InspecaoManutencao, 'certificacoes' | 'estruturaMecanica' | 'sistemaHidraulico' | 'sistemaPneumatico' | 'sistemaEletrico' | 'dispositivoSeguranca' | 'componentesOperacionais' | 'acessorios' | 'testesOperacionais'>, valor: string) => {
+  const documentoBloqueado = inspecao.statusManutencao !== 'CONCLUIDA';
+
+  const handleInputChange = (campo: CampoInspecao, valor: string) => {
     setInspecao((prev) => ({
       ...prev,
       [campo]: valor,
@@ -25,10 +46,14 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleRespostaChange = (
-    secao: keyof Pick<InspecaoManutencao, 'certificacoes' | 'estruturaMecanica' | 'sistemaHidraulico' | 'sistemaPneumatico' | 'sistemaEletrico' | 'dispositivoSeguranca' | 'componentesOperacionais' | 'acessorios' | 'testesOperacionais'>,
+    secao: SecaoInspecaoKey,
     itemId: string,
     resposta: RespostaBinaria
   ) => {
+    if (documentoBloqueado) {
+      return;
+    }
+
     setInspecao((prev) => ({
       ...prev,
       [secao]: prev[secao].map((item) =>
@@ -38,13 +63,14 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const renderSecao = (
-    secao: keyof Pick<InspecaoManutencao, 'certificacoes' | 'estruturaMecanica' | 'sistemaHidraulico' | 'sistemaPneumatico' | 'sistemaEletrico' | 'dispositivoSeguranca' | 'componentesOperacionais' | 'acessorios' | 'testesOperacionais'>,
-    titulo: string
+    secao: SecaoInspecaoKey,
+    titulo: string,
+    bloqueada = documentoBloqueado
   ) => {
     const itens = inspecao[secao] as ItemInspecao[];
 
     return (
-      <div key={secao} className="secao-inspecao">
+      <div key={secao} className={`secao-inspecao${bloqueada ? ' secao-inspecao-bloqueada' : ''}`}>
         <h3 className="titulo-secao">{titulo}</h3>
         <div className="itens-container">
           {itens.map((item) => (
@@ -59,13 +85,13 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
                       value={resp}
                       checked={item.resposta === resp}
                       onChange={() => handleRespostaChange(secao, item.id, resp)}
+                      disabled={bloqueada}
                     />
                     <span className="checkbox-custom">☐</span>
                     <span>{resp}</span>
                   </label>
                 ))}
               </div>
-
             </div>
           ))}
         </div>
@@ -74,25 +100,37 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleSalvar = () => {
-    if (!inspecao.dataManutencao || !inspecao.responsavel) {
-      alert('Por favor, preencha os campos obrigatórios: Data da Manutenção e Responsável');
+    if (!inspecao.responsavel) {
+      alert('Por favor, preencha o campo obrigatório: Responsável');
       return;
     }
+
     onSalvar?.(inspecao);
   };
 
   return (
-    <form className="formulario-inspecao-manutencao" onSubmit={(e) => e.preventDefault()}>
-      {/* Dados do Equipamento */}
+    <form
+      className="formulario-inspecao-manutencao"
+      aria-label={isEditing ? 'Editar inspeção de manutenção' : 'Nova inspeção de manutenção'}
+      onSubmit={(e) => e.preventDefault()}
+    >
       <div className="dados-equipamento">
         <h2>Dados da Manutenção</h2>
         <div className="grid-inputs">
           <div className="form-group">
-            <label>Data da Manutenção *</label>
+            <label>Data de Início da Manutenção</label>
             <input
               type="date"
               value={inspecao.dataManutencao}
               onChange={(e) => handleInputChange('dataManutencao', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Data de Retorno à Base</label>
+            <input
+              type="date"
+              value={inspecao.dataRetornoBase || ''}
+              onChange={(e) => handleInputChange('dataRetornoBase', e.target.value)}
             />
           </div>
           <div className="form-group">
@@ -151,6 +189,34 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
               onChange={(e) => handleInputChange('responsavel', e.target.value)}
             />
           </div>
+          <div className="form-group">
+            <label>Status da Manutenção</label>
+            <select
+              value={inspecao.statusManutencao}
+              onChange={(e) => handleInputChange('statusManutencao', e.target.value)}
+            >
+              <option value="PENDENTE">Pendente</option>
+              <option value="EM_MANUTENCAO">Em manutenção</option>
+              <option value="PARALISADA">Paralisada</option>
+              <option value="CONCLUIDA">Concluída</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Data de Término</label>
+            <input
+              type="date"
+              value={inspecao.dataTermino || ''}
+              onChange={(e) => handleInputChange('dataTermino', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Previsão de Término</label>
+            <input
+              type="date"
+              value={inspecao.previsaoTermino || ''}
+              onChange={(e) => handleInputChange('previsaoTermino', e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -166,7 +232,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
         {renderSecao('testesOperacionais', 'TESTES OPERACIONAIS')}
       </div>
 
-      <div className="avaliacao-final">
+      <div className={`avaliacao-final${documentoBloqueado ? ' secao-inspecao-bloqueada' : ''}`}>
         <h3>AVALIAÇÃO FINAL</h3>
         <div className="respostas">
           {(['CONFORME', 'NÃO CONFORME'] as const).map((aval) => (
@@ -177,6 +243,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
                 value={aval}
                 checked={inspecao.avaliacaoFinal === aval}
                 onChange={() => handleInputChange('avaliacaoFinal', aval)}
+                disabled={documentoBloqueado}
               />
               <span className="checkbox-custom">☐</span>
               <span>{aval}</span>
@@ -185,23 +252,25 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
         </div>
       </div>
 
-      <div className="observacoes-gerais">
+      <div className={`observacoes-gerais${documentoBloqueado ? ' secao-inspecao-bloqueada' : ''}`}>
         <h3>Observações</h3>
         <textarea
           value={inspecao.observacoes || ''}
           onChange={(e) => handleInputChange('observacoes', e.target.value)}
           placeholder="Digite observações gerais da inspeção"
           rows={4}
+          disabled={documentoBloqueado}
         />
       </div>
 
-      <div className="assinatura">
+      <div className={`assinatura${documentoBloqueado ? ' secao-inspecao-bloqueada' : ''}`}>
         <h3>Assinatura</h3>
         <input
           type="text"
           placeholder="Espaço para assinatura digital ou texto"
           value={inspecao.assinatura || ''}
           onChange={(e) => handleInputChange('assinatura', e.target.value)}
+          disabled={documentoBloqueado}
         />
       </div>
 
@@ -209,6 +278,11 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
         <button onClick={handleSalvar} className="btn-salvar">
           Salvar Inspeção
         </button>
+        {onCancelar && (
+          <button type="button" onClick={onCancelar} className="btn-cancelar">
+            Cancelar
+          </button>
+        )}
       </div>
     </form>
   );

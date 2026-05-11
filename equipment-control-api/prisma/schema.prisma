@@ -132,6 +132,7 @@ model RegistroInspecaoMontagem {
 
 model Manutencao {
   id                      String        @id @default(uuid())
+  numeroOrdemManutencao   Int           @unique @default(autoincrement())
   origem                  OrigemManutencao      @default(SYNCHRO)
 
   tipoEquipamentoNome     String?

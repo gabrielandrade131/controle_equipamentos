@@ -70,7 +70,7 @@ export const Manutencao: React.FC = () => {
 
   return (
     <div className="manutencao-page">
-      <h2>Manutencao</h2>
+      <h2>Manutenção</h2>
 
       <div className="page-toolbar">
         <button

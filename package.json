@@ -2,7 +2,7 @@
   "scripts": {
     "start": "npm run start:all",
     "start:api": "cd equipment-control-api && cross-env PORT=3000 npm run start:dev",
-    "start:front": "cd frontend && cross-env PORT=3001 REACT_APP_API_URL=http://localhost:3000 npm start",
+    "start:front": "cd frontend && cross-env PORT=3001 npm start",
     "start:all": "concurrently -n equipment-api,equipment-front -c cyan,green \"npm run start:api\" \"npm run start:front\"",
     "start:dev": "npm run start:api",
     "build": "cd frontend && npm run build && cd ../equipment-control-api && npm run build",

@@ -78,7 +78,7 @@ model HistoricoEquipamentoRegistro {
 
 model ItemSeriado {
   id                String          @id             @default(uuid())
-  equipmentId       String
+  equipmentId       String          @map("producaoID")
   descricao         String
   criadoEm          DateTime        @default(now())
 

@@ -31,6 +31,7 @@ async function bootstrap() {
       'http://localhost:5173',
       'http://localhost:3000',
       'http://localhost:3001',
+      'http://177.153.69.133',
       'http://177.153.69.133:3000'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
+import { ModalEditarDetalhesManutencao } from '../components/ModalEditarDetalhesManutencao';
+import { AlertModal } from '../components/AlertModal';
 import { useManutencao } from '../hooks/useManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
@@ -12,9 +13,9 @@ interface SelectedInspecao {
 }
 
 export const Manutencao: React.FC = () => {
-  const navigate = useNavigate();
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
-  const [modo, setModo] = useState<'lista' | 'editar'>('lista');
+  const [modo, setModo] = useState<'lista' | 'editar-formulario' | 'editar-detalhes' | 'editar-inspecao'>('lista');
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
   const { historico, atualizarInspecao } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
 
@@ -27,7 +28,7 @@ export const Manutencao: React.FC = () => {
 
   const handleExportarPDF = async (inspecao: InspecaoManutencao) => {
     try {
-      const nomeArquivo = `inspecao_manutencao_${inspecao.numeroSerie || 'equipamento'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const nomeArquivo = `inspecao_manutencao_${inspecao.tag || 'equipamento'}_${new Date().toISOString().split('T')[0]}.pdf`;
       await exportInspecaoToPdf(inspecao, nomeArquivo);
     } catch (error) {
       alert('Erro ao gerar PDF: ' + error);
@@ -55,7 +56,35 @@ export const Manutencao: React.FC = () => {
       });
   };
 
-  if (modo === 'editar' && selected && selected.data.statusManutencao !== 'CONCLUIDA') {
+  const handleEditarDetalhes = (inspecao: InspecaoManutencao) => {
+    if (!selected) return;
+
+    atualizarInspecao(selected.id, inspecao)
+      .then((inspecaoAtualizada) => {
+        setSelected({ id: inspecaoAtualizada.id || selected.id, data: inspecaoAtualizada });
+        setModo('lista');
+        alert('Detalhes atualizados com sucesso!');
+      })
+      .catch((error) => {
+        console.error('Erro ao atualizar detalhes:', error);
+        alert(error.response?.data?.message || 'Nao foi possivel atualizar os detalhes.');
+      });
+  };
+
+  if (modo === 'editar-formulario' && selected && selected.data.statusManutencao !== 'CONCLUIDA') {
+    return (
+      <div className="manutencao-container">
+        <FormularioInspecaoManutencao
+          inspecaoInicial={selected.data}
+          onSalvar={handleEditarInspecao}
+          onCancelar={() => setModo('lista')}
+          isEditing
+        />
+      </div>
+    );
+  }
+
+  if (modo === 'editar-inspecao' && selected && selected.data.statusManutencao !== 'CONCLUIDA') {
     return (
       <div className="manutencao-container">
         <FormularioInspecaoManutencao
@@ -72,15 +101,6 @@ export const Manutencao: React.FC = () => {
     <div className="manutencao-page">
       <h2>Manutenção</h2>
 
-      <div className="page-toolbar">
-        <button
-          onClick={() => navigate('/manutencao/criar')}
-          className="btn-primary"
-        >
-          Nova Inspecao
-        </button>
-      </div>
-
       <div className="page-content">
         <div className="page-list-section">
           <h3>Historico de Manutencoes ({historico.length})</h3>
@@ -94,7 +114,7 @@ export const Manutencao: React.FC = () => {
                   className={selected?.id === inspecao.id ? 'active' : ''}
                   onClick={() => handleSelectInspecao(inspecao)}
                 >
-                  <strong>{inspecao.numeroSerie || 'Sem serie'}</strong>
+                  <strong>{(inspecao.numeroOrdemManutencao ?? inspecao.tag) || 'Sem TAG'}</strong>
                   <small>{inspecao.fabricante || '-'}</small>
                   <small>{inspecao.statusManutencao || '-'}</small>
                 </li>
@@ -106,11 +126,11 @@ export const Manutencao: React.FC = () => {
         <div className="page-detail-section">
           {selected ? (
             <div className="manutencao-detail">
-              <h2>Detalhes da Inspecao</h2>
+              <h2>Detalhes</h2>
               <div className="page-detail-grid">
                 <div className="detail-item">
-                  <label>Numero de Serie:</label>
-                  <p>{selected.data.numeroSerie || '-'}</p>
+                  <label>Ordem de Manutenção:</label>
+                  <p>{selected.data.numeroOrdemManutencao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>TAG:</label>
@@ -125,8 +145,8 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.modelo || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data da Manutencao:</label>
-                  <p>{selected.data.dataManutencao ? new Date(selected.data.dataManutencao).toLocaleDateString('pt-BR') : '-'}</p>
+                  <label>Data de Início:</label>
+                  <p>{selected.data.dataInicio ? new Date(selected.data.dataInicio).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Retorno a Base:</label>
@@ -135,6 +155,10 @@ export const Manutencao: React.FC = () => {
                 <div className="detail-item">
                   <label>Previsao de Termino:</label>
                   <p>{selected.data.previsaoTermino ? new Date(selected.data.previsaoTermino).toLocaleDateString('pt-BR') : '-'}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Data de Término:</label>
+                  <p>{selected.data.dataTermino ? new Date(selected.data.dataTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Responsavel:</label>
@@ -154,36 +178,66 @@ export const Manutencao: React.FC = () => {
                 </div>
               </div>
 
-              <div className="detail-item full">
-                <label>Avaliacao Final:</label>
-                <span className={`badge badge-${selected.data.avaliacaoFinal === 'CONFORME' ? 'success' : 'danger'}`}>
-                  {selected.data.avaliacaoFinal || '-'}
-                </span>
+              <div className="documents-section">
+                <h3>Observações</h3>
+                <div className="observacoes-historico-view">
+                  {selected.data.observacoesHistorico && selected.data.observacoesHistorico.length > 0 ? (
+                    selected.data.observacoesHistorico.map((obs, index) => (
+                      <div key={obs.id || index} className="observacao-item-view">
+                        <strong>{new Date(obs.data).toLocaleDateString('pt-BR')}</strong>
+                        <p>{obs.texto}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="sem-observacoes">Nenhuma observação registrada.</p>
+                  )}
+                </div>
               </div>
 
-              {selected.data.observacoes && (
-                <div className="documents-section">
-                  <h3>Observacoes</h3>
-                  <p>{selected.data.observacoes}</p>
+              <div className="inspecao-mini-tab">
+                <h3>Inspeção</h3>
+                <div className="inspecao-content">
+                  <div className="avaliacao-item">
+                    <label>Avaliação Final:</label>
+                    <span className={`badge badge-${selected.data.avaliacaoFinal === 'CONFORME' ? 'success' : 'danger'}`}>
+                      {selected.data.avaliacaoFinal || '-'}
+                    </span>
+                  </div>
+                  <div className="inspecao-actions">
+                    <button
+                      onClick={() => selected.data.statusManutencao === 'CONCLUIDA' ? setModo('editar-inspecao') : setAlertModal({ isOpen: true, message: 'Não é possível criar inspeção pois a manutenção ainda não foi concluída.' })}
+                      className="btn-primary"
+                    >
+                      Criar Inspeção
+                    </button>
+                    <button
+                      onClick={() => handleExportarPDF(selected.data)}
+                      className="btn-primary"
+                    >
+                      Exportar PDF
+                    </button>
+                  </div>
                 </div>
-              )}
+              </div>
 
               <div className="action-buttons">
                 {selected.data.statusManutencao !== 'CONCLUIDA' && (
                   <button
-                    onClick={() => setModo('editar')}
+                    onClick={() => setModo('editar-detalhes')}
                     className="btn-primary"
                   >
                     Editar
                   </button>
                 )}
-                <button
-                  onClick={() => handleExportarPDF(selected.data)}
-                  className="btn-primary"
-                >
-                  Exportar PDF
-                </button>
               </div>
+
+              {modo === 'editar-detalhes' && (
+                <ModalEditarDetalhesManutencao
+                  inspecao={selected.data}
+                  onSalvar={handleEditarDetalhes}
+                  onCancelar={() => setModo('lista')}
+                />
+              )}
             </div>
           ) : (
             <div className="empty-state">
@@ -192,6 +246,14 @@ export const Manutencao: React.FC = () => {
           )}
         </div>
       </div>
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        title="Operação não permitida"
+        message={alertModal.message}
+        onClose={() => setAlertModal({ isOpen: false, message: '' })}
+        type="warning"
+      />
     </div>
   );
 };

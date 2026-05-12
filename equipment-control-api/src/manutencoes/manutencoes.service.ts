@@ -143,13 +143,6 @@ export class ManutencoesService {
       };
     }
 
-    if (filters.numeroSerie) {
-      where.numeroSerie = {
-        contains: filters.numeroSerie,
-        mode: 'insensitive',
-      };
-    }
-
     if (filters.tipoEquipamentoNome) {
       where.tipoEquipamentoNome = {
         contains: filters.tipoEquipamentoNome,
@@ -168,7 +161,6 @@ export class ManutencoesService {
     }
 
     const synchroId = this.normalizarTexto(data.synchroId);
-    const numeroSerie = this.normalizarTexto(data.numeroSerie);
     const tag = this.normalizarTexto(data.tag);
     const dataRetornoBase = this.normalizarData(data.dataRetornoBase);
 
@@ -186,7 +178,6 @@ export class ManutencoesService {
           excluidoEm: null,
           tipoEquipamentoNome: data.tipoEquipamentoNome,
           modeloEquipamento: data.modeloEquipamento,
-          numeroSerie,
           tag,
           situacaoEquipamento: data.situacaoEquipamento,
           dataRetornoBase,
@@ -200,15 +191,12 @@ export class ManutencoesService {
     }
 
     const candidatos =
-      numeroSerie || tag
+      tag
         ? await this.prisma.manutencao.findMany({
             where: {
               origem: OrigemManutencao.SYNCHRO,
               synchroId: null,
-              OR: [
-                ...(numeroSerie ? [{ numeroSerie }] : []),
-                ...(tag ? [{ tag }] : []),
-              ],
+              tag,
             },
             orderBy: {
               criadoEm: 'desc',
@@ -218,7 +206,6 @@ export class ManutencoesService {
 
     const manutencaoExistente = candidatos.find(
       (item) =>
-        this.normalizarTexto(item.numeroSerie) === numeroSerie &&
         this.normalizarTexto(item.tag) === tag &&
         this.mesmaData(item.dataRetornoBase, dataRetornoBase),
     );
@@ -232,7 +219,6 @@ export class ManutencoesService {
           synchroId,
           tipoEquipamentoNome: data.tipoEquipamentoNome,
           modeloEquipamento: data.modeloEquipamento,
-          numeroSerie,
           tag,
           situacaoEquipamento: data.situacaoEquipamento,
           dataRetornoBase,
@@ -246,10 +232,6 @@ export class ManutencoesService {
     }
 
     const condicoesDuplicidade: Prisma.ManutencaoWhereInput[] = [];
-
-    if (numeroSerie) {
-      condicoesDuplicidade.push({ numeroSerie });
-    }
 
     if (tag) {
       condicoesDuplicidade.push({ tag });
@@ -287,7 +269,6 @@ export class ManutencoesService {
         origem: OrigemManutencao.SYNCHRO,
         tipoEquipamentoNome: data.tipoEquipamentoNome,
         modeloEquipamento: data.modeloEquipamento,
-        numeroSerie,
         tag,
         situacaoEquipamento: data.situacaoEquipamento,
         dataRetornoBase,
@@ -314,7 +295,7 @@ export class ManutencoesService {
       action: 'created' | 'updated' | 'reactivated' | 'error';
       id?: string;
       synchroId?: string | null;
-      numeroSerie?: string | null;
+      numeroOrdemManutencao?: number | null;
       tag?: string | null;
       message?: string;
     }> = [];
@@ -328,7 +309,7 @@ export class ManutencoesService {
           action: resultado.action,
           id: resultado.manutencao.id,
           synchroId: resultado.manutencao.synchroId,
-          numeroSerie: resultado.manutencao.numeroSerie,
+          numeroOrdemManutencao: resultado.manutencao.numeroOrdemManutencao,
           tag: resultado.manutencao.tag,
         });
       } catch (error) {
@@ -336,7 +317,7 @@ export class ManutencoesService {
           index,
           action: 'error',
           synchroId: item.synchroId ?? null,
-          numeroSerie: item.numeroSerie ?? null,
+          numeroOrdemManutencao: null,
           tag: item.tag ?? null,
           message:
             error instanceof Error ? error.message : 'Falha ao importar manutenção.',
@@ -360,7 +341,6 @@ export class ManutencoesService {
         origem: OrigemManutencao.MANUAL,
         tipoEquipamentoNome: data.tipoEquipamentoNome,
         modeloEquipamento: data.modeloEquipamento,
-        numeroSerie: data.numeroSerie,
         tag: data.tag,
         situacaoEquipamento: data.situacaoEquipamento,
         dataRetornoBase: data.dataRetornoBase
@@ -449,7 +429,6 @@ export class ManutencoesService {
     const novosDados = {
       tipoEquipamentoNome: data.tipoEquipamentoNome,
       modeloEquipamento: data.modeloEquipamento,
-      numeroSerie: data.numeroSerie,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
       dataRetornoBase: data.dataRetornoBase ? new Date(data.dataRetornoBase) : undefined,
@@ -477,7 +456,6 @@ export class ManutencoesService {
     const camposMonitorados: Array<keyof typeof novosDados> = [
       'tipoEquipamentoNome',
       'modeloEquipamento',
-      'numeroSerie',
       'tag',
       'situacaoEquipamento',
       'dataRetornoBase',
@@ -554,7 +532,6 @@ export class ManutencoesService {
       { header: 'Ordem de Manutenção', key: 'numeroOrdemManutencao', width: 12 },
       { header: 'Tipo de Equipamento', key: 'tipoEquipamentoNome', width: 24 },
       { header: 'Modelo', key: 'modeloEquipamento', width: 28 },
-      { header: 'Número de Série', key: 'numeroSerie', width: 24 },
       { header: 'TAG', key: 'tag', width: 18 },
       { header: 'Situação do Equipamento', key: 'situacaoEquipamento', width: 26 },
       { header: 'Data de Retorno à Base', key: 'dataRetornoBase', width: 22 },
@@ -573,7 +550,6 @@ export class ManutencoesService {
         numeroOrdemManutencao: manutencao.numeroOrdemManutencao,
         tipoEquipamentoNome: manutencao.tipoEquipamentoNome,
         modeloEquipamento: manutencao.modeloEquipamento,
-        numeroSerie: manutencao.numeroSerie,
         tag: manutencao.tag,
         situacaoEquipamento: manutencao.situacaoEquipamento,
         dataRetornoBase: manutencao.dataRetornoBase,
@@ -620,7 +596,7 @@ export class ManutencoesService {
 
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'O1',
+      to: 'N1',
     };
 
     worksheet.views = [

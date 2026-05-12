@@ -138,7 +138,6 @@ model Manutencao {
 
   tipoEquipamentoNome     String?
   modeloEquipamento       String?
-  numeroSerie             String?
   tag                     String?
   situacaoEquipamento     String?
 
@@ -158,8 +157,7 @@ model Manutencao {
 
   ativo                   Boolean           @default(true)
   excluidoEm              DateTime?         
-  
-  @@index([numeroSerie])
+
   @@index([tag])
 
 }

@@ -13,11 +13,6 @@ export class CreateManutencaoDto {
   @IsString()
   modeloEquipamento?: string;
 
-  @ApiPropertyOptional({ example: 'CSEX420ACM-0559' })
-  @IsOptional()
-  @IsString()
-  numeroSerie?: string;
-
   @ApiPropertyOptional({ example: 'TAG-0001' })
   @IsOptional()
   @IsString()

@@ -1,12 +1,11 @@
 .login-container {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) 420px;
+  width: 100%;
+  grid-template-columns: minmax(500px, 1fr) 480px;
   overflow: hidden;
 }
 
 .login-background {
-  grid-column: 1 / 2;
-  grid-row: 1 / -1;
   width: 100%;
   min-height: 100vh;
   animation: fadeIn 0.8s ease-in-out;
@@ -25,26 +24,13 @@
   to {
     opacity: 1;
   }
-}
-
-.login-overlay {
-  inset: 0;
-  width: 30%;
-  display: block;
-  justify-content: flex-end;
-  align-items: center;
-  z-index: 1;
-  pointer-events: none;
-  background: transparent;
-  margin: 0;
-  background: black;
-}
+} 
 
 .login-card {
   pointer-events: auto;
-  position: absolute;
-  margin: 5%;
+  position: relative;
   width: 100%;
+  padding: 40px 30px;
   max-width: 420px;
   border-radius: 0;
   background: #ffffff;
@@ -66,40 +52,6 @@
   width: 300px;
   height: auto;
   object-fit: contain;
-}
-
-.axis-brand {
-  display: flex;
-  justify-content: flex-end;
-  padding-right: 10px;
-  margin-top: -70px;
-  margin-bottom: 10px;
-}
-
-.axis-text {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  background: linear-gradient(135deg, #a3e635 0%, #84cc16 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-  text-transform: uppercase;
-  font-family: 'Segoe UI', 'Roboto', sans-serif;
-  text-shadow: 0 2px 4px rgba(163, 230, 53, 0.2);
-  animation: slideInRight 0.6s ease-out;
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .logo-text {
@@ -180,29 +132,4 @@
   padding: 10px;
   border-radius: 6px;
   margin-top: 8px;
-}
-
-/* Responsivo para tablets e mobile */
-@media (max-width: 1024px) {
-  .login-container {
-    display: block;
-  }
-
-  .login-background {
-    position: absolute;
-    inset: 0;
-    opacity: 0.9;
-  }
-
-  .login-card {
-    position: relative;
-    margin: 60px auto;
-    left: 0;
-    right: 0;
-    transform: none;
-    width: min(92%, 420px);
-    background: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  }
 }

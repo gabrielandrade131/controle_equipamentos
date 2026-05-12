@@ -76,7 +76,7 @@ export const usePdfExportManutencao = () => {
         const rows = [
           [
             { label: 'Data de retorno a base', value: formatDate(inspecao.dataRetornoBase) },
-            { label: 'Data de inicio', value: formatDate(inspecao.dataManutencao) },
+            { label: 'Data de início', value: formatDate(inspecao.dataInicio) },
           ],
           [
             { label: 'Previsao de termino', value: formatDate(inspecao.previsaoTermino) },
@@ -91,7 +91,7 @@ export const usePdfExportManutencao = () => {
             { label: 'Modelo', value: inspecao.modelo || '-' },
           ],
           [
-            { label: 'Numero de serie', value: inspecao.numeroSerie || '-' },
+            { label: 'Ordem de Manutenção', value: String(inspecao.numeroOrdemManutencao ?? '-') },
             { label: 'TAG', value: inspecao.tag || '-' },
           ],
           [
@@ -141,7 +141,6 @@ export const usePdfExportManutencao = () => {
         if (!items.length) return;
 
         sectionHeader(title);
-
         const questionWidth = contentWidth - 58;
         const optionStartX = marginX + questionWidth + 6;
 
@@ -171,21 +170,29 @@ export const usePdfExportManutencao = () => {
         y += 4;
       };
 
-      const drawLongTextSection = (title: string, value?: string) => {
-        if (!value) return;
+      const drawObservacoesDiarias = () => {
+        const observacoes = inspecao.observacoesHistorico || [];
 
-        sectionHeader(title);
-        const lines = pdf.splitTextToSize(value, contentWidth - 4);
-        const height = Math.max(14, lines.length * 4 + 6);
-        ensureSpace(height);
+        if (!observacoes.length) return;
 
-        pdf.setDrawColor(border.r, border.g, border.b);
-        pdf.rect(marginX, y, contentWidth, height);
-        lines.forEach((line: string, index: number) => {
-          drawText(line, marginX + 2, y + 5 + index * 4, { size: 8.5 });
+        sectionHeader('OBSERVACOES DIARIAS');
+
+        observacoes.forEach((obs) => {
+          const dateStr = formatDate(obs.data);
+          const textLines = pdf.splitTextToSize(obs.texto || '-', contentWidth - 10);
+          const height = Math.max(14, (textLines.length + 1) * 4 + 8);
+
+          ensureSpace(height);
+          pdf.setDrawColor(border.r, border.g, border.b);
+          pdf.rect(marginX, y, contentWidth, height);
+
+          drawText(`[${dateStr}]`, marginX + 2, y + 5, { bold: true, size: 8 });
+          textLines.forEach((line: string, index: number) => {
+            drawText(line, marginX + 4, y + 9 + index * 4, { size: 8 });
+          });
+
+          y += height + 2;
         });
-
-        y += height + 3;
       };
 
       drawText('HISTORICO DE INSPECAO DE MANUTENCAO', marginX, y, {
@@ -214,7 +221,7 @@ export const usePdfExportManutencao = () => {
       drawCheckbox(marginX + 55, y + 2, finalAnswer === 'NAO CONFORME', 'NAO CONFORME');
       y += 11;
 
-      drawLongTextSection('OBSERVACOES', inspecao.observacoes);
+      drawObservacoesDiarias();
 
       sectionHeader('ASSINATURA');
       ensureSpace(24);
@@ -223,7 +230,12 @@ export const usePdfExportManutencao = () => {
       pdf.setDrawColor(0, 0, 0);
       pdf.line(marginX, y, marginX + 85, y);
       drawText('Assinatura', marginX, y + 5, { size: 8 });
-      drawText(`Data: ${new Date().toLocaleDateString('pt-BR')}`, marginX + 105, y + 2, { size: 9 });
+      drawText(
+        `Data: ${formatDate(inspecao.dataTermino)}`,
+        marginX + 105,
+        y + 2,
+        { size: 9 }
+      );
 
       pdf.save(filename);
     } catch (error) {

@@ -26,11 +26,6 @@ export class FilterManutencaoDto {
     @IsString()
     tag?: string;
 
-    @ApiPropertyOptional({ example: 'SN-12345'})
-    @IsOptional()
-    @IsString()
-    numeroSerie?: string;
-
     @ApiPropertyOptional({ example: 'Exaustor'})
     @IsOptional()
     @IsString()

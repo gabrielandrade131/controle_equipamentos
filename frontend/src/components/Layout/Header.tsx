@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import logo from '../../assets/login/logo.png';
+import logo from '../../assets/login/logo_interno.png';
 
 interface HeaderProps {
     title: string;
@@ -27,16 +27,6 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     <img src={logo} alt="Logo" style={{ width: 200, height: 'auto', marginBottom: 0 }} />
-                    <span style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        letterSpacing: 2,
-                        color: '#111',
-                        position: 'absolute',
-                        left: 110,
-                        top: 52,
-                        textShadow: '0 1px 2px rgba(0,0,0,0.08)'
-                    }}>AXIS</span>
                 </div>
             </div>
             <button

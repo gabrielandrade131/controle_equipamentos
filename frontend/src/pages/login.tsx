@@ -63,40 +63,35 @@ export default function Login() {
         style={{ backgroundImage: `url(${images[currentIndex]})` }}
         aria-hidden="true"
       />
-      <div className="login-overlay">
-        <form className="login-card" onSubmit={handleLogin}>
-          <div className="login-logo">
-            <img src={logo} alt="Logo" className="logo-img" />
-          </div>
-          <div className="axis-brand">
-            <h2 className="axis-text">AXIS</h2>
-          </div>
-          <h1 className="login-title">Bem-vindo!</h1>
-          <p className="login-subtitle">Acesse sua conta para continuar</p>
+      <form className="login-card" onSubmit={handleLogin}>
+        <div className="login-logo">
+          <img src={logo} alt="Logo" className="logo-img" />
+        </div>
+        <h1 className="login-title">Bem-vindo!</h1>
+        <p className="login-subtitle">Acesse sua conta para continuar</p>
 
-          <input
-            type="email"
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        <input
+          type="email"
+          placeholder="E-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        <input
+          type="password"
+          placeholder="Senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-          <button disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
+        <button disabled={loading}>
+          {loading ? "Entrando..." : "Entrar"}
+        </button>
 
-          {error && <span className="error">{error}</span>}
-        </form>
-      </div>
+        {error && <span className="error">{error}</span>}
+      </form>
     </div>
   );
 }

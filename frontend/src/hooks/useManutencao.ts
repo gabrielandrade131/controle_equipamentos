@@ -11,6 +11,21 @@ const toDateInput = (value?: string | null, fallbackToday = true) => {
   return value.split('T')[0];
 };
 
+const parseObservacoesDiarias = (diagnostico: any) => {
+  if (!diagnostico) return [];
+  if (typeof diagnostico !== 'string') return [];
+  try {
+    const parsed = JSON.parse(diagnostico);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // Backwards compatibility: tratar string legada como observação única
+    return [{
+      data: new Date().toISOString().split('T')[0],
+      texto: diagnostico,
+    }];
+  }
+};
+
 const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   const base = criarInspecaoVazia();
   const avaliacaoFinal =
@@ -23,14 +38,14 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   return {
     ...base,
     id: manutencao.id,
-    dataManutencao: toDateInput(manutencao.dataInicio, false),
+    dataInicio: toDateInput(manutencao.dataInicio, false),
     dataRetornoBase: toDateInput(manutencao.dataRetornoBase, false),
     previsaoTermino: toDateInput(manutencao.previsaoTermino, false),
     localManutencao: manutencao.origem === 'SYNCHRO' ? 'Retorno Synchro' : '',
     fabricante: manutencao.tipoEquipamentoNome ?? '',
     modelo: manutencao.modeloEquipamento ?? '',
-    numeroSerie: manutencao.numeroSerie ?? '',
     tag: manutencao.tag ?? '',
+    numeroOrdemManutencao: manutencao.numeroOrdemManutencao ?? null,
     destino: manutencao.situacaoEquipamento ?? '',
     responsavel: manutencao.responsavelManutencao ?? '',
     statusManutencao: manutencao.statusManutencao ?? 'EM_MANUTENCAO',
@@ -38,7 +53,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     diasEsperaManutencao: manutencao.diasEsperaManutencao ?? null,
     diasManutencao: manutencao.diasManutencao ?? null,
     avaliacaoFinal,
-    observacoes: manutencao.diagnostico ?? '',
+    observacoesHistorico: parseObservacoesDiarias(manutencao.diagnostico),
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
   };
@@ -47,14 +62,13 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   tipoEquipamentoNome: inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
-  numeroSerie: inspecao.numeroSerie || undefined,
   tag: inspecao.tag || undefined,
   situacaoEquipamento: inspecao.destino || 'Manutencao manual',
   dataRetornoBase: inspecao.dataRetornoBase || undefined,
-  dataInicio: inspecao.dataManutencao || undefined,
+  dataInicio: inspecao.dataInicio || undefined,
   previsaoTermino: inspecao.previsaoTermino || undefined,
   dataTermino: inspecao.dataTermino || undefined,
-  diagnostico: inspecao.observacoes || undefined,
+  diagnostico: inspecao.observacoesHistorico?.length ? JSON.stringify(inspecao.observacoesHistorico) : undefined,
   responsavelManutencao: inspecao.responsavel || undefined,
   statusManutencao: (inspecao.statusManutencao || 'EM_MANUTENCAO') as StatusManutencao,
   avaliacaoFinalConforme:

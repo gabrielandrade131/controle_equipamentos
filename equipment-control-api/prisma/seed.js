@@ -250,7 +250,6 @@ async function main() {
       origem: 'MANUAL',
       tipoEquipamentoNome: 'Exaustor',
       modeloEquipamento: 'Exaustor 420 Monofásico',
-      numeroSerie: 'EXA-420-001',
       tag: 'TAG-EXA-001',
       situacaoEquipamento: 'Retornou para a base',
       dataInicio: new Date('2026-04-22T08:00:00.000Z'),

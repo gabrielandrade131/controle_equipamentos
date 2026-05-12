@@ -17,7 +17,7 @@ export const PdfExporterManutencao: React.FC<PdfExporterManutencaoProps> = ({
     try {
       const nomeArquivo =
         filename ||
-        `inspecao_manutencao_${inspecao.numeroSerie || 'equipamento'}_${new Date().toISOString().split('T')[0]}.pdf`;
+        `inspecao_manutencao_${(inspecao.numeroOrdemManutencao ?? inspecao.tag) || 'equipamento'}_${new Date().toISOString().split('T')[0]}.pdf`;
       await exportInspecaoToPdf(inspecao, nomeArquivo);
     } catch (error) {
       alert('Erro ao gerar PDF: ' + error);

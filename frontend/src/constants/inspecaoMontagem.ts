@@ -284,7 +284,12 @@ export const criarFormularioInspecaoMontagemVazio = (): CreateInspecaoMontageDto
       VERIFICACOES_GERAIS_PREMONTAGEM_TEMPLATES,
       'vgpm',
     ),
-    verificacaoPosmontagem: buildVerificacaoItems(VERIFICACAO_POSMONTAGEM_TEMPLATES, 'pos'),
+    verificacaoPosmontagem: buildVerificacaoItems(VERIFICACAO_POSMONTAGEM_TEMPLATES, 'pos').map(
+      (item) => ({
+        ...item,
+        conformidade: 'SIM',
+      }),
+    ),
     resultadoFinal: '',
     observacoes: undefined,
     responsavel: '',

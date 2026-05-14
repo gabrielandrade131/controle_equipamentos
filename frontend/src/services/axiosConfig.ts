@@ -7,11 +7,15 @@ function withApiPrefix(baseUrl: string): string {
     : `${normalizedBaseUrl}/api`;
 }
 
-// Build the API base from the environment/current origin and always target the
-// Nest global prefix. Local dev usually provides only http://localhost:3000.
+// Build the API base from environment. In development, default to the backend
+// host instead of the frontend origin to avoid hitting the React dev server.
 const API_URL = withApiPrefix(
   process.env.REACT_APP_API_URL ||
-    (typeof window !== 'undefined' ? window.location.origin : ''),
+    (process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000'
+      : typeof window !== 'undefined'
+        ? window.location.origin
+        : ''),
 );
 const TIMEOUT = parseInt(process.env.REACT_APP_TIMEOUT || '5000', 10);
 

@@ -539,17 +539,6 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
           />
         </div>
         <div className="form-group">
-          <label htmlFor="nomeAssinante">Nome (Assinante):</label>
-          <input
-            type="text"
-            id="nomeAssinante"
-            name="nomeAssinante"
-            value={formData.nomeAssinante || ''}
-            onChange={handleInputChange}
-            placeholder="Nome de quem assina o documento"
-          />
-        </div>
-        <div className="form-group">
           <label htmlFor="aprovado">Aprovado:</label>
           <div className="checkbox-group">
             <label>

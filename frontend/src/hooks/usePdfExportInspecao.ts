@@ -70,6 +70,12 @@ export const usePdfExportInspecao = () => {
                 return segments.flatMap((segment) => pdf.splitTextToSize(segment, width) as string[]);
             };
 
+            const normalizeConformidade = (value?: string | boolean | null) => {
+                if (value === true || value === 'SIM') return 'SIM';
+                if (value === false || value === 'NÃO' || value === 'NAO') return 'NÃO';
+                return '-';
+            };
+
             const drawTextLines = (lines: string[], x: number, startY: number, lineHeight: number) => {
                 lines.forEach((line, index) => {
                     pdf.text(line || '-', x, startY + index * lineHeight);
@@ -145,7 +151,9 @@ export const usePdfExportInspecao = () => {
                                 nome: linha.titulo,
                                 valorObservado: origem?.valorObservado ?? '',
                                 instrumentoMedicao: origem?.instrumentoMedicao ?? linha.instrumentoPadrao,
-                                conformidade: origem?.conformidade ?? '',
+                                conformidade: normalizeConformidade(
+                                    origem?.conformidade ?? (origem as any)?.conformidades,
+                                ),
                             } as VerificacaoItem;
                         });
                     }
@@ -158,7 +166,9 @@ export const usePdfExportInspecao = () => {
                                 nome: linha.titulo,
                                 valorObservado: origem?.valorObservado ?? '',
                                 instrumentoMedicao: cleanInstrument(origem?.instrumentoMedicao ?? linha.instrumentoPadrao),
-                                conformidade: origem?.conformidade ?? '',
+                                conformidade: normalizeConformidade(
+                                    origem?.conformidade ?? (origem as any)?.conformidades,
+                                ),
                             } as VerificacaoItem;
                         });
                     }

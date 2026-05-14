@@ -4,6 +4,7 @@ import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
 import {
   NOMES_INSTRUMENTOS_AFERICAO,
   NOMES_VERIFICACOES_GERAIS_PREMONTAGEM,
+  NOMES_VERIFICACAO_POSMONTAGEM,
 } from '../constants/inspecaoMontagem';
 
 type ApiListResponse<T> = {
@@ -63,6 +64,11 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
     NOMES_VERIFICACOES_PREMONTAGEM,
     3,
   );
+    const verificacaoPosmontagem = mapRegistros(
+      producao.registrosInspecaoMontagem,
+      NOMES_VERIFICACAO_POSMONTAGEM,
+      19,
+    );
   const registros = [...instrumentosAfericao, ...verificacoesGeraisPremontagem];
   const reprovado = registros.some((item) => item.conformidade === NAO);
   const preenchido = registros.some(
@@ -76,7 +82,7 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
     modelo: producao.modelo ?? '',
     [INSTRUMENTOS_KEY]: instrumentosAfericao,
     verificacoesGeraisPremontagem,
-    verificacaoPosmontagem: [],
+    verificacaoPosmontagem,
     resultadoFinal: preenchido ? (reprovado ? 'REPROVADO' : 'APROVADO') : '',
     observacoes: '',
     responsavel: '',
@@ -112,9 +118,12 @@ export const useInspecoes = () => {
   const salvarRegistrosInspecao = async (producaoId: string, inspecao: InspecaoMontagem) => {
     const instrumentos = (inspecao.instrumentosAferição || []).slice(0, 2);
     const verificacoes = (inspecao.verificacoesGeraisPremontagem || []).slice(0, 16);
+    const posmontagem = (inspecao.verificacaoPosmontagem || []).slice(0, NOMES_VERIFICACAO_POSMONTAGEM.length);
+
+    const all = [...instrumentos, ...verificacoes, ...posmontagem];
 
     await Promise.all(
-      [...instrumentos, ...verificacoes].map((item, index) =>
+      all.map((item, index) =>
         axiosInstance.patch(`/producoes/${producaoId}/inspecao-montagem/${index + 1}`, {
           valorObservado: item.valorObservado || undefined,
           instrumentoMedicao: item.instrumentoMedicao || undefined,

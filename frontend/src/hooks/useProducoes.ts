@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
-import { CreateProducaoDto, Documento, Producao } from '../types/producao';
+import { CreateProducaoDto, Documento, HistoricoProducaoItem, Producao } from '../types/producao';
 
 type ApiListResponse<T> = {
   data: T[];
@@ -62,6 +62,17 @@ const getDescricaoItemSeriado = (item: { numero?: string; descricao?: string; nu
   return partes.join(' - ');
 };
 
+const mapHistoricoProducao = (observacoes: any[] | undefined | null): HistoricoProducaoItem[] =>
+  (observacoes ?? []).map((observacao: any) => ({
+    id: observacao.id,
+    descricao: String(observacao.descricao ?? '').trim(),
+    responsavel: String(observacao.responsavel ?? '').trim(),
+    criadoEm: observacao.criadoEm ?? undefined,
+  }));
+
+const getHistoricoNovo = (historico?: HistoricoProducaoItem[] | null) =>
+  (historico ?? []).filter((item) => item.id.startsWith('novo-') || !item.id);
+
 const parseItemSeriado = (item: { id: string; descricao?: string | null }, index: number) => {
   const descricaoCompleta = item.descricao ?? '';
   const partes = descricaoCompleta.split(' - ');
@@ -96,6 +107,7 @@ export const mapApiToProducao = (producao: any): Producao => ({
   itensSeriados: (producao.itensSeriados ?? []).map(parseItemSeriado),
   documentos: buildDocumentos(producao),
   observacoes: (producao.observacoes ?? []).map((observacao: any) => observacao.descricao).join('\n'),
+  historicoProducao: mapHistoricoProducao(producao.observacoes),
   listaPecas: producao.listaPecas ?? '',
   sequencialMontagem: producao.sequenciaMontagem ?? producao.sequencialMontagem ?? '',
   inspecaoMontagem: producao.inspecaoMontagem ?? '',
@@ -158,10 +170,17 @@ export const useProducoes = () => {
     const response = await axiosInstance.post('/producoes', mapProducaoToApi(novaProducao));
     let producaoCriada = mapApiToProducao(response.data);
 
-    if (novaProducao.observacoes) {
-      await axiosInstance.post(`/producoes/${producaoCriada.id}/observacoes`, {
-        descricao: novaProducao.observacoes,
-      });
+    const historicoParaSalvar = getHistoricoNovo(novaProducao.historicoProducao);
+
+    if (historicoParaSalvar.length > 0) {
+      await Promise.all(
+        historicoParaSalvar.map((item) =>
+          axiosInstance.post(`/producoes/${producaoCriada.id}/observacoes`, {
+            descricao: item.descricao,
+            responsavel: item.responsavel,
+          }),
+        ),
+      );
     }
 
     if (novaProducao.tag && producaoCriada.statusProducao === 'CONCLUIDA') {
@@ -171,6 +190,9 @@ export const useProducoes = () => {
       producaoCriada = mapApiToProducao(tagResponse.data);
     }
 
+    const refreshed = await axiosInstance.get(`/producoes/${producaoCriada.id}`);
+    producaoCriada = mapApiToProducao(refreshed.data);
+
     await carregarProducoes();
     return producaoCriada;
   };
@@ -178,6 +200,22 @@ export const useProducoes = () => {
   const atualizarProducao = async (id: string, producaoAtualizada: Producao) => {
     const response = await axiosInstance.put(`/producoes/${id}`, mapProducaoToApi(producaoAtualizada));
     let producao = mapApiToProducao(response.data);
+
+    const historicoNovo = getHistoricoNovo(producaoAtualizada.historicoProducao);
+
+    if (historicoNovo.length > 0) {
+      await Promise.all(
+        historicoNovo.map((item) =>
+          axiosInstance.post(`/producoes/${id}/observacoes`, {
+            descricao: item.descricao,
+            responsavel: item.responsavel,
+          }),
+        ),
+      );
+
+      const refreshed = await axiosInstance.get(`/producoes/${id}`);
+      producao = mapApiToProducao(refreshed.data);
+    }
 
     if (producaoAtualizada.tag && producao.statusProducao === 'CONCLUIDA') {
       const tagResponse = await axiosInstance.patch(`/producoes/${id}/tag`, {

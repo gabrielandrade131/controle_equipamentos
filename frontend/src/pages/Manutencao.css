@@ -6,9 +6,10 @@
 
 /* Padronização de containers para as subpáginas */
 .manutencao-page {
-  max-width: 1200px;
+  width: min(100%, var(--page-shell-max-width));
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--page-shell-padding-y) var(--page-shell-padding-x) 32px;
+  box-sizing: border-box;
 }
 
 .manutencao-page h2 {

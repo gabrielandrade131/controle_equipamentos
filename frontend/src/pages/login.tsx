@@ -6,10 +6,9 @@ import "./login.css";
 import img1 from "../assets/login/img1.jpg";
 import img2 from "../assets/login/img2.jpg";
 import img3 from "../assets/login/img3.jpg";
-import img4 from "../assets/login/img4.jpg";
 import logo from "../assets/login/logo.png";
 
-const images = [img1, img2, img3, img4];
+const images = [img1, img2, img3];
 
 export default function Login() {
   const navigate = useNavigate();

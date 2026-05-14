@@ -1,3 +1,30 @@
+.historico-producao-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.historico-producao-item-view {
+  background: #fff;
+  border-left: 3px solid #B2CC21;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.historico-producao-item-view strong {
+  color: #B2CC21;
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.historico-producao-item-view p {
+  color: #333;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+  word-break: break-word;
+}
 .producao-container {
   width: 100%;
   min-height: calc(100vh - 140px);
@@ -48,13 +75,15 @@
 }
 
 .producao-content {
-  padding: 20px;
+  padding: 20px 0 0;
 }
 
 /* Padronização de containers para as subpáginas */
 .producao-page {
-  max-width: 1200px;
+  width: min(100%, var(--page-shell-max-width));
   margin: 0 auto;
+  padding: var(--page-shell-padding-y) var(--page-shell-padding-x) 32px;
+  box-sizing: border-box;
 }
 
 .producao-page h2 {

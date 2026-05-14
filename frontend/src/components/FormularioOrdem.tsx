@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import {
   CreateProducaoDto,
+  HistoricoProducaoItem,
   Producao,
   StatusProducao,
   TipoEquipamento,
@@ -45,6 +46,14 @@ const createEmptyProducao = (): CreateProducaoDto => ({
   inspecaoMontagem: '',
   historicoEquipamento: '',
   procedimentoTestes: '',
+  historicoProducao: [],
+});
+
+const criarHistoricoItem = (descricao: string): HistoricoProducaoItem => ({
+  id: `novo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  descricao,
+  responsavel: '',
+  criadoEm: new Date().toISOString(),
 });
 
 export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
@@ -61,6 +70,8 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     descricao: '',
     numeroSerie: '',
   });
+  const [novaObservacao, setNovaObservacao] = useState('');
+  const [novoResponsavelHistorico, setNovoResponsavelHistorico] = useState('');
 
   const tagPodeSerEditada = formData.statusProducao === 'CONCLUIDA';
 
@@ -153,6 +164,26 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     updateFormData({
       itensSeriados: formData.itensSeriados.filter((item) => item.id !== id),
     });
+  };
+
+  const historicoProducao = formData.historicoProducao ?? [];
+
+  const handleAdicionarHistorico = () => {
+    const descricao = novaObservacao.trim();
+    const responsavel = novoResponsavelHistorico.trim();
+
+    if (!descricao || !responsavel) {
+      return;
+    }
+
+    updateFormData({
+      historicoProducao: [...historicoProducao, {
+        ...criarHistoricoItem(descricao),
+        responsavel,
+      }],
+    });
+    setNovaObservacao('');
+    setNovoResponsavelHistorico('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -419,17 +450,44 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="observacoes">Observacoes Adicionais:</label>
-          <textarea
-            id="observacoes"
-            name="observacoes"
-            value={formData.observacoes}
-            onChange={handleInputChange}
-            placeholder="Observacoes adicionais"
-            rows={3}
-          />
+        <div className="form-group full">
+          <label htmlFor="novaObservacao">Histórico de Produção:</label>
+          <div className="historico-producao-input">
+            <input
+              type="text"
+              value={novoResponsavelHistorico}
+              onChange={(e) => setNovoResponsavelHistorico(e.target.value)}
+              placeholder="Responsável pelo registro"
+            />
+            <textarea
+              id="novaObservacao"
+              value={novaObservacao}
+              onChange={(e) => setNovaObservacao(e.target.value)}
+              placeholder="Escreva um registro para o histórico de produção"
+              rows={3}
+            />
+            <button type="button" onClick={handleAdicionarHistorico} className="btn-add">
+              Adicionar registro
+            </button>
+          </div>
         </div>
+
+        {historicoProducao.length > 0 && (
+          <div className="historico-producao-list">
+            <h4>Registros do Histórico ({historicoProducao.length})</h4>
+            <div className="items-list historico-producao-items">
+              {historicoProducao.map((item) => (
+                <div key={item.id} className="item-card historico-producao-item">
+                  <div className="item-info">
+                    <strong>{item.criadoEm ? new Date(item.criadoEm).toLocaleDateString('pt-BR') : 'Novo registro'}</strong>
+                    <small>Responsável: {item.responsavel || '-'}</small>
+                    <p>{item.descricao}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="form-actions">

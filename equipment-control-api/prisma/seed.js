@@ -189,10 +189,12 @@ async function main() {
       {
         producaoId: equipamentos[0].id,
         descricao: 'Separação inicial aprovada pelo setor de montagem.',
+        responsavel: 'Gabriel Roza',
       },
       {
         producaoId: equipamentos[1].id,
         descricao: 'Teste final executado sem divergências.',
+        responsavel: 'Gabriel Roza',
       },
     ],
   });

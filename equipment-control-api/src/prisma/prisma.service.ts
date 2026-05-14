@@ -13,7 +13,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             console.log('✓ Conectado ao banco de dados');
         } catch (error) {
             console.error('✗ Erro ao conectar ao banco de dados:', error);
-            throw error;
+            console.warn('⚠️ API iniciada sem conexão ativa com o banco.');
         }
     }
 

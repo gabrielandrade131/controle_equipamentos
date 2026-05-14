@@ -2,6 +2,23 @@ import React, { useState } from 'react';
 import { HistoricoEquipamentoData, CreateHistoricoDto, RegistroHistorico } from '../types/historico';
 import './FormularioHistorico.css';
 
+const getLocalDateInput = () => {
+  const now = new Date();
+  const timezoneOffset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - timezoneOffset).toISOString().split('T')[0];
+};
+
+const formatDatePtBr = (value: string) => {
+  const datePart = value.includes('T') ? value.split('T')[0] : value;
+  const [year, month, day] = datePart.split('-');
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}/${month}/${year}`;
+};
+
 interface FormularioHistoricoProps {
   historico?: HistoricoEquipamentoData;
   onSalvar: (data: any) => void;
@@ -30,7 +47,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
   );
 
   const [novoRegistro, setNovoRegistro] = useState<RegistroHistorico>({
-    data: new Date().toISOString().split('T')[0],
+    data: getLocalDateInput(),
     historico: '',
     assinatura: ''
   });
@@ -66,7 +83,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
 
   const limparNovoRegistro = () => {
     setNovoRegistro({
-      data: new Date().toISOString().split('T')[0],
+      data: getLocalDateInput(),
       historico: '',
       assinatura: ''
     });
@@ -188,7 +205,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
             </div>
 
             <div className="form-group">
-              <label>Assinatura *</label>
+              <label>Responsável *</label>
               <input
                 type="text"
                 name="assinatura"
@@ -215,7 +232,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
                   <tr>
                     <th>Data</th>
                     <th>Histórico</th>
-                    <th>Assinatura</th>
+                    <th>Responsável</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -223,7 +240,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
                     const ehOriginal = isEditing && registrosOriginaisIds.has(registro.id || '');
                     return (
                       <tr key={registro.id} style={{ backgroundColor: ehOriginal ? '#f0f0f0' : 'transparent' }}>
-                        <td>{new Date(registro.data).toLocaleDateString('pt-BR')}</td>
+                        <td>{formatDatePtBr(registro.data)}</td>
                         <td>{registro.historico.substring(0, 50)}...</td>
                         <td>{registro.assinatura}</td>
                       </tr>

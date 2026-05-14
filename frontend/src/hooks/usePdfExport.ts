@@ -220,6 +220,31 @@ export const usePdfExport = () => {
                     }
             }
 
+            if (producao.historicoProducao && producao.historicoProducao.length > 0) {
+                addSection('HISTÓRICO DE PRODUÇÃO');
+
+                producao.historicoProducao.forEach((registro) => {
+                    pdf.setFontSize(8.5);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(
+                        registro.criadoEm ? new Date(registro.criadoEm).toLocaleDateString('pt-BR') : 'Registro',
+                        marginLeft + 3,
+                        yPosition,
+                    );
+                    yPosition += 4;
+                    pdf.setFont(undefined, 'normal');
+                    pdf.text(`Responsável: ${registro.responsavel || '-'}`, marginLeft + 3, yPosition);
+                    yPosition += 4;
+
+                    const registroLines = pdf.splitTextToSize(registro.descricao || '-', maxWidth - 6);
+                    registroLines.forEach((line: string) => {
+                        pdf.text(line, marginLeft + 3, yPosition);
+                        yPosition += 5;
+                    });
+                    yPosition += 2;
+                });
+            }
+
             // Assinaturas
             yPosition += 10;
             addSection('RECEBIMENTO DA ORDEM');

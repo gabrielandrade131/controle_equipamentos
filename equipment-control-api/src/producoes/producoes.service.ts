@@ -634,6 +634,7 @@ export class ProducoesService {
             data: {
                 producaoId: id,
                 descricao: data.descricao,
+                responsavel: data.responsavel,
             },
         });
     }

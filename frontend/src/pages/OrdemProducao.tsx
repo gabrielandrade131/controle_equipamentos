@@ -21,6 +21,12 @@ const calcularDiasProducao = (dataInicio: string, dataTermino?: string): number 
   return Math.max(0, dias);
 };
 
+const formatarRotulo = (valor?: string | null) => {
+  if (!valor) return '-';
+
+  return valor.replace(/_/g, ' ');
+};
+
 const OrdemProducao: React.FC = () => {
   const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoes();
   const [selected, setSelected] = useState<SelectedProducao | null>(null);
@@ -187,11 +193,11 @@ const OrdemProducao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Situacao Prazo:</label>
-                  <p>{selected.data.situacaoPrazo || '-'}</p>
+                  <p>{formatarRotulo(selected.data.situacaoPrazo)}</p>
                 </div>
                 <div className="detail-item">
                   <label>Resultado Prazo:</label>
-                  <p>{selected.data.resultadoPrazo || '-'}</p>
+                  <p>{formatarRotulo(selected.data.resultadoPrazo)}</p>
                 </div>
               </div>
 
@@ -224,12 +230,29 @@ const OrdemProducao: React.FC = () => {
                 </div>
               )}
 
-              {selected.data.observacoes && (
+              {selected.data.historicoProducao && selected.data.historicoProducao.length > 0 ? (
                 <div className="documents-section">
-                  <h3>Observacoes Adicionais</h3>
+                  <h3>Histórico de Produção</h3>
+                  <div className="historico-producao-view">
+                    {selected.data.historicoProducao.map((registro) => (
+                      <div key={registro.id} className="historico-producao-item-view">
+                        <strong>
+                          {registro.criadoEm
+                            ? new Date(registro.criadoEm).toLocaleDateString('pt-BR')
+                            : 'Registro'}
+                        </strong>
+                        <small>Responsável: {registro.responsavel || '-'}</small>
+                        <p>{registro.descricao}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : selected.data.observacoes ? (
+                <div className="documents-section">
+                  <h3>Histórico de Produção</h3>
                   <p>{selected.data.observacoes}</p>
                 </div>
-              )}
+              ) : null}
 
               <div className="action-buttons">
                 <button

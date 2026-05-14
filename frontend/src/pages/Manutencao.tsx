@@ -7,6 +7,13 @@ import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
 import './Manutencao.css';
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  EM_MANUTENCAO: 'Em manutenção',
+  PARALISADA: 'Paralisada',
+  CONCLUIDA: 'Concluída',
+};
+
 interface SelectedInspecao {
   id: string;
   data: InspecaoManutencao;
@@ -71,20 +78,7 @@ export const Manutencao: React.FC = () => {
       });
   };
 
-  if (modo === 'editar-formulario' && selected && selected.data.statusManutencao !== 'CONCLUIDA') {
-    return (
-      <div className="manutencao-container">
-        <FormularioInspecaoManutencao
-          inspecaoInicial={selected.data}
-          onSalvar={handleEditarInspecao}
-          onCancelar={() => setModo('lista')}
-          isEditing
-        />
-      </div>
-    );
-  }
-
-  if (modo === 'editar-inspecao' && selected && selected.data.statusManutencao !== 'CONCLUIDA') {
+  if (modo === 'editar-inspecao' && selected) {
     return (
       <div className="manutencao-container">
         <FormularioInspecaoManutencao
@@ -166,7 +160,7 @@ export const Manutencao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
-                  <p>{selected.data.statusManutencao || '-'}</p>
+                  <p>{STATUS_LABELS[selected.data.statusManutencao || ''] || selected.data.statusManutencao || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias em Espera:</label>
@@ -221,14 +215,12 @@ export const Manutencao: React.FC = () => {
               </div>
 
               <div className="action-buttons">
-                {selected.data.statusManutencao !== 'CONCLUIDA' && (
-                  <button
-                    onClick={() => setModo('editar-detalhes')}
-                    className="btn-primary"
-                  >
-                    Editar
-                  </button>
-                )}
+                <button
+                  onClick={() => setModo('editar-detalhes')}
+                  className="btn-primary"
+                >
+                  Editar Detalhes
+                </button>
               </div>
 
               {modo === 'editar-detalhes' && (

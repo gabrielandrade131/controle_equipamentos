@@ -168,6 +168,52 @@
   background: #CC1319;
 }
 
+.historico-producao-input {
+  display: grid;
+  gap: 12px;
+}
+
+.historico-producao-input input {
+  width: 100%;
+}
+
+.historico-producao-input textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.historico-producao-list {
+  margin-top: 8px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.historico-producao-list h4 {
+  margin: 0 0 12px;
+  color: #B2CC21;
+  font-size: 15px;
+}
+
+.historico-producao-items {
+  gap: 10px;
+}
+
+.historico-producao-item {
+  margin: 0;
+}
+
+.historico-producao-item .item-info p {
+  margin-bottom: 0;
+}
+
+.historico-producao-item .item-info small {
+  display: block;
+  margin-bottom: 6px;
+  color: #666;
+}
+
 .form-checkboxes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

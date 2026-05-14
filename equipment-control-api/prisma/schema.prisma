@@ -90,6 +90,7 @@ model ObservacaoProducao {
   id          String        @id @default(uuid())
   producaoId  String
   descricao   String
+  responsavel String
   criadoEm    DateTime      @default(now())
 
   equipment   Equipment     @relation(fields: [producaoId], references: [id], onDelete: Cascade)

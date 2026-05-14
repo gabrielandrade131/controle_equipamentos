@@ -11,6 +11,13 @@ export interface Documento {
   codigo: string;
 }
 
+export interface HistoricoProducaoItem {
+  id: string;
+  descricao: string;
+  responsavel: string;
+  criadoEm?: string;
+}
+
 export type StatusProducao =
   | 'PROGRAMADA'
   | 'EM_ANDAMENTO'
@@ -44,6 +51,7 @@ export interface CreateProducaoDto {
   inspecaoMontagem?: string;
   historicoEquipamento?: string;
   procedimentoTestes?: string;
+  historicoProducao?: HistoricoProducaoItem[];
 }
 
 export interface Producao extends CreateProducaoDto {

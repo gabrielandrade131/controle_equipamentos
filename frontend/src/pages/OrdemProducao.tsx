@@ -38,8 +38,8 @@ const OrdemProducao: React.FC = () => {
 
   const filteredProducoes = useMemo(() => {
     return producoes.filter((p) => {
-      if (filters.dataInicio && p.dataInicio < filters.dataInicio) return false;
-      if (filters.dataFinal && p.dataInicio > filters.dataFinal) return false;
+      if (filters.dataInicio && p.dataInicio && p.dataInicio < filters.dataInicio) return false;
+      if (filters.dataFinal && p.dataInicio && p.dataInicio > filters.dataFinal) return false;
       if (filters.status && p.statusProducao !== filters.status) return false;
       if (filters.tag && !p.tag?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
       if (filters.modelo && !p.modelo?.toLowerCase().includes(filters.modelo.toLowerCase())) return false;

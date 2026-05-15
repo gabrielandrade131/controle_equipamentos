@@ -27,8 +27,8 @@ const InspecaoMontagemPage: React.FC = () => {
 
   const filteredInspecoes = useMemo(() => {
     return inspecoes.filter((i) => {
-      if (filters.dataInicio && i.data < filters.dataInicio) return false;
-      if (filters.dataFinal && i.data > filters.dataFinal) return false;
+      if (filters.dataInicio && i.data && i.data < filters.dataInicio) return false;
+      if (filters.dataFinal && i.data && i.data > filters.dataFinal) return false;
       if (filters.resultado && i.resultadoFinal !== filters.resultado) return false;
       if (filters.modelo && !i.modelo?.toLowerCase().includes(filters.modelo.toLowerCase())) return false;
       if (filters.numeroSerie && !i.numeroSerie?.toLowerCase().includes(filters.numeroSerie.toLowerCase())) return false;

@@ -7,7 +7,6 @@ import { useManutencao } from '../hooks/useManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import { useFilters } from '../hooks/useFilters';
 import { InspecaoManutencao, criarInspecaoVazia } from '../types/manutencao';
-import { ManutencaoFilter } from '../types/filters';
 import './Manutencao.css';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -32,8 +31,8 @@ export const Manutencao: React.FC = () => {
 
   const filteredHistorico = useMemo(() => {
     return historico.filter((item) => {
-      if (filters.dataInicio && item.dataInicio < filters.dataInicio) return false;
-      if (filters.dataFinal && item.dataInicio > filters.dataFinal) return false;
+      if (filters.dataInicio && item.dataInicio && item.dataInicio < filters.dataInicio) return false;
+      if (filters.dataFinal && item.dataInicio && item.dataInicio > filters.dataFinal) return false;
       if (filters.status && item.statusManutencao !== filters.status) return false;
       if (filters.tag && !item.tag?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
       if (filters.fabricante && !item.fabricante?.toLowerCase().includes(filters.fabricante.toLowerCase())) return false;
@@ -120,14 +119,23 @@ export const Manutencao: React.FC = () => {
   }
 
   if (modo === 'criar-nova') {
+    const novaOM = criarInspecaoVazia();
+    // Autocalcular número da OM
+    const ultimoNumero = historico.reduce((max, item) => {
+      const num = item.numeroOrdemManutencao || 0;
+      return num > max ? num : max;
+    }, 0);
+    novaOM.numeroOrdemManutencao = ultimoNumero + 1;
+
     return (
       <div className="manutencao-page">
         <h2>Manutenção</h2>
         <ModalEditarDetalhesManutencao
-          inspecao={criarInspecaoVazia()}
+          inspecao={novaOM}
           onSalvar={handleCriarNova}
           onCancelar={() => setModo('lista')}
           titulo="Criar Nova Manutenção"
+          isCreating
         />
       </div>
     );

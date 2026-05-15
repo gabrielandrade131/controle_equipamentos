@@ -21,8 +21,7 @@ const HistoricoEquipamento: React.FC = () => {
 
   const filteredHistoricos = useMemo(() => {
     return historicos.filter((h) => {
-      if (filters.tag && !h.tag?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
-      if (filters.status && h.status !== filters.status) return false;
+      if (filters.tag && !h.numeroSerie?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
       return true;
     });
   }, [historicos, filters]);
@@ -87,16 +86,7 @@ const HistoricoEquipamento: React.FC = () => {
             filters={filters}
             onFiltersChange={updateFilters}
             fields={[
-              { key: 'tag', label: 'TAG', type: 'text', placeholder: 'Buscar TAG...' },
-              {
-                key: 'status',
-                label: 'Status',
-                type: 'select',
-                options: [
-                  { value: 'ATIVO', label: 'Ativo' },
-                  { value: 'INATIVO', label: 'Inativo' },
-                ],
-              },
+              { key: 'tag', label: 'Número de Série', type: 'text', placeholder: 'Buscar série...' },
             ]}
             titulo="Filtros"
           />

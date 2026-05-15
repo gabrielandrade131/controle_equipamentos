@@ -1,6 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException  } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
 import { CreateHistoricoEquipamentoDto } from './dto/create-historico-equipamento.dto';
@@ -101,6 +100,40 @@ export class ProducoesService {
         };
     }
 
+    private normalizarProducao<T extends {
+        descricao?: string | null;
+        loteProducao?: {
+            modelo?: string | null;
+            descricao?: string | null;
+            solicitante?: string | null;
+            dataSolicitacao?: Date | null;
+            dataNecessidade?: Date | null;
+            dataInicio?: Date | null;
+            previsaoTermino?: Date | null;
+            dataTermino?: Date | null;
+            statusProducao?: string | null;
+            tipoEquipamentoId?: string | null;
+            tipoEquipamento?: unknown;
+        } | null;
+    }>(producao: T) {
+        const lote = producao.loteProducao;
+
+        return this.adicionarDiasProducao({
+            ...producao,
+            modelo: lote?.modelo ?? null,
+            descricao: lote?.descricao ?? producao.descricao ?? null,
+            solicitante: lote?.solicitante ?? null,
+            dataSolicitacao: lote?.dataSolicitacao ?? null,
+            dataNecessidade: lote?.dataNecessidade ?? null,
+            dataInicio: lote?.dataInicio ?? null,
+            previsaoTermino: lote?.previsaoTermino ?? null,
+            dataTermino: lote?.dataTermino ?? null,
+            statusProducao: lote?.statusProducao ?? null,
+            tipoEquipamentoId: lote?.tipoEquipamentoId ?? null,
+            tipoEquipamento: lote?.tipoEquipamento ?? null,
+        });
+    }
+
     private formartarValor(value: unknown): string | null {
         if (value === null || value === undefined) {
             return null;
@@ -113,7 +146,7 @@ export class ProducoesService {
         return String(value);
     }
 
-    private obterPrevisaoTermino(data: CreateProducaoDto | UpdateProducaoDto): string | undefined {
+    private obterPrevisaoTermino(data:  UpdateProducaoDto): string | undefined {
         return data.previsaoTermino ?? data.dataPrevisao;
     }
 
@@ -183,6 +216,7 @@ export class ProducoesService {
         const where: Prisma.EquipmentWhereInput = {
             ativo: true,
         };
+        const loteProducaoWhere: Prisma.LoteProducaoWhereInput = {};
 
         if (filters.numeroOrdem) {
             where.numeroOrdem = filters.numeroOrdem;
@@ -196,9 +230,9 @@ export class ProducoesService {
         }
 
         if (filters.modelo) {
-            where.modelo = {
-            contains: filters.modelo,
-            mode: 'insensitive',
+            loteProducaoWhere.modelo = {
+                contains: filters.modelo,
+                mode: 'insensitive',
             };
         }
 
@@ -210,152 +244,25 @@ export class ProducoesService {
         }
 
         if (filters.statusProducao) {
-            where.statusProducao = filters.statusProducao;
+            loteProducaoWhere.statusProducao = filters.statusProducao;
         }
 
         if (filters.tipoEquipamentoId) {
-            where.tipoEquipamentoId = filters.tipoEquipamentoId;
+            loteProducaoWhere.tipoEquipamentoId = filters.tipoEquipamentoId;
+        }
+
+        if (Object.keys(loteProducaoWhere).length > 0) {
+            where.loteProducao = {
+                is: loteProducaoWhere,
+            };
         }
 
         return where;
     }
 
-    async create(data: CreateProducaoDto) {
-        try {
-            let tipoEquipamentoNome: string | null = null;
-
-            if (data.tipoEquipamentoId) {
-                const tipoEquipamento = await this.prisma.tipoEquipamento.findUnique({
-                    where: { id: data.tipoEquipamentoId },
-                });
-
-                if (!tipoEquipamento) {
-                    throw new NotFoundException('Tipo de equipamento não encontrado');
-                }
-                
-                tipoEquipamentoNome = tipoEquipamento.nome;
-            }
-        
-        // Gerar próximo numeroOrdem
-        const lastEquipment = await this.prisma.equipment.findFirst({
-            orderBy: { numeroOrdem: 'desc' },
-            select: { numeroOrdem: true },
-        });
-        const nextNumeroOrdem = (lastEquipment?.numeroOrdem ?? 0) + 1;
-
-        const previsaoTermino = this.obterPrevisaoTermino(data);
-
-        const producaoCriada = await this.prisma.equipment.create({
-            data: {
-                numeroOrdem: nextNumeroOrdem,
-                dataSolicitacao: data.dataSolicitacao
-                ? new Date(data.dataSolicitacao)
-                : null,
-                dataNecessidade: data.dataNecessidade
-                ? new Date(data.dataNecessidade)
-                : null,
-                solicitante: data.solicitante,
-                dataInicio: data.dataInicio
-                ? new Date(data.dataInicio)
-                : null,
-                previsaoTermino: previsaoTermino
-                ? new Date(previsaoTermino)
-                : null,
-                dataTermino: data.dataTermino
-                ? new Date(data.dataTermino)
-                : null,
-                tipoEquipamentoId: data.tipoEquipamentoId || null,
-                modelo: data.modelo,
-                descricao: this.montarDescricao(
-                    tipoEquipamentoNome,
-                    data.descricaoComplemento,
-                ),
-                listaPecas: data.listaPecas ?? '',
-                sequenciaMontagem: data.sequencialMontagem ?? '',
-                inspecaoMontagem: data.inspecaoMontagem ?? '',
-                historicoEquipamento: data.historicoEquipamento ?? '',
-                procedimentoTesteInspecaoMontagem:
-                    data.procedimentoTestes ?? '',
-                itensSeriados: {
-                    create:
-                    data.itensSeriados?.map((item) => ({
-                        descricao: item.descricao,
-                    })) ?? [],
-                },
-                registrosInspecaoMontagem: {
-                    create: Array.from({ length: 18 }, (_, index) => ({
-                        ordem: index + 1,
-                    })),
-                }
-            },
-        });
-
-            const numeroSerieGerado = this.montarNumeroSerie(
-                producaoCriada.modelo,
-                producaoCriada.numeroOrdem,
-            );
-
-            const producaoFinal = await this.prisma.equipment.update({
-                where: { id: producaoCriada.id },
-                data: {
-                    numeroSerie: numeroSerieGerado,
-                    tag: numeroSerieGerado,
-                },
-                include: {
-                    tipoEquipamento: true,
-                    itensSeriados: true,
-                    observacoes: {
-                        orderBy: {
-                            criadoEm: 'desc',
-                        },
-                    },
-                    registrosInspecaoMontagem: {
-                        orderBy: {
-                            ordem: 'asc',
-                        },
-                    },
-                },
-            });
-
-            return this.adicionarDiasProducao(producaoFinal);
-
-        } catch(error) {
-        if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === 'P2002'
-        ) {
-            throw new ConflictException('Número de ordem já existe');
-        }
-        throw error;
-        }
-    }
 
     async findAll(filters: FilterProducaoDto) {
        const where = this.montarWhere(filters);
-
-       if (filters.numeroOrdem) {
-        where.numeroOrdem = filters.numeroOrdem;
-       }
-
-       if (filters.numeroSerie) {
-        where.numeroSerie = {
-            contains: filters.numeroSerie,
-        };
-       }
-
-       if (filters.tag) {
-        where.tag = {
-            contains: filters.tag,
-        };
-       }
-
-       if (filters.statusProducao) {
-        where.statusProducao = filters.statusProducao;
-       }
-
-       if (filters.tipoEquipamentoId) {
-        where.tipoEquipamentoId = filters.tipoEquipamentoId;
-       }
 
        const page = filters.page ?? 1;
        const limit = filters.limit ?? 10;
@@ -367,7 +274,11 @@ export class ProducoesService {
         this.prisma.equipment.findMany({
             where,
             include: {
-                tipoEquipamento: true,
+                loteProducao: {
+                    include: {
+                        tipoEquipamento: true,
+                    },
+                },
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {
@@ -384,11 +295,6 @@ export class ProducoesService {
                         criadoEm: 'desc',
                     },
                 },
-                historicoEquipamentoRegistros: {
-                    orderBy: {
-                        data: 'desc',
-                    },
-                },
             },
             orderBy: {
                 [sortBy]: sortOrder,
@@ -400,7 +306,7 @@ export class ProducoesService {
        ]);
 
        return {
-        data: data.map((producao) => this.adicionarDiasProducao(producao)),
+        data: data.map((producao) => this.normalizarProducao(producao)),
         total,
         page,
         limit,
@@ -415,7 +321,11 @@ export class ProducoesService {
                 ativo: true 
             },
             include: {
-                tipoEquipamento: true,
+                loteProducao: {
+                    include: {
+                        tipoEquipamento: true,
+                    },
+                },
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {
@@ -438,7 +348,7 @@ export class ProducoesService {
     if (!producao) {
         throw new NotFoundException('Produção não encontrada');
     }
-    return this.adicionarDiasProducao(producao);
+    return this.normalizarProducao(producao);
 
     }
 
@@ -446,7 +356,11 @@ export class ProducoesService {
         const producao = await this.prisma.equipment.findUnique({
             where: { numeroOrdem },
             include: {
-                tipoEquipamento: true,
+                loteProducao: {
+                    include: {
+                        tipoEquipamento: true,
+                    },
+                },
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {
@@ -464,13 +378,13 @@ export class ProducoesService {
         if (!producao) {
             throw new NotFoundException('Produção não encontrada');
         }
-        return this.adicionarDiasProducao(producao);
+        return this.normalizarProducao(producao);
     }
 
     async update(id: string, data: UpdateProducaoDto, user?: any) {
        const producaoAtual = await this.findOne(id);
        const tipoEquipamentoIdFinal = 
-        data.tipoEquipamentoId ?? producaoAtual.tipoEquipamentoId ?? undefined;
+        data.tipoEquipamentoId ?? producaoAtual.loteProducao?.tipoEquipamentoId ?? undefined;
 
        let tipoEquipamentoNome: string | null = null;
 
@@ -487,8 +401,8 @@ export class ProducoesService {
         }
 
         const descricaoComplementoAtual = 
-            producaoAtual.descricao && tipoEquipamentoNome
-            ? producaoAtual.descricao.replace(tipoEquipamentoNome, '').trim()
+            producaoAtual.loteProducao?.descricao && tipoEquipamentoNome
+            ? producaoAtual.loteProducao.descricao.replace(tipoEquipamentoNome, '').trim()
             : '';
         
         const descricaoComplementoFinal =
@@ -532,8 +446,10 @@ export class ProducoesService {
 
             const valorAnterior =
             campo === 'descricao'
-                ? producaoAtual.descricao
-                : (producaoAtual as any)[campo];
+                ? producaoAtual.loteProducao?.descricao
+                : campo in (producaoAtual.loteProducao ?? {})
+                    ? (producaoAtual.loteProducao as any)[campo]
+                    : (producaoAtual as any)[campo];
             
             const anteriorFormatado = this.formartarValor(valorAnterior);
             const novoFormatado = this.formartarValor(novoValor);
@@ -548,84 +464,87 @@ export class ProducoesService {
             }
         }
 
-        try{
-            if (historicoParaCriar.length > 0) {
-                await Promise.all(
-                    historicoParaCriar.map((item) =>
-                        this.prisma.historicoProducao.create({
-                            data: {
-                                equipmentId: id,
-                                campo: item.campo,
-                                valorAnterior: item.valorAnterior,
-                                valorNovo: item.valorNovo,
-                                alteradoPor: item.alteradoPor,
+        try {
+            const descricaoAtualizada = this.montarDescricao(
+                tipoEquipamentoNome,
+                descricaoComplementoFinal,
+            );
+
+            const producaoAtualizada = await this.prisma.$transaction(async (tx) => {
+                if (historicoParaCriar.length > 0) {
+                    await tx.historicoProducao.createMany({
+                        data: historicoParaCriar.map((item) => ({
+                            equipmentId: id,
+                            campo: item.campo,
+                            valorAnterior: item.valorAnterior,
+                            valorNovo: item.valorNovo,
+                            alteradoPor: item.alteradoPor,
+                        })),
+                    });
+                }
+
+                await tx.loteProducao.update({
+                    where: { id: producaoAtual.loteProducaoId! },
+                    data: {
+                        dataSolicitacao: data.dataSolicitacao ? new Date(data.dataSolicitacao) : undefined,
+                        dataNecessidade: data.dataNecessidade ? new Date(data.dataNecessidade) : undefined,
+                        solicitante: data.solicitante,
+                        dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
+                        previsaoTermino: previsaoTermino ? new Date(previsaoTermino) : undefined,
+                        dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
+                        statusProducao: data.statusProducao as PrismaStatusProducao | undefined,
+                        tipoEquipamentoId: data.tipoEquipamentoId,
+                        modelo: data.modelo,
+                        descricao: descricaoAtualizada,
+                    },
+                });
+
+                return tx.equipment.update({
+                    where: { id },
+                    data: {
+                        numeroSerie: this.montarNumeroSerie(
+                            data.modelo ?? producaoAtual.loteProducao?.modelo,
+                            producaoAtual.numeroOrdem,
+                        ),
+                        descricao: descricaoAtualizada,
+                        listaPecas: data.listaPecas,
+                        sequenciaMontagem: data.sequencialMontagem,
+                        inspecaoMontagem: data.inspecaoMontagem,
+                        historicoEquipamento: data.historicoEquipamento,
+                        procedimentoTesteInspecaoMontagem:
+                            data.procedimentoTestes,
+                        itensSeriados:
+                            data.itensSeriados !== undefined
+                                ? {
+                                    deleteMany: {},
+                                    create: data.itensSeriados.map((item) => ({
+                                        descricao: item.descricao,
+                                    })),
+                                }
+                                : undefined,
+                    },
+                    include: {
+                        loteProducao: {
+                            include: {
+                                tipoEquipamento: true,
                             },
-                        })
-                    )
-                );
-            }
-
-            return this.prisma.equipment.update({
-                where: { id },
-                data: {
-                    numeroSerie: this.montarNumeroSerie(
-                        data.modelo ?? producaoAtual.modelo,
-                        producaoAtual.numeroOrdem,
-                    ),
-                    dataSolicitacao: data.dataSolicitacao 
-                        ? new Date(data.dataSolicitacao)
-                        : undefined,
-                    dataNecessidade: data.dataNecessidade
-                        ? new Date(data.dataNecessidade)
-                        : undefined,
-                    dataInicio: data.dataInicio
-                        ? new Date(data.dataInicio)
-                        : undefined,
-                    previsaoTermino: previsaoTermino
-                        ? new Date(previsaoTermino)
-                        : undefined,
-                    dataTermino: data.dataTermino
-                        ? new Date(data.dataTermino)
-                        : undefined,
-                    statusProducao: data.statusProducao as PrismaStatusProducao | undefined,
-                    tipoEquipamentoId: data.tipoEquipamentoId,
-                    modelo: data.modelo,
-                    descricao: this.montarDescricao(
-                        tipoEquipamentoNome,
-                        data.descricaoComplemento,
-                    ),
-                    listaPecas: data.listaPecas,
-                    sequenciaMontagem: data.sequencialMontagem,
-                    inspecaoMontagem: data.inspecaoMontagem,
-                    historicoEquipamento: data.historicoEquipamento,
-                    procedimentoTesteInspecaoMontagem:
-                        data.procedimentoTestes,
-                    itensSeriados:
-                        data.itensSeriados !== undefined
-                            ? {
-                                deleteMany: {},
-                                create: data.itensSeriados.map((item) => ({
-                                    descricao: item.descricao,
-                                })),
-                            }
-                            : undefined,
-                },
-                include: {
-                    tipoEquipamento: true,
-                    itensSeriados: true,
-                    observacoes: {
-                        orderBy: {
-                            criadoEm: 'desc',
+                        },
+                        itensSeriados: true,
+                        observacoes: {
+                            orderBy: {
+                                criadoEm: 'desc',
+                            },
+                        },
+                        registrosInspecaoMontagem: {
+                            orderBy: {
+                                ordem: 'asc',
+                            },
                         },
                     },
-                    registrosInspecaoMontagem: {
-                        orderBy: {
-                            ordem: 'asc',
-                        },
-                    },
-
-                },
+                });
             });
+
+            return this.normalizarProducao(producaoAtualizada);
         } catch (error) {
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError && 
@@ -665,7 +584,7 @@ export class ProducoesService {
     async updateTag(id: string, data: UpdateTagDto) {
         const equipment = await this.findOne(id);
 
-        if (equipment.statusProducao !== 'CONCLUIDA') {
+        if (equipment.loteProducao?.statusProducao !== 'CONCLUIDA') {
             throw new BadRequestException(
                 'A TAG só pode ser cadastrada quando a produção estiver concluida',
             )
@@ -690,7 +609,11 @@ export class ProducoesService {
                 tag: data.tag,
             },
             include: {
-                tipoEquipamento: true,
+                loteProducao: {
+                    include: {
+                        tipoEquipamento: true,
+                    },
+                },
                 itensSeriados: true,
                 observacoes: {
                     orderBy: {
@@ -705,7 +628,7 @@ export class ProducoesService {
             },
         });
 
-        return this.adicionarDiasProducao(equipamentoAtulizado);
+        return this.normalizarProducao(equipamentoAtulizado);
     }
 
     async listRegistrosInspecaoMontagem(id: string) {
@@ -797,7 +720,11 @@ export class ProducoesService {
         const producoes = await this.prisma.equipment.findMany({
             where,
             include: {
-            tipoEquipamento: true,
+            loteProducao: {
+                include: {
+                    tipoEquipamento: true,
+                },
+            },
             itensSeriados: true,
             },
             orderBy: {
@@ -806,7 +733,17 @@ export class ProducoesService {
         });
 
         const dados = producoes.map((producao) =>
-            this.adicionarDiasProducao(producao),
+            this.adicionarDiasProducao({
+                ...producao,
+                modelo: producao.loteProducao?.modelo,
+                descricao: producao.loteProducao?.descricao,
+                solicitante: producao.loteProducao?.solicitante,
+                dataSolicitacao: producao.loteProducao?.dataSolicitacao,
+                dataInicio: producao.loteProducao?.dataInicio,
+                previsaoTermino: producao.loteProducao?.previsaoTermino,
+                dataTermino: producao.loteProducao?.dataTermino,
+                statusProducao: producao.loteProducao?.statusProducao,
+            }),
         );
 
         const workbook = new ExcelJS.Workbook();
@@ -842,17 +779,17 @@ export class ProducoesService {
             worksheet.addRow({
             numeroOrdem: producao.numeroOrdem,
             numeroSerie: producao.numeroSerie,
-            tipoEquipamentoNome: producao.tipoEquipamento?.nome,
-            modelo: producao.modelo,
-            descricao: producao.descricao,
-            solicitante: producao.solicitante,
-            dataSolicitacao: producao.dataSolicitacao,
+            tipoEquipamentoNome: producao.loteProducao?.tipoEquipamento?.nome,
+            modelo: producao.loteProducao?.modelo,
+            descricao: producao.loteProducao?.descricao,
+            solicitante: producao.loteProducao?.solicitante,
+            dataSolicitacao: producao.loteProducao?.dataSolicitacao,
             diasSolicitacao: producao.diasSolicitacao,
-            dataInicio: producao.dataInicio,
-            previsaoTermino: producao.previsaoTermino,
-            dataTermino: producao.dataTermino,
+            dataInicio: producao.loteProducao?.dataInicio,
+            previsaoTermino: producao.loteProducao?.previsaoTermino,
+            dataTermino: producao.loteProducao?.dataTermino,
             diasProducao: producao.diasProducao,
-            statusProducao: producao.statusProducao,
+            statusProducao: producao.loteProducao?.statusProducao,
             situacaoPrazo: producao.situacaoPrazo,
             resultadoPrazo: producao.resultadoPrazo,
             tag: producao.tag,

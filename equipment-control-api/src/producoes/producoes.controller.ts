@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { CreateProducaoDto } from './dto/create-producao.dto';
 import { UpdateProducaoDto } from './dto/update-producao.dto';
 import { CreateObservacaoDto } from './dto/create-observacao.dto';
 import { CreateHistoricoEquipamentoDto } from './dto/create-historico-equipamento.dto';
@@ -17,12 +16,6 @@ import type { Response } from 'express';
 @Controller('producoes')
 export class ProducoesController {
     constructor(private readonly producoesService: ProducoesService) {}
-
-    @Post()
-    @ApiOperation({ summary: 'Criar uma nova produção' })
-    create(@Body() body: CreateProducaoDto) {
-        return this.producoesService.create(body);
-    }
 
     @Post(':id/observacoes')
     @ApiOperation({ summary: 'Adicionar uma nova Observação'})

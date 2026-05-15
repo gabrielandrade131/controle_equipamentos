@@ -17,17 +17,7 @@ model Equipment {
   numeroOrdem                       Int                                       @unique @default(autoincrement())
   numeroSerie                       String?   
   tag                               String?                                   @unique
-  dataSolicitacao                   DateTime?
-  dataNecessidade                   DateTime?
-  solicitante                       String?   
 
-  dataInicio                        DateTime?
-  previsaoTermino                   DateTime?
-  dataTermino                       DateTime?
-  statusProducao                    StatusProducao                           @default(PROGRAMADA)
-  tipoEquipamentoId                 String?
-  tipoEquipamento                   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
-  modelo                            String? 
   descricao                         String?
 
   listaPecas                        String?
@@ -45,8 +35,8 @@ model Equipment {
   historicoAlteracoes               HistoricoProducao[]
   historicoEquipamentoRegistros     HistoricoEquipamentoRegistro[]
 
-  loteProducaoId                    String?           
-  loteProducao                      LoteProducao?     @relation(fields: [loteProducaoId], references: [id]) 
+  loteProducaoId                    String           
+  loteProducao                      LoteProducao      @relation(fields: [loteProducaoId], references: [id]) 
 
   ativo                             Boolean           @default(true)
   excluidoEm                        DateTime?         
@@ -117,7 +107,6 @@ model TipoEquipamento {
   criadoEm          DateTime        @default(now())
   atualizadoEm      DateTime        @updatedAt
 
-  equipments        Equipment[]
   lotesProducao     LoteProducao[]
 }
 
@@ -194,6 +183,7 @@ model LoteProducao {
 
   dataSolicitacao           DateTime?
   dataInicio                DateTime?
+  dataNecessidade           DateTime?
   previsaoTermino           DateTime?
   dataTermino               DateTime?
   statusProducao            StatusProducao                           @default(PROGRAMADA)

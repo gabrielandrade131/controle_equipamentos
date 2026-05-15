@@ -256,7 +256,7 @@ export const useProducoes = () => {
       producao = mapApiToProducao(tagResponse.data);
     }
 
-    setProducoes((prev) => prev.map((item) => (item.id === id ? producao : item)));
+    await carregarProducoes();
     return producao;
   };
 

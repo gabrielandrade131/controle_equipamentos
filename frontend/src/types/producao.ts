@@ -30,6 +30,7 @@ export interface TipoEquipamento {
   ativo: boolean;
 }
 
+
 export interface CreateProducaoDto {
   numeroOrdem: string;
   numeroSerie: string;

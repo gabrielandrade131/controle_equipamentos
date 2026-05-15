@@ -1,0 +1,140 @@
+.filter-panel {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filter-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.filter-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #B2CC21;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+.filter-toggle:hover {
+  color: #FF1C20;
+}
+
+.filter-badge {
+  background-color: #FF1C20;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  margin-left: auto;
+  font-weight: 600;
+}
+
+.filter-content {
+  padding: 16px;
+}
+
+.filter-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #B2CC21;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #f9f9f9;
+  transition: all 0.2s ease;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #FF1C20;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(255, 28, 32, 0.1);
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.btn-apply-filter,
+.btn-clear-filter {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-apply-filter {
+  background-color: #FF1C20;
+  color: white;
+}
+
+.btn-apply-filter:hover {
+  background-color: #CC1319;
+  transform: translateY(-2px);
+}
+
+.btn-clear-filter {
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.btn-clear-filter:hover:not(:disabled) {
+  background-color: #e0e0e0;
+  border-color: #ccc;
+}
+
+.btn-clear-filter:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .filter-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+  }
+
+  .btn-apply-filter,
+  .btn-clear-filter {
+    width: 100%;
+  }
+}

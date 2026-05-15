@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useProducoes } from '../hooks/useProducoes';
+import { FilterPanel } from '../components/FilterPanel';
+import { useFilters } from '../hooks/useFilters';
 import { CreateProducaoDto, Producao } from '../types/producao';
 import { PdfExporter } from '../components/PdfExporter';
 import { FormularioOrdem } from '../components/FormularioOrdem';
@@ -32,6 +34,18 @@ const OrdemProducao: React.FC = () => {
   const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoes();
   const [selected, setSelected] = useState<SelectedProducao | null>(null);
   const [modo, setModo] = useState<'lista' | 'criar' | 'editar'>('lista');
+  const { filters, updateFilters } = useFilters('ordem-filters', {});
+
+  const filteredProducoes = useMemo(() => {
+    return producoes.filter((p) => {
+      if (filters.dataInicio && p.dataInicio < filters.dataInicio) return false;
+      if (filters.dataFinal && p.dataInicio > filters.dataFinal) return false;
+      if (filters.status && p.statusProducao !== filters.status) return false;
+      if (filters.tag && !p.tag?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
+      if (filters.modelo && !p.modelo?.toLowerCase().includes(filters.modelo.toLowerCase())) return false;
+      return true;
+    });
+  }, [producoes, filters]);
 
   const handleSelectProducao = (producao: Producao) => {
     setSelected({
@@ -112,12 +126,33 @@ const OrdemProducao: React.FC = () => {
 
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Producoes ({producoes.length})</h3>
-          {producoes.length === 0 ? (
-            <p>Nenhuma producao encontrada</p>
+          <FilterPanel
+            filters={filters}
+            onFiltersChange={updateFilters}
+            fields={[
+              { key: 'dataInicio', label: 'Data Inicial', type: 'date' },
+              { key: 'dataFinal', label: 'Data Final', type: 'date' },
+              {
+                key: 'status',
+                label: 'Status',
+                type: 'select',
+                options: [
+                  { value: 'CRIADA', label: 'Criada' },
+                  { value: 'INICIADA', label: 'Iniciada' },
+                  { value: 'FINALIZADA', label: 'Finalizada' },
+                ],
+              },
+              { key: 'tag', label: 'TAG', type: 'text', placeholder: 'Buscar TAG...' },
+              { key: 'modelo', label: 'Modelo', type: 'text', placeholder: 'Buscar modelo...' },
+            ]}
+            titulo="Filtros"
+          />
+          <h3>Produções ({filteredProducoes.length})</h3>
+          {filteredProducoes.length === 0 ? (
+            <p>Nenhuma produção encontrada</p>
           ) : (
             <ul className="page-list">
-              {producoes.map((producao: Producao) => (
+              {filteredProducoes.map((producao: Producao) => (
                 <li
                   key={producao.id}
                   className={selected?.id === producao.id ? 'active' : ''}

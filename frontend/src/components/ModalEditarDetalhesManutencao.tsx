@@ -6,12 +6,14 @@ interface ModalEditarDetalhesManutencaoProps {
   inspecao: InspecaoManutencao;
   onSalvar?: (inspecaoAtualizada: InspecaoManutencao) => void;
   onCancelar?: () => void;
+  titulo?: string;
 }
 
 export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutencaoProps> = ({
   inspecao,
   onSalvar,
   onCancelar,
+  titulo,
 }) => {
   const [formData, setFormData] = useState<InspecaoManutencao>(inspecao);
   const [novaObservacao, setNovaObservacao] = useState('');
@@ -51,7 +53,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>Editar Detalhes da Manutenção</h2>
+          <h2>{titulo || 'Editar Detalhes da Manutenção'}</h2>
           <button
             onClick={onCancelar}
             className="modal-close"

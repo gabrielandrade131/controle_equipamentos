@@ -73,6 +73,7 @@ export const usePdfExportInspecao = () => {
             const normalizeConformidade = (value?: string | boolean | null) => {
                 if (value === true || value === 'SIM') return 'SIM';
                 if (value === false || value === 'NÃO' || value === 'NAO') return 'NÃO';
+                if (value === 'N/A' || value === 'NA') return 'N/A';
                 return '-';
             };
 
@@ -242,6 +243,50 @@ export const usePdfExportInspecao = () => {
 
             renderVerificacoes('VERIFICAÇÕES GERAIS PRÉ MONTAGEM', inspecao.verificacoesGeraisPremontagem);
             renderVerificacoes('VERIFICAÇÕES GERAIS PÓS MONTAGEM', inspecao.verificacaoPosmontagem);
+
+            if (inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0) {
+                checkPageBreak(15);
+                addSection('FOTOS DA MONTAGEM');
+                
+                const imagensPerPage = 2;
+                const imageWidth = 85;
+                const imageHeight = 85;
+                
+                for (let i = 0; i < inspecao.imagensAnexadas.length; i++) {
+                    const indexInPage = i % imagensPerPage;
+                    
+                    if (indexInPage === 0 && i > 0) {
+                        pdf.addPage();
+                        yPosition = 15;
+                        addSection('FOTOS DA MONTAGEM (Continuação)');
+                    }
+                    
+                    checkPageBreak(imageHeight + 10);
+                    
+                    const imageX = marginLeft + (i % 2) * (imageWidth + 10);
+                    const imageY = yPosition;
+                    
+                    try {
+                        pdf.addImage(
+                            inspecao.imagensAnexadas[i],
+                            'JPEG',
+                            imageX,
+                            imageY,
+                            imageWidth,
+                            imageHeight
+                        );
+                        
+                        pdf.setFontSize(8);
+                        pdf.text(`Foto ${i + 1}`, imageX, imageY + imageHeight + 4);
+                        
+                        if ((i + 1) % imagensPerPage === 0 || i === inspecao.imagensAnexadas.length - 1) {
+                            yPosition += imageHeight + 10;
+                        }
+                    } catch (error) {
+                        console.error(`Erro ao adicionar imagem ${i + 1}:`, error);
+                    }
+                }
+            }
 
             // Resultado e assinatura
             checkPageBreak(30);

@@ -25,11 +25,53 @@ const STATUS_OPTIONS: Array<{ value: StatusProducao; label: string }> = [
 
 const today = () => new Date().toISOString().split('T')[0];
 
+type CampoDocumentoAnexo =
+  | 'listaPecas'
+  | 'sequencialMontagem'
+  | 'inspecaoMontagem'
+  | 'historicoEquipamento'
+  | 'procedimentoTestes';
+
+const CAMPOS_DOCUMENTOS_ANEXOS: Array<{ campo: CampoDocumentoAnexo; label: string }> = [
+  { campo: 'listaPecas', label: 'Lista de Pecas' },
+  { campo: 'sequencialMontagem', label: 'Sequencial de Montagem' },
+  { campo: 'inspecaoMontagem', label: 'Inspecao de Montagem' },
+  { campo: 'historicoEquipamento', label: 'Historico do equipamento' },
+  {
+    campo: 'procedimentoTestes',
+    label: 'Procedimento para Testes e Inspecao de Montagem',
+  },
+];
+
+const parseAnexos = (valor?: string): string[] => {
+  const texto = (valor ?? '').trim();
+  if (!texto) return [];
+
+  try {
+    const parsed = JSON.parse(texto);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => String(item).trim())
+        .filter(Boolean);
+    }
+  } catch {
+    // mantém compatibilidade com registros legados em texto puro
+  }
+
+  return texto
+    .split(/\r?\n/)
+    .map((linha) => linha.replace(/^-+\s*/, '').trim())
+    .filter(Boolean);
+};
+
+const serializeAnexos = (anexos: string[]) => anexos.join('\n');
+
 const createEmptyProducao = (): CreateProducaoDto => ({
   numeroOrdem: '',
   numeroSerie: '',
   tag: '',
   dataSolicitacao: today(),
+  dataNecessidade: '',
   dataInicio: '',
   dataPrevisao: '',
   dataTermino: '',
@@ -72,6 +114,13 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   });
   const [novaObservacao, setNovaObservacao] = useState('');
   const [novoResponsavelHistorico, setNovoResponsavelHistorico] = useState('');
+  const [anexosPorCampo, setAnexosPorCampo] = useState<Record<CampoDocumentoAnexo, string[]>>({
+    listaPecas: parseAnexos(producao?.listaPecas),
+    sequencialMontagem: parseAnexos(producao?.sequencialMontagem),
+    inspecaoMontagem: parseAnexos(producao?.inspecaoMontagem),
+    historicoEquipamento: parseAnexos(producao?.historicoEquipamento),
+    procedimentoTestes: parseAnexos(producao?.procedimentoTestes),
+  });
 
   const tagPodeSerEditada = formData.statusProducao === 'CONCLUIDA';
 
@@ -90,6 +139,18 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
         console.error('Erro ao carregar tipos de equipamento:', error);
       });
   }, []);
+
+  useEffect(() => {
+    if (!producao) return;
+
+    setAnexosPorCampo({
+      listaPecas: parseAnexos(producao.listaPecas),
+      sequencialMontagem: parseAnexos(producao.sequencialMontagem),
+      inspecaoMontagem: parseAnexos(producao.inspecaoMontagem),
+      historicoEquipamento: parseAnexos(producao.historicoEquipamento),
+      procedimentoTestes: parseAnexos(producao.procedimentoTestes),
+    });
+  }, [producao]);
 
   const updateFormData = (changes: Partial<CreateProducaoDto | Producao>) => {
     setFormData((current) => ({
@@ -186,6 +247,28 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     setNovoResponsavelHistorico('');
   };
 
+  const handleAnexosChange = (campo: CampoDocumentoAnexo, arquivosSelecionados: FileList | null) => {
+    if (!arquivosSelecionados || arquivosSelecionados.length === 0) {
+      return;
+    }
+
+    const nomesNovos = Array.from(arquivosSelecionados).map((arquivo) => arquivo.name);
+    const anexosAtualizados = Array.from(new Set([...(anexosPorCampo[campo] ?? []), ...nomesNovos]));
+
+    setAnexosPorCampo((prev) => ({ ...prev, [campo]: anexosAtualizados }));
+    updateFormData({
+      [campo]: serializeAnexos(anexosAtualizados),
+    });
+  };
+
+  const handleRemoverAnexo = (campo: CampoDocumentoAnexo, anexo: string) => {
+    const anexosAtualizados = (anexosPorCampo[campo] ?? []).filter((item) => item !== anexo);
+    setAnexosPorCampo((prev) => ({ ...prev, [campo]: anexosAtualizados }));
+    updateFormData({
+      [campo]: serializeAnexos(anexosAtualizados),
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSalvar(formData);
@@ -252,49 +335,68 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="dataSolicitacao">Data solicitacao</label>
-            <input
-              type="date"
-              id="dataSolicitacao"
-              name="dataSolicitacao"
-              value={formData.dataSolicitacao}
-              onChange={handleInputChange}
-            />
-          </div>
+          {!isEditing && (
+            <>
+              <div className="form-group">
+                <label htmlFor="dataSolicitacao">Data solicitacao</label>
+                <input
+                  type="date"
+                  id="dataSolicitacao"
+                  name="dataSolicitacao"
+                  value={formData.dataSolicitacao}
+                  onChange={handleInputChange}
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="dataInicio">Data inicio</label>
-            <input
-              type="date"
-              id="dataInicio"
-              name="dataInicio"
-              value={formData.dataInicio || ''}
-              onChange={handleInputChange}
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="dataNecessidade">Data necessidade</label>
+                <input
+                  type="date"
+                  id="dataNecessidade"
+                  name="dataNecessidade"
+                  value={formData.dataNecessidade || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </>
+          )}
 
-          <div className="form-group">
-            <label htmlFor="dataPrevisao">Previsao de termino</label>
-            <input
-              type="date"
-              id="dataPrevisao"
-              name="dataPrevisao"
-              value={formData.dataPrevisao || ''}
-              onChange={handleInputChange}
-            />
-          </div>
+          {isEditing && (
+            <>
+              <div className="form-group">
+                <label htmlFor="dataInicio">Data inicio</label>
+                <input
+                  type="date"
+                  id="dataInicio"
+                  name="dataInicio"
+                  value={formData.dataInicio || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="dataTermino">Data termino</label>
-            <input
-              type="date"
-              id="dataTermino"
-              name="dataTermino"
-              value={formData.dataTermino || ''}
-              onChange={handleInputChange}
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="dataPrevisao">Previsao de termino</label>
+                <input
+                  type="date"
+                  id="dataPrevisao"
+                  name="dataPrevisao"
+                  value={formData.dataPrevisao || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="dataTermino">Data termino</label>
+                <input
+                  type="date"
+                  id="dataTermino"
+                  name="dataTermino"
+                  value={formData.dataTermino || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </>
+          )}
 
           <div className="form-group">
             <label htmlFor="tipoEquipamentoId">Tipo de equipamento</label>
@@ -391,64 +493,40 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
       <div className="form-section">
         <h3>Documentos Relacionados</h3>
 
-        <div className="form-group">
-          <label htmlFor="listaPecas">Lista de Pecas:</label>
-          <textarea
-            id="listaPecas"
-            name="listaPecas"
-            value={formData.listaPecas}
-            onChange={handleInputChange}
-            placeholder="Descreva a lista de pecas ou deixe em branco se nao aplicavel"
-            rows={2}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="sequencialMontagem">Sequencial de Montagem:</label>
-          <textarea
-            id="sequencialMontagem"
-            name="sequencialMontagem"
-            value={formData.sequencialMontagem}
-            onChange={handleInputChange}
-            placeholder="Descreva o sequencial de montagem ou deixe em branco se nao aplicavel"
-            rows={2}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="inspecaoMontagem">Inspecao de Montagem:</label>
-          <textarea
-            id="inspecaoMontagem"
-            name="inspecaoMontagem"
-            value={formData.inspecaoMontagem}
-            onChange={handleInputChange}
-            placeholder="Descreva a inspecao de montagem ou deixe em branco se nao aplicavel"
-            rows={2}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="historicoEquipamento">Historico do Equipamento:</label>
-          <textarea
-            id="historicoEquipamento"
-            name="historicoEquipamento"
-            value={formData.historicoEquipamento}
-            onChange={handleInputChange}
-            placeholder="Descreva o historico do equipamento ou deixe em branco se nao aplicavel"
-            rows={2}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="procedimento">Procedimento para Testes e Inspecao de Montagem:</label>
-          <input
-            type="text"
-            id="procedimento"
-            value={formData.procedimentoTestes || ''}
-            onChange={(e) => setFormData({ ...formData, procedimentoTestes: e.target.value })}
-            placeholder="Ex: PR-MAN-003"
-          />
-        </div>
+        {CAMPOS_DOCUMENTOS_ANEXOS.map(({ campo, label }) => (
+          <div className="form-group" key={campo}>
+            <label htmlFor={`anexo-${campo}`}>{label}:</label>
+            <div className="anexo-upload">
+              <input
+                id={`anexo-${campo}`}
+                type="file"
+                multiple
+                onChange={(e) => {
+                  handleAnexosChange(campo, e.target.files);
+                  e.currentTarget.value = '';
+                }}
+              />
+              {anexosPorCampo[campo].length > 0 ? (
+                <div className="anexo-lista">
+                  {anexosPorCampo[campo].map((anexo) => (
+                    <div key={`${campo}-${anexo}`} className="anexo-item">
+                      <span>{anexo}</span>
+                      <button
+                        type="button"
+                        className="btn-remove-anexo"
+                        onClick={() => handleRemoverAnexo(campo, anexo)}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <small className="anexo-placeholder">Nenhum anexo selecionado</small>
+              )}
+            </div>
+          </div>
+        ))}
 
         <div className="form-group full">
           <label htmlFor="novaObservacao">Histórico de Produção:</label>

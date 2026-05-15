@@ -74,6 +74,9 @@ export interface InspecaoManutencao {
   observacoesHistorico?: ObservacaoHistorico[];
   assinatura?: string;
   
+  // Imagens/Fotos
+  imagensAnexadas?: string[];
+  
   criadoEm?: string;
   atualizadoEm?: string;
 }
@@ -168,4 +171,5 @@ export const criarInspecaoVazia = (): InspecaoManutencao => ({
   ],
   avaliacaoFinal: '',
   observacoesHistorico: [],
+  imagensAnexadas: [],
 });

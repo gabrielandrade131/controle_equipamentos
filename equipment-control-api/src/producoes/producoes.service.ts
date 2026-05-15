@@ -251,6 +251,9 @@ export class ProducoesService {
                 dataSolicitacao: data.dataSolicitacao
                 ? new Date(data.dataSolicitacao)
                 : null,
+                dataNecessidade: data.dataNecessidade
+                ? new Date(data.dataNecessidade)
+                : null,
                 solicitante: data.solicitante,
                 dataInicio: data.dataInicio
                 ? new Date(data.dataInicio)
@@ -509,6 +512,7 @@ export class ProducoesService {
             descricao: data.descricaoComplemento,
             statusProducao: data.statusProducao,
             dataSolicitacao: data.dataSolicitacao ? new Date(data.dataSolicitacao) : undefined,
+            dataNecessidade: data.dataNecessidade ? new Date(data.dataNecessidade) : undefined,
             solicitante: data.solicitante,
             dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
             previsaoTermino: previsaoTermino ? new Date(previsaoTermino) : undefined,
@@ -567,6 +571,9 @@ export class ProducoesService {
                     ),
                     dataSolicitacao: data.dataSolicitacao 
                         ? new Date(data.dataSolicitacao)
+                        : undefined,
+                    dataNecessidade: data.dataNecessidade
+                        ? new Date(data.dataNecessidade)
                         : undefined,
                     dataInicio: data.dataInicio
                         ? new Date(data.dataInicio)

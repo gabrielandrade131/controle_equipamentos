@@ -35,6 +35,12 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
         ? 'NÃO CONFORME'
         : '';
 
+  const imagensAnexadas = manutencao.imagensAnexadas
+    ? (typeof manutencao.imagensAnexadas === 'string'
+        ? JSON.parse(manutencao.imagensAnexadas)
+        : manutencao.imagensAnexadas)
+    : [];
+
   return {
     ...base,
     id: manutencao.id,
@@ -54,6 +60,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     diasManutencao: manutencao.diasManutencao ?? null,
     avaliacaoFinal,
     observacoesHistorico: parseObservacoesDiarias(manutencao.diagnostico),
+    imagensAnexadas,
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
   };
@@ -75,6 +82,7 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
     inspecao.avaliacaoFinal === ''
       ? undefined
       : inspecao.avaliacaoFinal === 'CONFORME',
+  imagensAnexadas: inspecao.imagensAnexadas?.length ? JSON.stringify(inspecao.imagensAnexadas) : undefined,
 });
 
 export const useManutencao = () => {

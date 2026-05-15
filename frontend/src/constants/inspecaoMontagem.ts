@@ -33,7 +33,7 @@ const VERIFICACOES_GERAIS_PREMONTAGEM_TEMPLATES: VerificacaoTemplate[] = [
   },
   {
     nome: 'Análise Dimensional da Carcaça',
-    instrumentoMedicao: 'TRENA / Nº Série',
+    instrumentoMedicao: 'TRENA\nNºSérie:',
   },
   {
     nome: 'Resultado Esperado: Modelo CSEX420RM entre 415 e 430mm',
@@ -53,58 +53,62 @@ const VERIFICACOES_GERAIS_PREMONTAGEM_TEMPLATES: VerificacaoTemplate[] = [
   },
   {
     nome: 'Teste de Aterramento do Motor',
-    instrumentoMedicao: 'MEGÔMETRO / Nº Série',
+    instrumentoMedicao: 'MEGÔMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Isolação do Motor',
-    instrumentoMedicao: 'MULTÍMETRO / MEGÔMETRO / Nº Série',
+    instrumentoMedicao: 'MULTÍMETRO☐/MEGÔMETRO☐\nNºSérie:',
   },
   {
     nome: 'Aplicação e aferição de Torque do Motor M4',
-    instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+    instrumentoMedicao: 'TORQUÍMETRO\nNºSérie:',
   },
   {
     nome: 'Aplicação e aferição de Torque do Motor M5',
-    instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+    instrumentoMedicao: 'TORQUÍMETRO\nNºSérie:',
   },
   {
     nome: 'Aplicação e aferição de Torque (botoeira)',
-    instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+    instrumentoMedicao: 'TORQUÍMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Funcionamento do Motor',
-    instrumentoMedicao: 'AMPERÍMETRO / Nº Série',
+    instrumentoMedicao: 'AMPERÍMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Rotação do Motor - Modelo CSEX420RM',
-    instrumentoMedicao: 'TACÔMETRO / Nº Série',
+    instrumentoMedicao: 'TACÔMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Rotação do Motor - Modelo CSEX420AC',
-    instrumentoMedicao: 'TACÔMETRO / Nº Série',
+    instrumentoMedicao: 'TACÔMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Rotação do Motor - Modelo CSEX550AC',
-    instrumentoMedicao: 'TACÔMETRO / Nº Série',
+    instrumentoMedicao: 'TACÔMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Rotação do Motor - Modelo CSEX550SS',
-    instrumentoMedicao: 'TACÔMETRO / Nº Série',
+    instrumentoMedicao: 'TACÔMETRO\nNºSérie:',
   },
 ];
 
 const VERIFICACAO_POSMONTAGEM_TEMPLATES: VerificacaoTemplate[] = [
   {
     nome: 'Teste de Aterramento (Resultado Esperado: >=0)',
+    instrumentoMedicao: 'MULTÍMETRO☐/MEGÔMETRO☐\nNºSérie:',
   },
   {
     nome: 'Teste de Isolação (Resultado Esperado: >=0)',
+    instrumentoMedicao: 'MEGÔMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Funcionamento (Inspeção visual de estado de funcionamento do equipamento)',
+    instrumentoMedicao: 'AMPERÍMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Rotação - Modelo CSEX420RM (3.390 rpm, com tolerância de -150 rpm)',
+    instrumentoMedicao: 'TACÔMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Rotação - Modelo CSEX42DAC (3.600 rpm, com tolerância de -150 rpm)',
@@ -117,9 +121,11 @@ const VERIFICACAO_POSMONTAGEM_TEMPLATES: VerificacaoTemplate[] = [
   },
   {
     nome: 'Teste de Temperatura (Range: 30 a 40 graus C)',
+    instrumentoMedicao: 'TERMÔMETRO LASER\nNºSérie:',
   },
   {
     nome: 'Teste de Decibéis (Resultado Esperado: Modelo CSEX420RM ou T<=96.2 SPL(a) dB]',
+    instrumentoMedicao: 'DECIBELÍMETRO\nNºSérie:',
   },
   {
     nome: 'Teste de Decibéis (Resultado Esperado: Modelo CSEX420AC ou T<=97 SPL(a) dB]',
@@ -132,6 +138,7 @@ const VERIFICACAO_POSMONTAGEM_TEMPLATES: VerificacaoTemplate[] = [
   },
   {
     nome: 'Teste de Continuidade (Resultado: >=0)',
+    instrumentoMedicao: 'MULTÍMETRO\nNºSérie:',
   },
 ];
 
@@ -158,43 +165,43 @@ export const LINHAS_PREMONTAGEM_INSPECAO_PDF: LinhaVerificacaoInspecaoPdf[] = [
       'Resultado Esperado: Modelo CSEX550AC entre 545 e 560mm',
       'Resultado Esperado: Modelo CSEX550SS entre 545 e 560mm',
     ],
-    instrumentoPadrao: 'TRENA / Nº Série',
+    instrumentoPadrao: 'TRENA\nNºSérie:',
   },
   {
     itemIndex: 6,
     titulo: 'Teste de Aterramento do Motor',
     detalhes: ['Resultado Esperado: >=0'],
-    instrumentoPadrao: 'MEGÔMETRO / Nº Série',
+    instrumentoPadrao: 'MEGÔMETRO\nNºSérie:',
   },
   {
     itemIndex: 7,
     titulo: 'Teste de Isolação do Motor',
     detalhes: ['Resultado Esperado: >=0'],
-    instrumentoPadrao: 'MULTÍMETRO ( ) / MEGÔMETRO ( ) / Nº Série',
+    instrumentoPadrao: 'MULTÍMETRO☐/MEGÔMETRO☐\nNºSérie:',
   },
   {
     itemIndex: 8,
     titulo: 'Aplicação e aferição de Torque do Motor',
     detalhes: ['Resultado Esperado para rosca M4: 1,5'],
-    instrumentoPadrao: 'TORQUÍMETRO / Nº Série',
+    instrumentoPadrao: 'TORQUÍMETRO\nNºSérie:',
   },
   {
     itemIndex: 9,
     titulo: 'Aplicação e aferição de Torque do motor',
     detalhes: ['Resultado Esperado para rosca M5: 2'],
-    instrumentoPadrao: 'TORQUÍMETRO / Nº Série',
+    instrumentoPadrao: 'TORQUÍMETRO\nNºSérie:',
   },
   {
     itemIndex: 10,
     titulo: 'Aplicação e aferição de Torque (botoeira)',
     detalhes: ['Resultado esperado: 2Nm'],
-    instrumentoPadrao: 'TORQUÍMETRO / Nº Série',
+    instrumentoPadrao: 'TORQUÍMETRO\nNºSérie:',
   },
   {
     itemIndex: 11,
     titulo: 'Teste de Funcionamento do Motor',
     detalhes: ['Inspeção visual do estado de funcionamento do equipamento'],
-    instrumentoPadrao: 'AMPERÍMETRO / Nº Série',
+    instrumentoPadrao: 'AMPERÍMETRO\nNºSérie:',
   },
   {
     itemIndex: 12,
@@ -205,7 +212,7 @@ export const LINHAS_PREMONTAGEM_INSPECAO_PDF: LinhaVerificacaoInspecaoPdf[] = [
       'Resultado Esperado: Modelo CSEX550AC 1.800 rpm, com tolerância de -150 rpm',
       'Resultado Esperado: Modelo CSEX550SS 1.800 rpm, com tolerância de -150 rpm',
     ],
-    instrumentoPadrao: 'TACÔMETRO / Nº Série',
+    instrumentoPadrao: 'TACÔMETRO\nNºSérie:',
   },
 ];
 
@@ -214,19 +221,19 @@ export const LINHAS_POSMONTAGEM_INSPECAO_PDF: LinhaVerificacaoInspecaoPdf[] = [
     itemIndex: 0,
     titulo: 'Teste de Aterramento',
     detalhes: ['Resultado Esperado: >=0'],
-    instrumentoPadrao: 'MULTÍMETRO ( ) / MEGÔMETRO ( ) / Nº Série',
+    instrumentoPadrao: 'MULTÍMETRO☐/MEGÔMETRO☐\nNºSérie:',
   },
   {
     itemIndex: 1,
     titulo: 'Teste de Isolação',
     detalhes: ['Resultado Esperado: >=0'],
-    instrumentoPadrao: 'MEGÔMETRO / Nº Série',
+    instrumentoPadrao: 'MEGÔMETRO\nNºSérie:',
   },
   {
     itemIndex: 2,
     titulo: 'Teste de Funcionamento',
     detalhes: ['Inspeção visual de estado de funcionamento do equipamento'],
-    instrumentoPadrao: 'AMPERÍMETRO / Nº Série',
+    instrumentoPadrao: 'AMPERÍMETRO\nNºSérie:',
   },
   {
     itemIndex: 3,
@@ -237,13 +244,13 @@ export const LINHAS_POSMONTAGEM_INSPECAO_PDF: LinhaVerificacaoInspecaoPdf[] = [
       'Resultado Esperado: Modelo CSEX550AC 1.800 rpm, com tolerância de -150 rpm',
       'Resultado Esperado: Modelo CSEX550SS 1.800 rpm, com tolerância de -150 rpm',
     ],
-    instrumentoPadrao: 'TACÔMETRO / Nº Série',
+    instrumentoPadrao: 'TACÔMETRO\nNºSérie:',
   },
   {
     itemIndex: 7,
     titulo: 'Teste de Temperatura',
     detalhes: ['Range: 30 a 40 graus celsius'],
-    instrumentoPadrao: 'TERMÔMETRO LASER / Nº Série',
+    instrumentoPadrao: 'TERMÔMETRO LASER\nNºSérie:',
   },
   {
     itemIndex: 8,
@@ -254,13 +261,13 @@ export const LINHAS_POSMONTAGEM_INSPECAO_PDF: LinhaVerificacaoInspecaoPdf[] = [
       'Resultado Esperado: Modelo CSEX550AC ou T <= 89 SPL(A) dB',
       'Resultado Esperado: Modelo CSEX550SS ou T <= 89 SPL(A) dB',
     ],
-    instrumentoPadrao: 'DECIBELÍMETRO / Nº Série',
+    instrumentoPadrao: 'DECIBELÍMETRO\nNºSérie:',
   },
   {
     itemIndex: 12,
     titulo: 'Teste de Continuidade',
     detalhes: ['Resultado Esperado: >=0'],
-    instrumentoPadrao: 'MULTÍMETRO / Nº Série',
+    instrumentoPadrao: 'MULTÍMETRO\nNºSérie:',
   },
 ];
 

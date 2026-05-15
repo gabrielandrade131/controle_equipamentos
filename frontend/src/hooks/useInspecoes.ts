@@ -90,6 +90,11 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
     assinatura: '',
     nomeAssinante: '',
     aprovado: !reprovado && preenchido,
+    imagensAnexadas: producao.imagensAnexadas
+      ? (typeof producao.imagensAnexadas === 'string'
+          ? JSON.parse(producao.imagensAnexadas)
+          : producao.imagensAnexadas)
+      : [],
     createdAt: producao.criadoEm,
     updatedAt: producao.atualizadoEm,
   } as unknown as InspecaoMontagem;
@@ -131,6 +136,12 @@ export const useInspecoes = () => {
         }),
       ),
     );
+
+    if (inspecao.imagensAnexadas?.length) {
+      await axiosInstance.patch(`/producoes/${producaoId}`, {
+        imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas),
+      });
+    }
 
     await carregarInspecoes();
   };

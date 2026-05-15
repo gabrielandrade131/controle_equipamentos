@@ -223,6 +223,52 @@ export const usePdfExportManutencao = () => {
 
       drawObservacoesDiarias();
 
+      if (inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0) {
+        sectionHeader('FOTOS DA MANUTENCAO');
+        
+        const imagensPerPage = 2;
+        const imageWidth = 85;
+        const imageHeight = 85;
+        const pageMargin = marginX;
+        
+        for (let i = 0; i < inspecao.imagensAnexadas.length; i++) {
+          const indexInPage = i % imagensPerPage;
+          
+          if (indexInPage === 0 && i > 0) {
+            pdf.addPage();
+            y = 14;
+            sectionHeader('FOTOS DA MANUTENCAO (Continuação)');
+          }
+          
+          ensureSpace(imageHeight + 10);
+          
+          const imageX = pageMargin + (i % 2) * (imageWidth + 10);
+          const imageY = y;
+          
+          try {
+            pdf.addImage(
+              inspecao.imagensAnexadas[i],
+              'JPEG',
+              imageX,
+              imageY,
+              imageWidth,
+              imageHeight
+            );
+            
+            drawText(`Foto ${i + 1}`, imageX, imageY + imageHeight + 4, { 
+              size: 8, 
+              bold: true 
+            });
+            
+            if ((i + 1) % imagensPerPage === 0 || i === inspecao.imagensAnexadas.length - 1) {
+              y += imageHeight + 10;
+            }
+          } catch (error) {
+            console.error(`Erro ao adicionar imagem ${i + 1}:`, error);
+          }
+        }
+      }
+
       sectionHeader('ASSINATURA');
       ensureSpace(24);
       drawText(`Responsavel: ${inspecao.responsavel || '-'}`, marginX, y + 2, { size: 9 });

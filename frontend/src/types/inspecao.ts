@@ -4,7 +4,7 @@ export interface VerificacaoItem {
   nome: string; // Nome FIXO do item
   valorObservado?: string; // Campo preenchido pelo inspetor
   instrumentoMedicao?: string; // Campo preenchido pelo inspetor
-  conformidade: 'SIM' | 'NÃO' | ''; // Checklist SIM/NÃO
+  conformidade: 'SIM' | 'NÃO' | 'N/A' | ''; // Checklist SIM/NÃO/N/A
 }
 
 // Para ENVIAR (criar novo)
@@ -26,6 +26,7 @@ export interface CreateInspecaoMontageDto {
   assinatura?: string;
   nomeAssinante?: string;
   aprovado?: boolean;
+  imagensAnexadas?: string[];
 }
 
 // Para RECEBER (resposta do backend)

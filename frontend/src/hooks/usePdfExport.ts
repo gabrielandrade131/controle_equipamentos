@@ -97,6 +97,25 @@ export const usePdfExport = () => {
                 yPosition += 6;
             };
 
+            const getAttachmentLines = (value?: string) => {
+                const texto = String(value ?? '').trim();
+                if (!texto) return [] as string[];
+
+                try {
+                    const parsed = JSON.parse(texto);
+                    if (Array.isArray(parsed)) {
+                        return parsed.map((item) => String(item).trim()).filter(Boolean);
+                    }
+                } catch {
+                    // Compatibilidade com registros legados
+                }
+
+                return texto
+                    .split(/\r?\n/)
+                    .map((line) => line.replace(/^-+\s*/, '').trim())
+                    .filter(Boolean);
+            };
+
             // Dados básicos
             addSection('DADOS DA ORDEM');
             addField('Número da Ordem', producao.numeroOrdem);
@@ -145,14 +164,15 @@ export const usePdfExport = () => {
                 addSection('DOCUMENTOS RELACIONADOS');
 
                 // Lista de Peças
-                if (producao.listaPecas) {
+                const listaPecasAnexos = getAttachmentLines(producao.listaPecas);
+                if (listaPecasAnexos.length > 0) {
                     pdf.setFontSize(9);
                     pdf.setFont(undefined, 'bold');
                     pdf.text('Lista de Peças:', marginLeft + 3, yPosition);
                     yPosition += 4;
                     pdf.setFont(undefined, 'normal');
-                    
-                    const listaPecasLines = pdf.splitTextToSize(producao.listaPecas, maxWidth - 6);
+
+                    const listaPecasLines = pdf.splitTextToSize(listaPecasAnexos.join('\n'), maxWidth - 6);
                     listaPecasLines.forEach((line: string) => {
                             pdf.text(line, marginLeft + 3, yPosition);
                             yPosition += 5.5;
@@ -161,14 +181,15 @@ export const usePdfExport = () => {
                 }
 
                 // Sequencial de Montagem
-                if (producao.sequencialMontagem) {
+                const sequencialMontagemAnexos = getAttachmentLines(producao.sequencialMontagem);
+                if (sequencialMontagemAnexos.length > 0) {
                     pdf.setFontSize(9);
                     pdf.setFont(undefined, 'bold');
                     pdf.text('Sequencial de Montagem:', marginLeft + 3, yPosition);
                     yPosition += 4;
                     pdf.setFont(undefined, 'normal');
-                    
-                    const seqLines = pdf.splitTextToSize(producao.sequencialMontagem, maxWidth - 6);
+
+                    const seqLines = pdf.splitTextToSize(sequencialMontagemAnexos.join('\n'), maxWidth - 6);
                     seqLines.forEach((line: string) => {
                             pdf.text(line, marginLeft + 3, yPosition);
                             yPosition += 5.5;
@@ -177,14 +198,15 @@ export const usePdfExport = () => {
                 }
 
                 // Inspeção de Montagem
-                if (producao.inspecaoMontagem) {
+                const inspecaoMontagemAnexos = getAttachmentLines(producao.inspecaoMontagem);
+                if (inspecaoMontagemAnexos.length > 0) {
                     pdf.setFontSize(9);
                     pdf.setFont(undefined, 'bold');
                     pdf.text('Inspeção de Montagem:', marginLeft + 3, yPosition);
                     yPosition += 4;
                     pdf.setFont(undefined, 'normal');
-                    
-                    const inspecaoLines = pdf.splitTextToSize(producao.inspecaoMontagem, maxWidth - 6);
+
+                    const inspecaoLines = pdf.splitTextToSize(inspecaoMontagemAnexos.join('\n'), maxWidth - 6);
                     inspecaoLines.forEach((line: string) => {
                             pdf.text(line, marginLeft + 3, yPosition);
                             yPosition += 5.5;
@@ -193,14 +215,15 @@ export const usePdfExport = () => {
                 }
 
                 // Histórico do Equipamento
-                if (producao.historicoEquipamento) {
+                const historicoEquipamentoAnexos = getAttachmentLines(producao.historicoEquipamento);
+                if (historicoEquipamentoAnexos.length > 0) {
                     pdf.setFontSize(9);
                     pdf.setFont(undefined, 'bold');
                     pdf.text('Histórico do Equipamento:', marginLeft + 3, yPosition);
                     yPosition += 4;
                     pdf.setFont(undefined, 'normal');
-                    
-                    const historicooLines = pdf.splitTextToSize(producao.historicoEquipamento, maxWidth - 6);
+
+                    const historicooLines = pdf.splitTextToSize(historicoEquipamentoAnexos.join('\n'), maxWidth - 6);
                     historicooLines.forEach((line: string) => {
                             pdf.text(line, marginLeft + 3, yPosition);
                             yPosition += 5.5;
@@ -209,14 +232,18 @@ export const usePdfExport = () => {
                 }
 
                 // Procedimento para Testes e Inspeção de Montagem
-                if (producao.procedimentoTestes) {
+                const procedimentoTestesAnexos = getAttachmentLines(producao.procedimentoTestes);
+                if (procedimentoTestesAnexos.length > 0) {
                     pdf.setFontSize(9);
                     pdf.setFont(undefined, 'bold');
                     pdf.text('Procedimento para Testes e Inspeção de Montagem:', marginLeft + 3, yPosition);
                     yPosition += 4;
                     pdf.setFont(undefined, 'normal');
-                    pdf.text('Código: ' + producao.procedimentoTestes, marginLeft + 3, yPosition);
-                    yPosition += 5.5;
+                    const procedimentoLines = pdf.splitTextToSize(procedimentoTestesAnexos.join('\n'), maxWidth - 6);
+                    procedimentoLines.forEach((line: string) => {
+                            pdf.text(line, marginLeft + 3, yPosition);
+                            yPosition += 5.5;
+                    });
                     }
             }
 

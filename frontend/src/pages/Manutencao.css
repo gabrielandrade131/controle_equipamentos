@@ -326,7 +326,6 @@
   word-break: break-word;
 }
 
-/* Responsividade */
 @media (max-width: 768px) {
   .page-content {
     grid-template-columns: 1fr;

@@ -79,6 +79,56 @@
   color: #777;
 }
 
+.anexo-upload {
+  border: 1px dashed #d5d5d5;
+  border-radius: 6px;
+  padding: 10px;
+  background: #fafafa;
+}
+
+.anexo-upload input[type="file"] {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.anexo-lista {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.anexo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid #e2e2e2;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.btn-remove-anexo {
+  background: #f1f1f1;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-remove-anexo:hover {
+  background: #e7e7e7;
+}
+
+.anexo-placeholder {
+  display: block;
+  margin-top: 8px;
+  color: #777;
+}
+
 .add-item {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr auto;

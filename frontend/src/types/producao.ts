@@ -35,6 +35,7 @@ export interface CreateProducaoDto {
   numeroSerie: string;
   tag?: string;
   dataSolicitacao: string;
+  dataNecessidade?: string;
   dataInicio?: string;
   dataPrevisao?: string;
   dataTermino?: string;

@@ -18,6 +18,7 @@ model Equipment {
   numeroSerie                       String?   
   tag                               String?                                   @unique
   dataSolicitacao                   DateTime?
+  dataNecessidade                   DateTime?
   solicitante                       String?   
 
   dataInicio                        DateTime?

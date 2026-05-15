@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
 import { ModalEditarDetalhesManutencao } from '../components/ModalEditarDetalhesManutencao';
 import { AlertModal } from '../components/AlertModal';
@@ -25,6 +26,7 @@ export const Manutencao: React.FC = () => {
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
   const { historico, atualizarInspecao } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
+  const navigate = useNavigate();
 
   const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
     setSelected({
@@ -93,7 +95,12 @@ export const Manutencao: React.FC = () => {
 
   return (
     <div className="manutencao-page">
-      <h2>Manutenção</h2>
+      <div className="page-header">
+        <h2>Manutenção</h2>
+        <div className="page-toolbar">
+          <button className="btn-primary" onClick={() => navigate('/manutencao/criar')}>Criar OM</button>
+        </div>
+      </div>
 
       <div className="page-content">
         <div className="page-list-section">

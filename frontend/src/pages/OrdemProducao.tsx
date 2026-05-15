@@ -6,6 +6,7 @@ import { FormularioOrdem } from '../components/FormularioOrdem';
 import '../pages/Producao.css';
 
 interface SelectedProducao {
+
   id: string;
   data: Producao;
 }
@@ -163,6 +164,10 @@ const OrdemProducao: React.FC = () => {
                 <div className="detail-item">
                   <label>Data Solicitacao:</label>
                   <p>{selected.data.dataSolicitacao}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Data Necessidade:</label>
+                  <p>{selected.data.dataNecessidade || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data Inicio:</label>

@@ -11,25 +11,55 @@ const toDateInput = (value?: string | null) => {
   return value.split('T')[0];
 };
 
+const parseAnexos = (valor?: string | null) => {
+  const texto = String(valor ?? '').trim();
+  if (!texto) return [] as string[];
+
+  try {
+    const parsed = JSON.parse(texto);
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => String(item).trim()).filter(Boolean);
+    }
+  } catch {
+    // Compatibilidade com registros antigos em texto
+  }
+
+  return texto
+    .split(/\r?\n/)
+    .map((linha) => linha.replace(/^-+\s*/, '').trim())
+    .filter(Boolean);
+};
+
+const formatarCodigoDocumento = (valor?: string | null) => {
+  const anexos = parseAnexos(valor);
+  if (anexos.length === 0) return '';
+  return anexos.join(', ');
+};
+
 const buildDocumentos = (producao: any): Documento[] => {
   const documentos: Documento[] = [];
 
-  if (producao.listaPecas && String(producao.listaPecas).trim() !== '') {
-    documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Pecas', codigo: String(producao.listaPecas) });
+  const listaPecas = formatarCodigoDocumento(producao.listaPecas);
+  if (listaPecas) {
+    documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Pecas', codigo: listaPecas });
   }
   const sequencialMontagem = producao.sequenciaMontagem ?? producao.sequencialMontagem;
-  if (sequencialMontagem && String(sequencialMontagem).trim() !== '') {
-    documentos.push({ id: `${producao.id}-sequencialMontagem`, nome: 'Sequencial de Montagem', codigo: String(sequencialMontagem) });
+  const sequencialMontagemCodigo = formatarCodigoDocumento(sequencialMontagem);
+  if (sequencialMontagemCodigo) {
+    documentos.push({ id: `${producao.id}-sequencialMontagem`, nome: 'Sequencial de Montagem', codigo: sequencialMontagemCodigo });
   }
-  if (producao.inspecaoMontagem && String(producao.inspecaoMontagem).trim() !== '') {
-    documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspecao de Montagem', codigo: String(producao.inspecaoMontagem) });
+  const inspecaoMontagem = formatarCodigoDocumento(producao.inspecaoMontagem);
+  if (inspecaoMontagem) {
+    documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspecao de Montagem', codigo: inspecaoMontagem });
   }
-  if (producao.historicoEquipamento && String(producao.historicoEquipamento).trim() !== '') {
-    documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Historico do Equipamento', codigo: String(producao.historicoEquipamento) });
+  const historicoEquipamento = formatarCodigoDocumento(producao.historicoEquipamento);
+  if (historicoEquipamento) {
+    documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Historico do Equipamento', codigo: historicoEquipamento });
   }
   const procedimentoTestes = producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes;
-  if (procedimentoTestes && String(procedimentoTestes).trim() !== '') {
-    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: String(procedimentoTestes) });
+  const procedimentoTestesCodigo = formatarCodigoDocumento(procedimentoTestes);
+  if (procedimentoTestesCodigo) {
+    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: procedimentoTestesCodigo });
   }
 
   return documentos;
@@ -96,6 +126,7 @@ export const mapApiToProducao = (producao: any): Producao => ({
   numeroSerie: producao.numeroSerie ?? '',
   tag: producao.tag ?? '',
   dataSolicitacao: toDateInput(producao.dataSolicitacao),
+  dataNecessidade: toDateInput(producao.dataNecessidade),
   dataInicio: toDateInput(producao.dataInicio),
   dataPrevisao: toDateInput(producao.dataPrevisao ?? producao.previsaoTermino),
   dataTermino: toDateInput(producao.dataTermino),
@@ -123,6 +154,7 @@ export const mapApiToProducao = (producao: any): Producao => ({
 
 export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   dataSolicitacao: producao.dataSolicitacao || undefined,
+  dataNecessidade: producao.dataNecessidade || undefined,
   dataInicio: producao.dataInicio || undefined,
   previsaoTermino: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,

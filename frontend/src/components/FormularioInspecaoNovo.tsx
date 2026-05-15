@@ -10,6 +10,15 @@ interface FormularioInspecaoProps {
   titulo?: string;
 }
 
+type LinhaVerificacaoFormulario = {
+  itemIndex: number;
+  titulo: string;
+  detalhes: string[];
+  instrumentoFixo: string;
+  solicitarNumeroSerie: boolean;
+  instrumentosMarcaveis?: string[];
+};
+
 export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
   onSubmit,
   onCancel,
@@ -17,6 +26,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
   titulo = 'Inspecao de Montagem',
 }) => {
   const formularioPadrao = criarFormularioInspecaoMontagemVazio();
+  const PREFIXO_NUMERO_SERIE = 'NºSérie:';
 
   const [formData, setFormData] = useState<CreateInspecaoMontageDto>(() => ({
     ...criarFormularioInspecaoMontagemVazio(),
@@ -26,6 +36,43 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImagensChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const maxImages = 5;
+    const currentCount = (formData.imagensAnexadas || []).length;
+    
+    if (currentCount >= maxImages) {
+      alert(`Máximo de ${maxImages} imagens permitidas`);
+      return;
+    }
+
+    const availableSlots = maxImages - currentCount;
+    const filesToAdd = Array.from(files).slice(0, availableSlots);
+
+    filesToAdd.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setFormData((prev) => ({
+          ...prev,
+          imagensAnexadas: [...(prev.imagensAnexadas || []), base64],
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = '';
+  };
+
+  const handleRemoverImagem = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      imagensAnexadas: (prev.imagensAnexadas || []).filter((_, i) => i !== index),
+    }));
   };
 
   const handleVerificacaoChange = (
@@ -73,8 +120,84 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
       return;
     }
 
-    const novaInspecao: InspecaoMontagem = {
+    const aplicarInstrumentosFixosPremontagem = (
+      itens: CreateInspecaoMontageDto['verificacoesGeraisPremontagem'],
+    ) => {
+      const itensAtualizados = [...itens];
+
+      linhasPremontagem.forEach((linha) => {
+        const itemAtual =
+          itensAtualizados[linha.itemIndex] ?? formularioPadrao.verificacoesGeraisPremontagem[linha.itemIndex];
+
+        if (!itemAtual) {
+          return;
+        }
+
+        const numeroSerie = extrairNumeroSerieInstrumento(itemAtual.instrumentoMedicao);
+        const instrumentosMarcados = extrairInstrumentosMarcados(
+          itemAtual.instrumentoMedicao,
+          linha.instrumentosMarcaveis,
+        );
+        itensAtualizados[linha.itemIndex] = {
+          ...itemAtual,
+          instrumentoMedicao: formatarInstrumentoMedicao(
+            linha.instrumentoFixo,
+            numeroSerie,
+            linha.solicitarNumeroSerie,
+            instrumentosMarcados,
+            linha.instrumentosMarcaveis,
+          ),
+        };
+      });
+
+      return itensAtualizados;
+    };
+
+    const aplicarInstrumentosFixosPosmontagem = (
+      itens: CreateInspecaoMontageDto['verificacaoPosmontagem'],
+    ) => {
+      const itensAtualizados = [...itens];
+
+      linhasPosmontagem.forEach((linha) => {
+        const itemAtual =
+          itensAtualizados[linha.itemIndex] ?? formularioPadrao.verificacaoPosmontagem[linha.itemIndex];
+
+        if (!itemAtual) {
+          return;
+        }
+
+        const numeroSerie = extrairNumeroSerieInstrumento(itemAtual.instrumentoMedicao);
+        const instrumentosMarcados = extrairInstrumentosMarcados(
+          itemAtual.instrumentoMedicao,
+          linha.instrumentosMarcaveis,
+        );
+        itensAtualizados[linha.itemIndex] = {
+          ...itemAtual,
+          instrumentoMedicao: formatarInstrumentoMedicao(
+            linha.instrumentoFixo,
+            numeroSerie,
+            linha.solicitarNumeroSerie,
+            instrumentosMarcados,
+            linha.instrumentosMarcaveis,
+          ),
+        };
+      });
+
+      return itensAtualizados;
+    };
+
+    const formDataNormalizado: CreateInspecaoMontageDto = {
       ...formData,
+      verificacoesGeraisPremontagem: aplicarInstrumentosFixosPremontagem(
+        formData.verificacoesGeraisPremontagem,
+      ),
+      verificacaoPosmontagem: aplicarInstrumentosFixosPosmontagem(
+        formData.verificacaoPosmontagem,
+      ),
+    };
+
+    const novaInspecao: InspecaoMontagem = {
+      ...formDataNormalizado,
       id: inspecaoInicial?.id || String(Date.now()),
       createdAt: inspecaoInicial?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -83,12 +206,65 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     onSubmit(novaInspecao);
   };
 
-  const linhasPremontagem = [
+  const extrairNumeroSerieInstrumento = (instrumentoMedicao?: string) => {
+    if (!instrumentoMedicao) {
+      return '';
+    }
+
+    const match = instrumentoMedicao.match(/N[ºo]\s*S[ée]rie:\s*(.*)$/i);
+    if (match) {
+      return match[1]?.trim() || '';
+    }
+
+    return '';
+  };
+
+  const formatarInstrumentoMedicao = (
+    instrumentoFixo: string,
+    numeroSerie: string,
+    solicitarNumeroSerie: boolean,
+    instrumentosMarcados?: string[],
+    instrumentosMarcaveis?: readonly string[],
+  ) => {
+    const instrumentoFormatado =
+      instrumentosMarcaveis && instrumentosMarcaveis.length > 0
+        ? instrumentosMarcaveis
+            .map((instrumento) =>
+              `${instrumento}${instrumentosMarcados?.includes(instrumento) ? '☑' : '☐'}`,
+            )
+            .join('/')
+        : instrumentoFixo;
+
+    if (!solicitarNumeroSerie) {
+      return instrumentoFormatado;
+    }
+
+    return numeroSerie.trim()
+      ? `${instrumentoFormatado}\n${PREFIXO_NUMERO_SERIE} ${numeroSerie.trim()}`
+      : `${instrumentoFormatado}\n${PREFIXO_NUMERO_SERIE}`;
+  };
+
+  const extrairInstrumentosMarcados = (
+    instrumentoMedicao: string | undefined,
+    instrumentosMarcaveis?: readonly string[],
+  ) => {
+    if (!instrumentoMedicao || !instrumentosMarcaveis?.length) {
+      return [] as string[];
+    }
+
+    return instrumentosMarcaveis.filter((instrumento) => {
+      const escaped = instrumento.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`${escaped}☑`, 'i').test(instrumentoMedicao);
+    });
+  };
+
+  const linhasPremontagem: LinhaVerificacaoFormulario[] = [
     {
       itemIndex: 0,
       titulo: 'Check dos Itens dos Seriados',
       detalhes: ['(Números de série do motor, caixa elétrica e plug conferem com Ordem Produção?)'],
-      instrumentoMedicao: 'AVALIAÇÃO VISUAL',
+      instrumentoFixo: 'AVALIAÇÃO VISUAL',
+      solicitarNumeroSerie: false,
     },
     {
       itemIndex: 1,
@@ -99,43 +275,51 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         'Resultado Esperado: Modelo CSEX550AC entre 545 e 560mm',
         'Resultado Esperado: Modelo CSEX550SS entre 545 e 560mm',
       ],
-      instrumentoMedicao: 'TRENA / Nº Série',
+      instrumentoFixo: 'TRENA',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 6,
       titulo: 'Teste de Aterramento do Motor',
       detalhes: ['Resultado Esperado: >=0'],
-      instrumentoMedicao: 'MEGÔMETRO / Nº Série',
+      instrumentoFixo: 'MEGÔMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 7,
       titulo: 'Teste de Isolação do Motor',
       detalhes: ['Resultado Esperado: >=0'],
-      instrumentoMedicao: 'MULTÍMETRO ( ) / MEGÔMETRO ( ) / Nº Série',
+      instrumentoFixo: 'MULTÍMETRO☐/MEGÔMETRO☐',
+      solicitarNumeroSerie: true,
+      instrumentosMarcaveis: ['MULTÍMETRO', 'MEGÔMETRO'],
     },
     {
       itemIndex: 8,
       titulo: 'Aplicação e aferição de Torque do Motor',
       detalhes: ['Resultado Esperado para rosca M4: 1,5'],
-      instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+      instrumentoFixo: 'TORQUÍMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 9,
       titulo: 'Aplicação e aferição de Torque do motor',
       detalhes: ['Resultado Esperado para rosca M5: 2'],
-      instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+      instrumentoFixo: 'TORQUÍMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 10,
       titulo: 'Aplicação e aferição de Torque (botoeira)',
       detalhes: ['Resultado esperado: 2Nm'],
-      instrumentoMedicao: 'TORQUÍMETRO / Nº Série',
+      instrumentoFixo: 'TORQUÍMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 11,
       titulo: 'Teste de Funcionamento do Motor',
       detalhes: ['Inspeção visual do estado de funcionamento do equipamento'],
-      instrumentoMedicao: 'AMPERÍMETRO / Nº Série',
+      instrumentoFixo: 'AMPERÍMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 12,
@@ -146,28 +330,33 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         'Resultado Esperado: Modelo CSEX550AC 1.800 rpm, com tolerância de -150 rpm',
         'Resultado Esperado: Modelo CSEX550SS 1.800 rpm, com tolerância de -150 rpm',
       ],
-      instrumentoMedicao: 'TACÔMETRO / Nº Série',
+      instrumentoFixo: 'TACÔMETRO',
+      solicitarNumeroSerie: true,
     },
-  ] as const;
+  ];
 
-  const linhasPosmontagem = [
+  const linhasPosmontagem: LinhaVerificacaoFormulario[] = [
     {
       itemIndex: 0,
       titulo: 'Teste de Aterramento',
       detalhes: ['Resultado Esperado: >=0'],
-      instrumentoMedicao: 'MULTÍMETRO ( ) / MEGÔMETRO ( ) / Nº Série',
+      instrumentoFixo: 'MULTÍMETRO☐/MEGÔMETRO☐',
+      solicitarNumeroSerie: true,
+      instrumentosMarcaveis: ['MULTÍMETRO', 'MEGÔMETRO'],
     },
     {
       itemIndex: 1,
       titulo: 'Teste de Isolação',
       detalhes: ['Resultado Esperado: >=0'],
-      instrumentoMedicao: 'MEGÔMETRO / Nº Série',
+      instrumentoFixo: 'MEGÔMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 2,
       titulo: 'Teste de Funcionamento',
       detalhes: ['Inspeção visual de estado de funcionamento do equipamento'],
-      instrumentoMedicao: 'AMPERÍMETRO / Nº Série',
+      instrumentoFixo: 'AMPERÍMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 3,
@@ -178,13 +367,15 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         'Resultado Esperado: Modelo CSEX550AC 1.800 rpm, com tolerância de -150 rpm',
         'Resultado Esperado: Modelo CSEX550SS 1.800 rpm, com tolerância de -150 rpm',
       ],
-      instrumentoMedicao: 'TACÔMETRO / Nº Série',
+      instrumentoFixo: 'TACÔMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 7,
       titulo: 'Teste de Temperatura',
       detalhes: ['Range: 30 a 40 graus celsius'],
-      instrumentoMedicao: 'TERMÔMETRO LASER / Nº Série',
+      instrumentoFixo: 'TERMÔMETRO LASER',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 8,
@@ -195,15 +386,17 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         'Resultado Esperado: Modelo CSEX550AC ou T <= 89 SPL(A) dB',
         'Resultado Esperado: Modelo CSEX550SS ou T <= 89 SPL(A) dB',
       ],
-      instrumentoMedicao: 'DECIBELÍMETRO / Nº Série',
+      instrumentoFixo: 'DECIBELÍMETRO',
+      solicitarNumeroSerie: true,
     },
     {
       itemIndex: 12,
       titulo: 'Teste de Continuidade',
       detalhes: ['Resultado Esperado: >=0'],
-      instrumentoMedicao: 'MULTÍMETRO / Nº Série',
+      instrumentoFixo: 'MULTÍMETRO',
+      solicitarNumeroSerie: true,
     },
-  ] as const;
+  ];
 
   const renderSecaoVerificacoes = (
     titulo: string,
@@ -312,6 +505,11 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         <tbody>
           {linhasPremontagem.map((linha) => {
             const item = formData.verificacoesGeraisPremontagem[linha.itemIndex] ?? formularioPadrao.verificacoesGeraisPremontagem[linha.itemIndex];
+            const numeroSerieInstrumento = extrairNumeroSerieInstrumento(item.instrumentoMedicao);
+            const instrumentosMarcados = extrairInstrumentosMarcados(
+              item.instrumentoMedicao,
+              linha.instrumentosMarcaveis,
+            );
 
             return (
               <tr key={`premontagem-${linha.itemIndex}`}>
@@ -336,16 +534,65 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                   />
                 </td>
                 <td>
-                  <input
-                    type="text"
-                    className="verificacoes-pm-input"
-                    value={item.instrumentoMedicao || ''}
-                    onChange={(e) =>
-                      handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'instrumentoMedicao', e.target.value)
-                    }
-                    title="Instrumento de medição"
-                    
-                  />
+                  {linha.instrumentosMarcaveis ? (
+                    <div className="verificacoes-pm-instrumentos-marcaveis">
+                      {linha.instrumentosMarcaveis.map((instrumentoMarcavel) => (
+                        <label key={instrumentoMarcavel} className="verificacoes-pm-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={instrumentosMarcados.includes(instrumentoMarcavel)}
+                            onChange={(e) => {
+                              const proximosMarcados = e.target.checked
+                                ? [...instrumentosMarcados, instrumentoMarcavel]
+                                : instrumentosMarcados.filter((itemMarcado) => itemMarcado !== instrumentoMarcavel);
+
+                              handleVerificacaoChangePorIndice(
+                                'verificacoesGeraisPremontagem',
+                                linha.itemIndex,
+                                'instrumentoMedicao',
+                                formatarInstrumentoMedicao(
+                                  linha.instrumentoFixo,
+                                  numeroSerieInstrumento,
+                                  linha.solicitarNumeroSerie,
+                                  proximosMarcados,
+                                  linha.instrumentosMarcaveis,
+                                ),
+                              );
+                            }}
+                          />
+                          <span>{instrumentoMarcavel}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="verificacoes-pm-instrumento">{linha.instrumentoFixo}</span>
+                  )}
+                  {linha.solicitarNumeroSerie && (
+                    <>
+                      <span className="verificacoes-pm-numero-serie-label">{PREFIXO_NUMERO_SERIE}</span>
+                      <input
+                        type="text"
+                        className="verificacoes-pm-input"
+                        value={numeroSerieInstrumento}
+                        onChange={(e) =>
+                          handleVerificacaoChangePorIndice(
+                            'verificacoesGeraisPremontagem',
+                            linha.itemIndex,
+                            'instrumentoMedicao',
+                            formatarInstrumentoMedicao(
+                              linha.instrumentoFixo,
+                              e.target.value,
+                              linha.solicitarNumeroSerie,
+                              instrumentosMarcados,
+                              linha.instrumentosMarcaveis,
+                            ),
+                          )
+                        }
+                        title="Número de série do instrumento"
+                        placeholder="Preencher nº de série"
+                      />
+                    </>
+                  )}
                 </td>
                 <td>
                   <div className="checkbox-group">
@@ -372,6 +619,18 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         }
                       />
                       NÃO
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name={`conf-premontagem-${linha.itemIndex}`}
+                        value="N/A"
+                        checked={item.conformidade === 'N/A'}
+                        onChange={(e) =>
+                          handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'conformidade', e.target.value)
+                        }
+                      />
+                      N/A
                     </label>
                   </div>
                 </td>
@@ -398,6 +657,11 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         <tbody>
           {linhasPosmontagem.map((linha) => {
             const item = formData.verificacaoPosmontagem[linha.itemIndex] ?? formularioPadrao.verificacaoPosmontagem[linha.itemIndex];
+            const numeroSerieInstrumento = extrairNumeroSerieInstrumento(item.instrumentoMedicao);
+            const instrumentosMarcados = extrairInstrumentosMarcados(
+              item.instrumentoMedicao,
+              linha.instrumentosMarcaveis,
+            );
 
             return (
               <tr key={`posmontagem-${linha.itemIndex}`}>
@@ -422,15 +686,60 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                   />
                 </td>
                 <td>
+                  {linha.instrumentosMarcaveis ? (
+                    <div className="verificacoes-pm-instrumentos-marcaveis">
+                      {linha.instrumentosMarcaveis.map((instrumentoMarcavel) => (
+                        <label key={instrumentoMarcavel} className="verificacoes-pm-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={instrumentosMarcados.includes(instrumentoMarcavel)}
+                            onChange={(e) => {
+                              const proximosMarcados = e.target.checked
+                                ? [...instrumentosMarcados, instrumentoMarcavel]
+                                : instrumentosMarcados.filter((itemMarcado) => itemMarcado !== instrumentoMarcavel);
+
+                              handleVerificacaoChangePorIndice(
+                                'verificacaoPosmontagem',
+                                linha.itemIndex,
+                                'instrumentoMedicao',
+                                formatarInstrumentoMedicao(
+                                  linha.instrumentoFixo,
+                                  numeroSerieInstrumento,
+                                  linha.solicitarNumeroSerie,
+                                  proximosMarcados,
+                                  linha.instrumentosMarcaveis,
+                                ),
+                              );
+                            }}
+                          />
+                          <span>{instrumentoMarcavel}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="verificacoes-pm-instrumento">{linha.instrumentoFixo}</span>
+                  )}
+                  <span className="verificacoes-pm-numero-serie-label">{PREFIXO_NUMERO_SERIE}</span>
                   <input
                     type="text"
                     className="verificacoes-pm-input"
-                    value={item.instrumentoMedicao || ''}
+                    value={numeroSerieInstrumento}
                     onChange={(e) =>
-                      handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'instrumentoMedicao', e.target.value)
+                      handleVerificacaoChangePorIndice(
+                        'verificacaoPosmontagem',
+                        linha.itemIndex,
+                        'instrumentoMedicao',
+                        formatarInstrumentoMedicao(
+                          linha.instrumentoFixo,
+                          e.target.value,
+                          linha.solicitarNumeroSerie,
+                          instrumentosMarcados,
+                          linha.instrumentosMarcaveis,
+                        ),
+                      )
                     }
-                    title="Instrumento de medição"
-                    
+                    title="Número de série do instrumento"
+                    placeholder="Preencher nº de série"
                   />
                 </td>
                 <td>
@@ -458,6 +767,18 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         }
                       />
                       NÃO
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name={`conf-posmontagem-${linha.itemIndex}`}
+                        value="N/A"
+                        checked={item.conformidade === 'N/A'}
+                        onChange={(e) =>
+                          handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'conformidade', e.target.value)
+                        }
+                      />
+                      N/A
                     </label>
                   </div>
                 </td>
@@ -567,6 +888,43 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
             </label>
           </div>
         </div>
+      </div>
+
+      <div className="form-section">
+       <h3>Fotos/Imagens da Montagem (Máx. 5)</h3>
+        
+       <div className="upload-imagens">
+         <label className="upload-label">
+           <input
+             type="file"
+             multiple
+             accept="image/*"
+             onChange={handleImagensChange}
+             disabled={(formData.imagensAnexadas || []).length >= 5}
+             className="file-input"
+           />
+           <span className="upload-text">
+             Clique ou arraste imagens ({(formData.imagensAnexadas || []).length}/5)
+           </span>
+         </label>
+       </div>
+
+       {(formData.imagensAnexadas || []).length > 0 && (
+         <div className="galeria-imagens">
+           {formData.imagensAnexadas!.map((imagem, index) => (
+             <div key={index} className="imagem-container">
+               <img src={imagem} alt={`Imagem ${index + 1}`} className="imagem-preview" />
+               <button
+                 type="button"
+                 onClick={() => handleRemoverImagem(index)}
+                 className="btn-remover-imagem"
+               >
+                 ✕
+               </button>
+             </div>
+           ))}
+         </div>
+       )}
       </div>
 
       <div className="form-actions">

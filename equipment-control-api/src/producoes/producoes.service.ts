@@ -290,13 +290,16 @@ export class ProducoesService {
             },
         });
 
+            const numeroSerieGerado = this.montarNumeroSerie(
+                producaoCriada.modelo,
+                producaoCriada.numeroOrdem,
+            );
+
             const producaoFinal = await this.prisma.equipment.update({
                 where: { id: producaoCriada.id },
                 data: {
-                    numeroSerie: this.montarNumeroSerie(
-                        producaoCriada.modelo,
-                        producaoCriada.numeroOrdem,
-                    ),
+                    numeroSerie: numeroSerieGerado,
+                    tag: numeroSerieGerado,
                 },
                 include: {
                     tipoEquipamento: true,

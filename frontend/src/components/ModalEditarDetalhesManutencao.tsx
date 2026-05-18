@@ -6,12 +6,16 @@ interface ModalEditarDetalhesManutencaoProps {
   inspecao: InspecaoManutencao;
   onSalvar?: (inspecaoAtualizada: InspecaoManutencao) => void;
   onCancelar?: () => void;
+  titulo?: string;
+  isCreating?: boolean;
 }
 
 export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutencaoProps> = ({
   inspecao,
   onSalvar,
   onCancelar,
+  titulo,
+  isCreating,
 }) => {
   const [formData, setFormData] = useState<InspecaoManutencao>(inspecao);
   const [novaObservacao, setNovaObservacao] = useState('');
@@ -51,7 +55,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>Editar Detalhes da Manutenção</h2>
+          <h2>{titulo || 'Editar Detalhes da Manutenção'}</h2>
           <button
             onClick={onCancelar}
             className="modal-close"
@@ -62,39 +66,45 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
 
         <div className="modal-body">
           <div className="form-grid">
-            <div className="form-group read-only">
+            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
               <label>Ordem de Manutenção</label>
               <input
                 type="text"
                 value={formData.numeroOrdemManutencao ?? '-'}
-                readOnly
+                readOnly={!isCreating}
               />
             </div>
 
-            <div className="form-group read-only">
+            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
               <label>TAG</label>
               <input
                 type="text"
-                value={formData.tag || '-'}
-                readOnly
+                value={formData.tag || ''}
+                onChange={(e) => handleInputChange('tag', e.target.value)}
+                readOnly={!isCreating}
+                placeholder={isCreating ? 'Digite a TAG' : '-'}
               />
             </div>
 
-            <div className="form-group read-only">
+            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
               <label>Fabricante</label>
               <input
                 type="text"
-                value={formData.fabricante || '-'}
-                readOnly
+                value={formData.fabricante || ''}
+                onChange={(e) => handleInputChange('fabricante', e.target.value)}
+                readOnly={!isCreating}
+                placeholder={isCreating ? 'Digite o fabricante' : '-'}
               />
             </div>
 
-            <div className="form-group read-only">
+            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
               <label>Modelo</label>
               <input
                 type="text"
-                value={formData.modelo || '-'}
-                readOnly
+                value={formData.modelo || ''}
+                onChange={(e) => handleInputChange('modelo', e.target.value)}
+                readOnly={!isCreating}
+                placeholder={isCreating ? 'Digite o modelo' : '-'}
               />
             </div>
 

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FormularioInspecaoNovo } from '../components/FormularioInspecaoNovo';
+import { FilterPanel } from '../components/FilterPanel';
+import { useFilters } from '../hooks/useFilters';
 import { PdfExporterInspecao } from '../components/PdfExporterInspecao';
 import { useInspecoes } from '../hooks/useInspecoes';
 import { InspecaoMontagem } from '../types/inspecao';
@@ -21,6 +23,18 @@ const InspecaoMontagemPage: React.FC = () => {
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const { filters, updateFilters } = useFilters('inspecao-filters', {});
+
+  const filteredInspecoes = useMemo(() => {
+    return inspecoes.filter((i) => {
+      if (filters.dataInicio && i.data && i.data < filters.dataInicio) return false;
+      if (filters.dataFinal && i.data && i.data > filters.dataFinal) return false;
+      if (filters.resultado && i.resultadoFinal !== filters.resultado) return false;
+      if (filters.modelo && !i.modelo?.toLowerCase().includes(filters.modelo.toLowerCase())) return false;
+      if (filters.numeroSerie && !i.numeroSerie?.toLowerCase().includes(filters.numeroSerie.toLowerCase())) return false;
+      return true;
+    });
+  }, [inspecoes, filters]);
 
   const handleSelectInspecao = (inspecao: InspecaoMontagem) => {
     setSelected({
@@ -81,12 +95,32 @@ const InspecaoMontagemPage: React.FC = () => {
 
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Producoes ({inspecoes.length})</h3>
-          {inspecoes.length === 0 ? (
-            <p>Nenhuma producao encontrada</p>
+          <FilterPanel
+            filters={filters}
+            onFiltersChange={updateFilters}
+            fields={[
+              { key: 'dataInicio', label: 'Data Inicial', type: 'date' },
+              { key: 'dataFinal', label: 'Data Final', type: 'date' },
+              {
+                key: 'resultado',
+                label: 'Resultado',
+                type: 'select',
+                options: [
+                  { value: 'APROVADO', label: 'Aprovado' },
+                  { value: 'REPROVADO', label: 'Reprovado' },
+                ],
+              },
+              { key: 'modelo', label: 'Modelo', type: 'text', placeholder: 'Buscar modelo...' },
+              { key: 'numeroSerie', label: 'Número de Série', type: 'text', placeholder: 'Buscar série...' },
+            ]}
+            titulo="Filtros"
+          />
+          <h3>Produções ({filteredInspecoes.length})</h3>
+          {filteredInspecoes.length === 0 ? (
+            <p>Nenhuma produção encontrada</p>
           ) : (
             <ul className="page-list">
-              {inspecoes.map((inspecao) => (
+              {filteredInspecoes.map((inspecao) => (
                 <li
                   key={inspecao.id}
                   className={selected?.id === inspecao.id ? 'active' : ''}

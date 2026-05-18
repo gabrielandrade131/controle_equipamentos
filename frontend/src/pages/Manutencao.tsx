@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
 import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
 import { ModalEditarDetalhesManutencao } from '../components/ModalEditarDetalhesManutencao';
 import { AlertModal } from '../components/AlertModal';
+import { FilterPanel } from '../components/FilterPanel';
 import { useManutencao } from '../hooks/useManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
-import { InspecaoManutencao } from '../types/manutencao';
+import { useFilters } from '../hooks/useFilters';
+import { InspecaoManutencao, criarInspecaoVazia } from '../types/manutencao';
 import './Manutencao.css';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -22,11 +23,23 @@ interface SelectedInspecao {
 
 export const Manutencao: React.FC = () => {
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
-  const [modo, setModo] = useState<'lista' | 'editar-formulario' | 'editar-detalhes' | 'editar-inspecao'>('lista');
+  const [modo, setModo] = useState<'lista' | 'editar-formulario' | 'editar-detalhes' | 'editar-inspecao' | 'criar-nova'>('lista');
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
   const { historico, atualizarInspecao } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
-  const navigate = useNavigate();
+  const { filters, updateFilters } = useFilters('manutencao-filters', {});
+
+  const filteredHistorico = useMemo(() => {
+    return historico.filter((item) => {
+      if (filters.dataInicio && item.dataInicio && item.dataInicio < filters.dataInicio) return false;
+      if (filters.dataFinal && item.dataInicio && item.dataInicio > filters.dataFinal) return false;
+      if (filters.status && item.statusManutencao !== filters.status) return false;
+      if (filters.tag && !item.tag?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
+      if (filters.fabricante && !item.fabricante?.toLowerCase().includes(filters.fabricante.toLowerCase())) return false;
+      if (filters.responsavel && !item.responsavel?.toLowerCase().includes(filters.responsavel.toLowerCase())) return false;
+      return true;
+    });
+  }, [historico, filters]);
 
   const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
     setSelected({
@@ -80,6 +93,18 @@ export const Manutencao: React.FC = () => {
       });
   };
 
+  const handleCriarNova = (inspecao: InspecaoManutencao) => {
+    atualizarInspecao('', inspecao)
+      .then(() => {
+        setModo('lista');
+        alert('Manutenção criada com sucesso!');
+      })
+      .catch((error) => {
+        console.error('Erro ao criar manutenção:', error);
+        alert(error.response?.data?.message || 'Não foi possível criar a manutenção.');
+      });
+  };
+
   if (modo === 'editar-inspecao' && selected) {
     return (
       <div className="manutencao-container">
@@ -93,23 +118,69 @@ export const Manutencao: React.FC = () => {
     );
   }
 
+  if (modo === 'criar-nova') {
+    const novaOM = criarInspecaoVazia();
+    // Autocalcular número da OM
+    const ultimoNumero = historico.reduce((max, item) => {
+      const num = item.numeroOrdemManutencao || 0;
+      return num > max ? num : max;
+    }, 0);
+    novaOM.numeroOrdemManutencao = ultimoNumero + 1;
+
+    return (
+      <div className="manutencao-page">
+        <h2>Manutenção</h2>
+        <ModalEditarDetalhesManutencao
+          inspecao={novaOM}
+          onSalvar={handleCriarNova}
+          onCancelar={() => setModo('lista')}
+          titulo="Criar Nova Manutenção"
+          isCreating
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="manutencao-page">
       <div className="page-header">
         <h2>Manutenção</h2>
         <div className="page-toolbar">
-          <button className="btn-primary" onClick={() => navigate('/manutencao/criar')}>Criar OM</button>
+          <button className="btn-primary" onClick={() => setModo('criar-nova')}>Criar OM</button>
         </div>
       </div>
 
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Historico de Manutencoes ({historico.length})</h3>
-          {historico.length === 0 ? (
-            <p>Nenhuma manutencao registrada</p>
+          <FilterPanel
+            filters={filters}
+            onFiltersChange={updateFilters}
+            fields={[
+              { key: 'dataInicio', label: 'Data Inicial', type: 'date' },
+              { key: 'dataFinal', label: 'Data Final', type: 'date' },
+              {
+                key: 'status',
+                label: 'Status',
+                type: 'select',
+                options: [
+                  { value: 'PENDENTE', label: 'Pendente' },
+                  { value: 'EM_MANUTENCAO', label: 'Em Manutenção' },
+                  { value: 'PARALISADA', label: 'Paralisada' },
+                  { value: 'CONCLUIDA', label: 'Concluída' },
+                ],
+              },
+              { key: 'tag', label: 'TAG', type: 'text', placeholder: 'Buscar TAG...' },
+              { key: 'fabricante', label: 'Fabricante', type: 'text', placeholder: 'Buscar fabricante...' },
+              { key: 'responsavel', label: 'Responsável', type: 'text', placeholder: 'Buscar responsável...' },
+            ]}
+            titulo="Filtros"
+          />
+          <h3>Histórico de Manutenções ({filteredHistorico.length})</h3>
+          {filteredHistorico.length === 0 ? (
+            <p>Nenhuma manutenção registrada</p>
           ) : (
             <ul className="page-list">
-              {historico.map((inspecao) => (
+              {filteredHistorico.map((inspecao) => (
                 <li
                   key={inspecao.id}
                   className={selected?.id === inspecao.id ? 'active' : ''}

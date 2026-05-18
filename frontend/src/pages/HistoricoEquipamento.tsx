@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FormularioHistorico } from '../components/FormularioHistorico';
+import { FilterPanel } from '../components/FilterPanel';
+import { useFilters } from '../hooks/useFilters';
 import { PdfExporterHistorico } from '../components/PdfExporterHistorico';
 import { useHistorico } from '../hooks/useHistorico';
 import { HistoricoEquipamentoData } from '../types/historico';
@@ -15,6 +17,14 @@ const HistoricoEquipamento: React.FC = () => {
   const [selected, setSelected] = useState<SelectedHistorico | null>(null);
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const { filters, updateFilters } = useFilters('historico-filters', {});
+
+  const filteredHistoricos = useMemo(() => {
+    return historicos.filter((h) => {
+      if (filters.tag && !h.numeroSerie?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
+      return true;
+    });
+  }, [historicos, filters]);
 
   const handleSelectHistorico = (historico: HistoricoEquipamentoData) => {
     setSelected({
@@ -72,12 +82,20 @@ const HistoricoEquipamento: React.FC = () => {
 
       <div className="page-content">
         <div className="page-list-section">
-          <h3>Producoes ({historicos.length})</h3>
-          {historicos.length === 0 ? (
-            <p>Nenhuma producao encontrada</p>
+          <FilterPanel
+            filters={filters}
+            onFiltersChange={updateFilters}
+            fields={[
+              { key: 'tag', label: 'Número de Série', type: 'text', placeholder: 'Buscar série...' },
+            ]}
+            titulo="Filtros"
+          />
+          <h3>Produções ({filteredHistoricos.length})</h3>
+          {filteredHistoricos.length === 0 ? (
+            <p>Nenhuma produção encontrada</p>
           ) : (
             <ul className="page-list">
-              {historicos.map((historico) => (
+              {filteredHistoricos.map((historico) => (
                 <li
                   key={historico.id}
                   className={selected?.id === historico.id ? 'active' : ''}

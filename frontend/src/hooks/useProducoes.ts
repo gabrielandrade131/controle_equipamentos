@@ -123,6 +123,8 @@ const parseItemSeriado = (item: { id: string; descricao?: string | null }, index
 export const mapApiToProducao = (producao: any): Producao => ({
   id: producao.id,
   numeroOrdem: String(producao.numeroOrdem ?? ''),
+  numeroLote: producao.numeroLote ?? producao.loteProducao?.numeroLote ?? null,
+  loteProducao: producao.loteProducao ?? undefined,
   numeroSerie: producao.numeroSerie ?? '',
   tag: producao.tag ?? '',
   dataSolicitacao: toDateInput(producao.dataSolicitacao),

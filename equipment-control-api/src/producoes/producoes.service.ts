@@ -103,6 +103,7 @@ export class ProducoesService {
     private normalizarProducao<T extends {
         descricao?: string | null;
         loteProducao?: {
+            numeroLote?: number | null;
             modelo?: string | null;
             descricao?: string | null;
             solicitante?: string | null;
@@ -120,6 +121,8 @@ export class ProducoesService {
 
         return this.adicionarDiasProducao({
             ...producao,
+            numeroLote: lote?.numeroLote ?? null,
+            loteProducao: lote ?? null,
             modelo: lote?.modelo ?? null,
             descricao: lote?.descricao ?? producao.descricao ?? null,
             solicitante: lote?.solicitante ?? null,

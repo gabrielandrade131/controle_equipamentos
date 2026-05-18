@@ -33,6 +33,22 @@ export interface TipoEquipamento {
 
 export interface CreateProducaoDto {
   numeroOrdem: string;
+  numeroLote?: number | null;
+  loteProducao?: {
+    id: string;
+    numeroLote: number;
+    modelo?: string;
+    descricao?: string;
+    statusProducao?: StatusProducao;
+    dataSolicitacao?: string;
+    dataInicio?: string;
+    previsaoTermino?: string;
+    dataTermino?: string;
+    tipoEquipamento?: {
+      id: string;
+      nome: string;
+    };
+  };
   numeroSerie: string;
   tag?: string;
   dataSolicitacao: string;

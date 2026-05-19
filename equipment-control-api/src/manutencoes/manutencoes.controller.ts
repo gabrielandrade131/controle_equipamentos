@@ -11,7 +11,12 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiHeader,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ManutencoesService } from './manutencoes.service';
 import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto';
 import { CreateManutencoesSynchroBulkDto } from './dto/create-manutencoes-synchro-bulk.dto';
@@ -34,7 +39,9 @@ export class ManutencoesController {
     description: 'Chave de integração entre Synchro e Manutenção',
     required: true,
   })
-  @ApiOperation({ summary: 'Criar manutenção automaticamente a partir do Synchro' })
+  @ApiOperation({
+    summary: 'Criar manutenção automaticamente a partir do Synchro',
+  })
   createFromSynchro(@Body() body: CreateManutencaoSynchroDto) {
     return this.manutencoesService.createFromSynchro(body);
   }
@@ -80,7 +87,6 @@ export class ManutencoesController {
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-
     );
 
     res.send(buffer);
@@ -114,7 +120,11 @@ export class ManutencoesController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Editar dados da manutenção' })
-  update(@Param('id') id: string, @Body() body: UpdateManutencaoDto, @Req() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() body: UpdateManutencaoDto,
+    @Req() req: any,
+  ) {
     return this.manutencoesService.update(id, body, req.user);
   }
 

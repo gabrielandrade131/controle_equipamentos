@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common'; 
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -7,77 +11,75 @@ import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AuthService {
-    constructor (
-        private readonly usersService: UsersService,
-        private readonly jwtService: JwtService,
-    ) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-    async register(data: CreateUserDto) {
-        const usuarioExistente = await this.usersService.findByEmail(data.email);
+  async register(data: CreateUserDto) {
+    const usuarioExistente = await this.usersService.findByEmail(data.email);
 
-        if (usuarioExistente) {
-            throw new ConflictException('Já existe um usuário com este e-mail');
-        }
-
-        const senhaHash = await bcrypt.hash(data.senha, 10);
-
-        const usuario = await this.usersService.create({
-            nome: data.nome,
-            email: data.email,
-            senha: senhaHash,
-            ativo: true,
-            precisaTrocarSenha: true,
-        });
-
-        return {
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email,
-            ativo: usuario.ativo,
-            precisaTrocarSenha: usuario.precisaTrocarSenha,
-            criadoEm: usuario.criadoEm,
-        };
-        
+    if (usuarioExistente) {
+      throw new ConflictException('Já existe um usuário com este e-mail');
     }
 
-    async login(data: LoginDto) {
-        const usuario = await this.usersService.findByEmail(data.email);
+    const senhaHash = await bcrypt.hash(data.senha, 10);
 
-        if (!usuario) {
-            throw new UnauthorizedException('E-mail ou senha inválidos.');
-        }
+    const usuario = await this.usersService.create({
+      nome: data.nome,
+      email: data.email,
+      senha: senhaHash,
+      ativo: true,
+      precisaTrocarSenha: true,
+    });
 
-        if (!usuario.ativo) {
-            throw new UnauthorizedException('Usuario inativo.')
-        }
+    return {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      ativo: usuario.ativo,
+      precisaTrocarSenha: usuario.precisaTrocarSenha,
+      criadoEm: usuario.criadoEm,
+    };
+  }
 
-        const senhaValida = await bcrypt.compare(data.senha, usuario.senha);
+  async login(data: LoginDto) {
+    const usuario = await this.usersService.findByEmail(data.email);
 
-        if (!senhaValida) {
-            throw new UnauthorizedException('E-mail ou senha inválidos. ');
-        }
-
-        const payload = {
-            sub: usuario.id,
-            email: usuario.email,
-        };
-
-        const access_token = await this.jwtService.signAsync(payload);
-
-        return {
-            access_token,
-            usuario: {
-                id: usuario.id,
-                nome: usuario.nome,
-                email: usuario.email,
-                ativo: usuario.ativo,
-                precisaTrocarSenha: usuario.precisaTrocarSenha,
-            },
-        };
+    if (!usuario) {
+      throw new UnauthorizedException('E-mail ou senha inválidos.');
     }
 
-    async validateUserById(userId: string) {
-        return this.usersService.findById(userId);
+    if (!usuario.ativo) {
+      throw new UnauthorizedException('Usuario inativo.');
     }
+
+    const senhaValida = await bcrypt.compare(data.senha, usuario.senha);
+
+    if (!senhaValida) {
+      throw new UnauthorizedException('E-mail ou senha inválidos. ');
+    }
+
+    const payload = {
+      sub: usuario.id,
+      email: usuario.email,
+    };
+
+    const access_token = await this.jwtService.signAsync(payload);
+
+    return {
+      access_token,
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        ativo: usuario.ativo,
+        precisaTrocarSenha: usuario.precisaTrocarSenha,
+      },
+    };
+  }
+
+  async validateUserById(userId: string) {
+    return this.usersService.findById(userId);
+  }
 }
-

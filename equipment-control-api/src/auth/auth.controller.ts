@@ -8,27 +8,27 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-    @Post('register')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Cadastrar usuário' })
-    register(@Body() body: CreateUserDto) {
-        return this.authService.register(body);
-    }
+  @Post('register')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cadastrar usuário' })
+  register(@Body() body: CreateUserDto) {
+    return this.authService.register(body);
+  }
 
-    @Post('login')
-    @ApiOperation({ summary: 'Fazer login' })
-    login(@Body() body: LoginDto) {
-        return this.authService.login(body);
-    }
+  @Post('login')
+  @ApiOperation({ summary: 'Fazer login' })
+  login(@Body() body: LoginDto) {
+    return this.authService.login(body);
+  }
 
-    @Get('me')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Retorna o usuario auenticado' })
-    me(@Req() req: any) {
-        return req.user;
-    }
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retorna o usuario auenticado' })
+  me(@Req() req: any) {
+    return req.user;
+  }
 }

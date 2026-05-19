@@ -23,8 +23,15 @@ const serveStaticModules =
           exclude: ['/api/{*splat}'],
           serveStaticOptions: {
             setHeaders(res: Response, filePath: string) {
-              if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
-                res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+              if (
+                filePath.endsWith('.html') ||
+                filePath.endsWith('.js') ||
+                filePath.endsWith('.css')
+              ) {
+                res.setHeader(
+                  'Cache-Control',
+                  'no-store, no-cache, must-revalidate, proxy-revalidate',
+                );
               }
             },
           },

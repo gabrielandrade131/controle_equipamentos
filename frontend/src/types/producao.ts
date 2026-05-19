@@ -33,6 +33,7 @@ export interface TipoEquipamento {
 
 export interface CreateProducaoDto {
   numeroOrdem: string;
+  quantidade?: number;
   numeroLote?: number | null;
   loteProducao?: {
     id: string;

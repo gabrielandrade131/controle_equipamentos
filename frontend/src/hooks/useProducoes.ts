@@ -176,6 +176,20 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
     .filter((item) => item.descricao),
 });
 
+const mapProducaoToLoteApi = (producao: CreateProducaoDto) => ({
+  tipoEquipamentoId: producao.tipoEquipamentoId || undefined,
+  modelo: producao.modelo,
+  descricao: producao.descricao || undefined,
+  solicitante: undefined,
+  quantidade: Math.max(1, Number(producao.quantidade ?? 1)),
+  dataSolicitacao: producao.dataSolicitacao || undefined,
+  dataNecessidade: producao.dataNecessidade || undefined,
+  dataInicio: producao.dataInicio || undefined,
+  previsaoTermino: producao.dataPrevisao || undefined,
+  dataTermino: producao.dataTermino || undefined,
+  statusProducao: producao.statusProducao || undefined,
+});
+
 export const useProducoes = () => {
   const [producoes, setProducoes] = useState<Producao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,31 +215,25 @@ export const useProducoes = () => {
   }, [carregarProducoes]);
 
   const criarProducao = async (novaProducao: CreateProducaoDto) => {
-    const response = await axiosInstance.post('/producoes', mapProducaoToApi(novaProducao));
-    let producaoCriada = mapApiToProducao(response.data);
-
-    const historicoParaSalvar = getHistoricoNovo(novaProducao.historicoProducao);
-
-    if (historicoParaSalvar.length > 0) {
-      await Promise.all(
-        historicoParaSalvar.map((item) =>
-          axiosInstance.post(`/producoes/${producaoCriada.id}/observacoes`, {
-            descricao: item.descricao,
-            responsavel: item.responsavel,
-          }),
-        ),
-      );
-    }
-
-    if (novaProducao.tag && producaoCriada.statusProducao === 'CONCLUIDA') {
-      const tagResponse = await axiosInstance.patch(`/producoes/${producaoCriada.id}/tag`, {
-        tag: novaProducao.tag,
-      });
-      producaoCriada = mapApiToProducao(tagResponse.data);
-    }
-
-    const refreshed = await axiosInstance.get(`/producoes/${producaoCriada.id}`);
-    producaoCriada = mapApiToProducao(refreshed.data);
+    const response = await axiosInstance.post('/lotes-producao', mapProducaoToLoteApi(novaProducao));
+    const primeiroEquipamento = response.data.equipamentos?.[0];
+    let producaoCriada = primeiroEquipamento
+      ? mapApiToProducao({
+          ...primeiroEquipamento,
+          loteProducao: response.data,
+          numeroLote: response.data.numeroLote,
+          modelo: response.data.modelo,
+          descricao: response.data.descricao,
+          dataSolicitacao: response.data.dataSolicitacao,
+          dataNecessidade: response.data.dataNecessidade,
+          dataInicio: response.data.dataInicio,
+          previsaoTermino: response.data.previsaoTermino,
+          dataTermino: response.data.dataTermino,
+          statusProducao: response.data.statusProducao,
+          tipoEquipamentoId: response.data.tipoEquipamentoId,
+          tipoEquipamento: response.data.tipoEquipamento,
+        })
+      : mapApiToProducao(response.data);
 
     await carregarProducoes();
     return producaoCriada;

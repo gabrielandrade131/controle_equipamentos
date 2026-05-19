@@ -68,6 +68,7 @@ const serializeAnexos = (anexos: string[]) => anexos.join('\n');
 
 const createEmptyProducao = (): CreateProducaoDto => ({
   numeroOrdem: '',
+  quantidade: 1,
   numeroSerie: '',
   tag: '',
   dataSolicitacao: today(),
@@ -164,6 +165,12 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   ) => {
     const { name, value } = e.currentTarget;
     updateFormData({ [name]: value });
+  };
+
+  const handleQuantidadeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateFormData({
+      quantidade: Math.max(1, Number(e.currentTarget.value || 1)),
+    });
   };
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -306,6 +313,22 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
             />
           </div>
 
+          {!isEditing && (
+            <div className="form-group">
+              <label htmlFor="quantidade">Quantidade de equipamentos</label>
+              <input
+                type="number"
+                id="quantidade"
+                name="quantidade"
+                min={1}
+                step={1}
+                value={formData.quantidade ?? 1}
+                onChange={handleQuantidadeChange}
+                required
+              />
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="statusProducao">Status</label>
             <select
@@ -446,6 +469,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
         </div>
       </div>
 
+      {isEditing && (
       <div className="form-section">
         <h3>Itens Seriados</h3>
 
@@ -489,7 +513,9 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
           </div>
         )}
       </div>
+      )}
 
+      {isEditing && (
       <div className="form-section">
         <h3>Documentos Relacionados</h3>
 
@@ -567,10 +593,11 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
           </div>
         )}
       </div>
+      )}
 
       <div className="form-actions">
         <button type="submit" className="btn-salvar">
-          {isEditing ? 'Atualizar ordem' : 'Salvar ordem'}
+          {isEditing ? 'Atualizar ordem' : 'Gerar lote'}
         </button>
         <button type="button" onClick={onCancelar} className="btn-cancelar">
           Cancelar

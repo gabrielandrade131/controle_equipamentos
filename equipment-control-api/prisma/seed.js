@@ -126,10 +126,61 @@ async function main() {
   const equipamentos = [];
 
   for (const equipamento of equipamentosBase) {
+    const {
+      solicitante,
+      dataSolicitacao,
+      dataInicio,
+      dataTermino,
+      statusProducao,
+      tipoEquipamentoId,
+      modelo,
+      descricao,
+      ...equipmentData
+    } = equipamento;
+
+    const loteProducao = await prisma.loteProducao.upsert({
+      where: { numeroLote: equipamento.numeroOrdem },
+      update: {
+        solicitante,
+        dataSolicitacao,
+        dataInicio,
+        dataTermino,
+        statusProducao,
+        tipoEquipamentoId,
+        modelo,
+        descricao,
+        quantidade: 1,
+        ativo: true,
+        excluidoEm: null,
+      },
+      create: {
+        numeroLote: equipamento.numeroOrdem,
+        solicitante,
+        dataSolicitacao,
+        dataInicio,
+        dataTermino,
+        statusProducao,
+        tipoEquipamentoId,
+        modelo,
+        descricao,
+        quantidade: 1,
+      },
+    });
+
     const created = await prisma.equipment.upsert({
       where: { numeroOrdem: equipamento.numeroOrdem },
-      update: equipamento,
-      create: equipamento,
+      update: {
+        ...equipmentData,
+        descricao,
+        loteProducaoId: loteProducao.id,
+        ativo: true,
+        excluidoEm: null,
+      },
+      create: {
+        ...equipmentData,
+        descricao,
+        loteProducaoId: loteProducao.id,
+      },
     });
 
     equipamentos.push(created);

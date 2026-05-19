@@ -59,16 +59,16 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
     }
 
     Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FinalizarRecebimentoScreen(
-          os: widget.os,
-          checklistsPorEquipamento: checklistsPorEquipamento,
+        context,
+        MaterialPageRoute(
+          builder: (_) => FinalizarRecebimentoScreen(
+            os: widget.os,
+            checklistsPorEquipamento: checklistsPorEquipamento,
+          ),
         ),
-      ),
-    );
+      );
   }
-
+  
   void marcarTodosRetornaram() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

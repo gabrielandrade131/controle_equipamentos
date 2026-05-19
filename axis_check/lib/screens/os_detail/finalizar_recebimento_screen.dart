@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../services/recebimento_service.dart';
 import '../../models/checklist_recebimento_model.dart';
 import '../../models/os_operacao_model.dart';
 
@@ -7,11 +7,13 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
   final OsOperacao os;
   final Map<String, ChecklistRecebimento> checklistsPorEquipamento;
 
-  const FinalizarRecebimentoScreen({
+  FinalizarRecebimentoScreen({
     super.key,
     required this.os,
     required this.checklistsPorEquipamento,
   });
+
+  final RecebimentoService recebimentoService = RecebimentoService();
 
   int get totalFotos {
     return checklistsPorEquipamento.values.fold(
@@ -26,43 +28,45 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
         .length;
   }
 
-  void confirmarEnvio(BuildContext context) {
-    final payload = {
-      'osId': os.id,
-      'numeroOs': os.numeroOs,
-      'cliente': os.cliente,
-      'descricaoOperacao': os.descricaoOperacao,
-      'status': os.status,
-      'dataRecebimento': DateTime.now().toIso8601String(),
-      'equipamentos': checklistsPorEquipamento.values.map((checklist) {
-        return {
-          'equipamentoId': checklist.equipamentoId,
-          'tag': checklist.tag,
-          'numeroSerie': checklist.numeroSerie,
-          'retornouFisicamente': checklist.retornouFisicamente,
-          'equipamentoConferido': checklist.equipamentoConferido,
-          'possuiAvaria': checklist.possuiAvaria,
-          'observacao': checklist.observacao,
-          'fotos': checklist.fotos.map((foto) {
-            return {
-              'path': foto.path,
-              'tipo': foto.tipo,
-              'criadoEm': foto.criadoEm.toIso8601String(),
-            };
-          }).toList(),
-        };
-      }).toList(),
-    };
+  
 
-    debugPrint('ENVIAR PARA AXIS: $payload');
+  Future<void> confirmarEnvio(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
+    final sucesso = await recebimentoService.enviarRecebimento(
+      os: os,
+      checklistsPorEquipamento: checklistsPorEquipamento,
+      usarMock: true,
+    );
+
+    if (!context.mounted) return;
+
+    Navigator.pop(context);
+
+    if (sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recebimento enviado para o Axis com sucesso.'),
+        ),
+      );
+
+      Navigator.popUntil(context, (route) => route.isFirst);
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Recebimento pronto para envio ao Axis.'),
+        content: Text('Erro ao enviar recebimento. Tente novamente.'),
       ),
     );
-
-    Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   @override

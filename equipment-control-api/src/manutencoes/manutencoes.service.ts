@@ -86,44 +86,46 @@ export class ManutencoesService {
     inicio.setHours(0, 0, 0, 0);
     fim.setHours(0, 0, 0, 0);
 
-    
     const diffMs = fim.getTime() - inicio.getTime();
     const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     return dias >= 1 ? dias : 1;
   }
 
-  private adicionarDiasManutencao<T extends { 
-    dataRetornoBase?: Date | null;
-    dataInicio?: Date | null;
-    dataTermino?: Date | null;
-    statusManutencao?: string | null;
-  }>(
-    manutencao: T,
-  ) {
+  private adicionarDiasManutencao<
+    T extends {
+      dataRetornoBase?: Date | null;
+      dataInicio?: Date | null;
+      dataTermino?: Date | null;
+      statusManutencao?: string | null;
+    },
+  >(manutencao: T) {
     const deveCalcular = manutencao.statusManutencao === 'EM_MANUTENCAO';
     const deveCalcularEspera =
       Boolean(manutencao.dataRetornoBase) &&
-      (manutencao.statusManutencao === 'PENDENTE' || Boolean(manutencao.dataInicio));
+      (manutencao.statusManutencao === 'PENDENTE' ||
+        Boolean(manutencao.dataInicio));
 
     return {
       ...manutencao,
       diasEsperaManutencao: deveCalcularEspera
         ? this.calcularDias(
-          manutencao.dataRetornoBase ?? null,
-          manutencao.dataInicio ?? null,
-        )
+            manutencao.dataRetornoBase ?? null,
+            manutencao.dataInicio ?? null,
+          )
         : null,
       diasManutencao: deveCalcular
-      ? this.calcularDias(
-        manutencao.dataInicio ?? null,
-        manutencao.dataTermino ?? null,
-      )
-      : null,
+        ? this.calcularDias(
+            manutencao.dataInicio ?? null,
+            manutencao.dataTermino ?? null,
+          )
+        : null,
     };
   }
 
-  private montarWhere(filters: FilterManutencaoDto): Prisma.ManutencaoWhereInput {
+  private montarWhere(
+    filters: FilterManutencaoDto,
+  ): Prisma.ManutencaoWhereInput {
     const where: Prisma.ManutencaoWhereInput = {
       ativo: true,
     };
@@ -190,19 +192,18 @@ export class ManutencoesService {
       } as const;
     }
 
-    const candidatos =
-      tag
-        ? await this.prisma.manutencao.findMany({
-            where: {
-              origem: OrigemManutencao.SYNCHRO,
-              synchroId: null,
-              tag,
-            },
-            orderBy: {
-              criadoEm: 'desc',
-            },
-          })
-        : [];
+    const candidatos = tag
+      ? await this.prisma.manutencao.findMany({
+          where: {
+            origem: OrigemManutencao.SYNCHRO,
+            synchroId: null,
+            tag,
+          },
+          orderBy: {
+            criadoEm: 'desc',
+          },
+        })
+      : [];
 
     const manutencaoExistente = candidatos.find(
       (item) =>
@@ -282,8 +283,6 @@ export class ManutencoesService {
     } as const;
   }
 
-
-
   async createFromSynchro(data: CreateManutencaoSynchroDto) {
     const resultado = await this.importarUmaManutencaoSynchro(data);
     return resultado.manutencao;
@@ -320,7 +319,9 @@ export class ManutencoesService {
           numeroOrdemManutencao: null,
           tag: item.tag ?? null,
           message:
-            error instanceof Error ? error.message : 'Falha ao importar manutenção.',
+            error instanceof Error
+              ? error.message
+              : 'Falha ao importar manutenção.',
         });
       }
     }
@@ -329,7 +330,8 @@ export class ManutencoesService {
       total: items.length,
       created: results.filter((item) => item.action === 'created').length,
       updated: results.filter((item) => item.action === 'updated').length,
-      reactivated: results.filter((item) => item.action === 'reactivated').length,
+      reactivated: results.filter((item) => item.action === 'reactivated')
+        .length,
       errors: results.filter((item) => item.action === 'error').length,
       results,
     };
@@ -352,7 +354,8 @@ export class ManutencoesService {
           : null,
         diagnostico: data.diagnostico,
         responsavelManutencao: data.responsavelManutencao,
-        statusManutencao: data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
+        statusManutencao:
+          data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
         avaliacaoFinalConforme: data.avaliacaoFinalConforme,
       },
     });
@@ -391,9 +394,9 @@ export class ManutencoesService {
 
   async findOne(id: string) {
     const manutencao = await this.prisma.manutencao.findUnique({
-      where: { 
-        id, 
-        ativo: true 
+      where: {
+        id,
+        ativo: true,
       },
       include: {
         historicoAlteracoes: {
@@ -431,21 +434,21 @@ export class ManutencoesService {
       modeloEquipamento: data.modeloEquipamento,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
-      dataRetornoBase: data.dataRetornoBase ? new Date(data.dataRetornoBase) : undefined,
+      dataRetornoBase: data.dataRetornoBase
+        ? new Date(data.dataRetornoBase)
+        : undefined,
       diagnostico: data.diagnostico,
       responsavelManutencao: data.responsavelManutencao,
       statusManutencao: data.statusManutencao,
       avaliacaoFinalConforme: data.avaliacaoFinalConforme,
       dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
-      previsaoTermino: data.previsaoTermino ? new Date(data.previsaoTermino) : undefined,
+      previsaoTermino: data.previsaoTermino
+        ? new Date(data.previsaoTermino)
+        : undefined,
       dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
     };
 
-    const alteradoPor = 
-      user?.nome ||
-      user?.email || 
-      user?.username ||
-      null;
+    const alteradoPor = user?.nome || user?.email || user?.username || null;
 
     const historicoParaCriar: {
       campo: string;
@@ -522,18 +525,26 @@ export class ManutencoesService {
     });
 
     const dados = manutencoes.map((manutencao) =>
-      this.adicionarDiasManutencao(manutencao), 
+      this.adicionarDiasManutencao(manutencao),
     );
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Manutenções');
 
     worksheet.columns = [
-      { header: 'Ordem de Manutenção', key: 'numeroOrdemManutencao', width: 12 },
+      {
+        header: 'Ordem de Manutenção',
+        key: 'numeroOrdemManutencao',
+        width: 12,
+      },
       { header: 'Tipo de Equipamento', key: 'tipoEquipamentoNome', width: 24 },
       { header: 'Modelo', key: 'modeloEquipamento', width: 28 },
       { header: 'TAG', key: 'tag', width: 18 },
-      { header: 'Situação do Equipamento', key: 'situacaoEquipamento', width: 26 },
+      {
+        header: 'Situação do Equipamento',
+        key: 'situacaoEquipamento',
+        width: 26,
+      },
       { header: 'Data de Retorno à Base', key: 'dataRetornoBase', width: 22 },
       { header: 'Data de Início', key: 'dataInicio', width: 18 },
       { header: 'Data de Término', key: 'dataTermino', width: 18 },

@@ -4,36 +4,35 @@ import { timeStamp } from 'console';
 
 @Injectable()
 export class UsersService {
-    constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-    async findByEmail(email: string) {
-        return this.prisma.user.findUnique({
-            where: { email },
-        });
-    }
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
+  }
 
-    async create(data: {
-        nome: string;
-        email: string;
-        senha: string;
-        ativo?: boolean;
-        precisaTrocarSenha?: boolean;
-    }) {
-        return this.prisma.user.create({
-            data: {
-                nome: data.nome,
-                email: data.email,
-                senha: data.senha,
-                ativo: data.ativo ?? true,
-                precisaTrocarSenha: data.precisaTrocarSenha?? true,
-            },
-        });
+  async create(data: {
+    nome: string;
+    email: string;
+    senha: string;
+    ativo?: boolean;
+    precisaTrocarSenha?: boolean;
+  }) {
+    return this.prisma.user.create({
+      data: {
+        nome: data.nome,
+        email: data.email,
+        senha: data.senha,
+        ativo: data.ativo ?? true,
+        precisaTrocarSenha: data.precisaTrocarSenha ?? true,
+      },
+    });
+  }
 
-    }
-
-    async findById(id: string) {
-        return this.prisma.user.findUnique({
-            where: { id },
-        });
-    }
+  async findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
 }

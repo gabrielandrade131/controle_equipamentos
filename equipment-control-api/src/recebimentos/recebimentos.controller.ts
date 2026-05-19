@@ -1,0 +1,84 @@
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+  Body,
+} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { extname } from 'path';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RecebimentosService } from './recebimentos.service';
+
+@ApiTags('Recebimentos')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('recebimentos')
+export class RecebimentosController {
+  constructor(private readonly recebimentosService: RecebimentosService) {}
+
+  @Post()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        dados: {
+          type: 'string',
+          example: '{"numeroOs":"OS-001","equipamentos":[]}',
+        },
+        fotos: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FilesInterceptor('fotos', 50, {
+      storage: diskStorage({
+        destination: './uploads/recebimentos',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+          const extension = extname(file.originalname);
+
+          callback(null, `${uniqueSuffix}${extension}`);
+        },
+      }),
+    }),
+  )
+  criar(
+    @Body('dados') dados: string,
+    @UploadedFiles() arquivos: Express.Multer.File[],
+  ) {
+    return this.recebimentosService.criarRecebimento(
+      dados,
+      arquivos ?? [],
+    );
+  }
+
+  @Get()
+  listar() {
+    return this.recebimentosService.listar();
+  }
+
+  @Get('os/:numeroOs')
+  buscarPorNumeroOs(@Param('numeroOs') numeroOs: string) {
+    return this.recebimentosService.buscarPorNumeroOs(numeroOs);
+  }
+
+  @Get(':id')
+  buscarPorId(@Param('id') id: string) {
+    return this.recebimentosService.buscarPorId(id);
+  }
+}

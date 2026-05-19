@@ -150,6 +150,8 @@ model Manutencao {
   atualizadoEm            DateTime            @updatedAt
   historicoAlteracoes     HistoricoManutencao[]
 
+  recebimentosEquipamento RecebimentoEquipamento[]
+
   ativo                   Boolean           @default(true)
   excluidoEm              DateTime?         
 
@@ -204,9 +206,80 @@ model LoteProducao {
 
 }
 
+model RecebimentoOperacional {
+  id                  String                    @id @default(uuid())
+
+  osIdSynchro          String?
+  numeroOs             String
+  cliente              String?
+  descricaoOperacao    String?
+  statusOperacao       String?
+
+  usuarioRecebimentoId String?
+  usuarioRecebimento   String?
+
+  dataRecebimento      DateTime                 @default(now())
+
+  criadoEm             DateTime                 @default(now())
+  atualizadoEm         DateTime                 @updatedAt
+
+  equipamentos         RecebimentoEquipamento[]
+
+  @@index([numeroOs])
+  @@index([osIdSynchro])
+}
+
+model RecebimentoEquipamento {
+  id                       String                     @id @default(uuid())
+
+  recebimentoId             String
+  equipamentoIdSynchro      String?
+  tag                       String?
+  numeroSerie               String?
+  tipoEquipamento           String?
+  modelo                    String?
+
+  retornouFisicamente       Boolean                   @default(false)
+  equipamentoConferido      Boolean                   @default(false)
+  possuiAvaria              Boolean                   @default(false)
+  observacao                String?
+
+  manutencaoId              String?
+  manutencao                Manutencao?               @relation(fields: [manutencaoId], references: [id])
+
+  criadoEm                  DateTime                  @default(now())
+  atualizadoEm              DateTime                  @updatedAt
+
+  recebimento               RecebimentoOperacional    @relation(fields: [recebimentoId], references: [id], onDelete: Cascade)
+  fotos                     FotoRecebimentoEquipamento[]
+
+  @@index([tag])
+  @@index([numeroSerie])
+  @@index([recebimentoId])
+}
+
+model FotoRecebimentoEquipamento {
+  id                         String                   @id @default(uuid())
+
+  recebimentoEquipamentoId    String
+  tag                         String?
+  numeroSerie                 String?
+  tipoFoto                    String
+  nomeArquivo                 String
+  caminhoArquivo              String
+
+  criadoEm                    DateTime                 @default(now())
+
+  recebimentoEquipamento      RecebimentoEquipamento   @relation(fields: [recebimentoEquipamentoId], references: [id], onDelete: Cascade)
+
+  @@index([tag])
+  @@index([numeroSerie])
+}
+
 enum OrigemManutencao {
   SYNCHRO
   MANUAL
+  APP_RECEBIMENTO
 }
 
 enum StatusManutencao {

@@ -92,6 +92,14 @@ export class ManutencoesController {
     res.send(buffer);
   }
 
+  @Get(':id/recebimento')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Buscar dados de recebimento vinculados a manutencao' })
+  buscarRecebimento(@Param('id') id: string) {
+    return this.manutencoesService.buscarRecebimentoDaManutencao(id);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

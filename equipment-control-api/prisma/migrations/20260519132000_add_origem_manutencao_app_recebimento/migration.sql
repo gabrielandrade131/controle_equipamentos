@@ -1,0 +1,1 @@
+ALTER TYPE "OrigemManutencao" ADD VALUE 'APP_RECEBIMENTO';

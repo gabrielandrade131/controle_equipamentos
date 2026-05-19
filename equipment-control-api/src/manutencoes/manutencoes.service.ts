@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrigemManutencao, Prisma, StatusManutencao } from '@prisma/client';
 import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto';
@@ -11,6 +12,7 @@ import { CreateManutencaoDto } from './dto/create-manutencao.dto';
 import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
 import * as ExcelJS from 'exceljs';
+
 
 type UsuarioHistorico = {
   nome?: string | null;
@@ -646,5 +648,55 @@ export class ManutencoesService {
         criadoEm: 'desc',
       },
     });
+  }
+
+  async buscarRecebimentoDaManutencao(id: string) {
+    const manutencao = await this.prisma.manutencao.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!manutencao) {
+      throw new NotFoundException('Manutenção não encontrada.');
+    }
+
+    const recebimentoEquipamento =
+      await this.prisma.recebimentoEquipamento.findFirst({
+        where: {
+          manutencaoId: id,
+        },
+        include: {
+          recebimento: true,
+          fotos: true,
+          manutencao: true,
+        },
+      });
+
+    if (!recebimentoEquipamento) {
+      return {
+        manutencao,
+        recebimento: null,
+        mensagem: 'Esta manutenção não possui recebimento vinculado.',
+      };
+    }
+
+    return {
+      manutencao,
+      recebimento: recebimentoEquipamento.recebimento,
+      checklist: {
+        retornouFisicamente: recebimentoEquipamento.retornouFisicamente,
+        equipamentoConferido: recebimentoEquipamento.equipamentoConferido,
+        possuiAvaria: recebimentoEquipamento.possuiAvaria,
+        observacao: recebimentoEquipamento.observacao,
+      },
+      equipamentoRecebido: {
+        tag: recebimentoEquipamento.tag,
+        numeroSerie: recebimentoEquipamento.numeroSerie,
+        tipoEquipamento: recebimentoEquipamento.tipoEquipamento,
+        modelo: recebimentoEquipamento.modelo,
+      },
+      fotos: recebimentoEquipamento.fotos,
+    };
   }
 }

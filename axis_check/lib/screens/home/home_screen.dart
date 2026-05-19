@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../widgets/action_card.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/metric_card.dart';
 import '../os_list/os_list_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -7,41 +11,93 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Axis Check'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.assignment_outlined),
-                title: const Text('OS em andamento'),
-                subtitle: const Text('Listar operações vindas do Synchro'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const OsListScreen(),
+      body: Column(
+        children: [
+          const AppHeader(
+            title: 'Axis Check',
+            subtitle: 'Recebimento e conferência operacional',
+            icon: Icons.fact_check_rounded,
+          ),
+
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const Text(
+                  'Visão geral',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                const Row(
+                  children: [
+                    Expanded(
+                      child: MetricCard(
+                        title: 'OS em andamento',
+                        value: '2',
+                        icon: Icons.assignment_outlined,
+                      ),
                     ),
-                  );
-                },
-              ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: MetricCard(
+                        title: 'Pendências',
+                        value: '0',
+                        icon: Icons.sync_problem_outlined,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                const Text(
+                  'Ações rápidas',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                ActionCard(
+                  title: 'OS em andamento',
+                  subtitle: 'Conferir equipamentos retornando da operação',
+                  icon: Icons.assignment_turned_in_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OsListScreen(),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 12),
+
+                ActionCard(
+                  title: 'Pendências de envio',
+                  subtitle: 'Recebimentos aguardando sincronização',
+                  icon: Icons.cloud_sync_outlined,
+                  onTap: () {},
+                ),
+
+                const SizedBox(height: 12),
+
+                ActionCard(
+                  title: 'Últimos recebimentos',
+                  subtitle: 'Visualizar conferências já realizadas',
+                  icon: Icons.history_outlined,
+                  onTap: () {},
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.sync_problem_outlined),
-                title: const Text('Pendências de envio'),
-                subtitle: const Text('Recebimentos ainda não sincronizados'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {},
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

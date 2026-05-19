@@ -150,4 +150,27 @@ class RecebimentoService {
 
     return formData;
   }
+
+  Future<bool> osJaFoiRecebida({
+    required String numeroOs,
+    bool usarMock = true,
+  }) async {
+    if (usarMock) {
+      return false;
+    }
+
+    try {
+      final response = await apiClient.axisDio().get(
+            '/recebimentos/os/$numeroOs',
+          );
+
+      final data = response.data;
+
+      return data['recebido'] == true;
+    } catch (e) {
+      debugPrint('ERRO AO CONSULTAR RECEBIMENTO DA OS: $e');
+
+      return false;
+    }
+  }
 }

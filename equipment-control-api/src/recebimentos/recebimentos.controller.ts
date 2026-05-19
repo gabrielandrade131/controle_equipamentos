@@ -7,6 +7,7 @@ import {
   UseGuards,
   UseInterceptors,
   Body,
+  Query,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -68,13 +69,30 @@ export class RecebimentosController {
   }
 
   @Get()
-  listar() {
-    return this.recebimentosService.listar();
+  listar(
+    @Query('numeroOs') numeroOs?: string,
+    @Query('tag') tag?: string,
+    @Query('numeroSerie') numeroSerie?: string,
+    @Query('sincronizadoSynchro') sincronizadoSynchro?: string,
+    @Query('statusRecebimento') statusRecebimento?: any,
+  ) {
+    return this.recebimentosService.listar({
+      numeroOs,
+      tag,
+      numeroSerie,
+      sincronizadoSynchro,
+      statusRecebimento,
+    });
   }
 
   @Get('os/:numeroOs')
   buscarPorNumeroOs(@Param('numeroOs') numeroOs: string) {
     return this.recebimentosService.buscarPorNumeroOs(numeroOs);
+  }
+
+  @Post(':id/reprocessar-synchro')
+  reprocessarSynchro(@Param('id') id: string) {
+    return this.recebimentosService.reprocessarSincronizacaoSynchro(id);
   }
 
   @Get(':id')

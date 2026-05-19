@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../core/storage/token_storage.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/os_operacao_model.dart';
 import '../../services/synchro_service.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/os_card.dart';
 import '../os_detail/os_detail_screen.dart';
 
 class OsListScreen extends StatefulWidget {
@@ -36,31 +39,59 @@ class _OsListScreenState extends State<OsListScreen> {
       erro = null;
     });
 
-    final resultado = await synchroService.listarOsEmAndamento(
-      usarMock: true,
-    );
+    try {
+      final resultado = await synchroService.listarOsEmAndamento(
+        usarMock: true,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      osList = resultado;
-      loading = false;
-    });
+      setState(() {
+        osList = resultado;
+        loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        erro = 'Não foi possível carregar as OS em andamento.';
+        loading = false;
+      });
+    }
   }
 
   Future<void> atualizar() async {
     await carregarOs();
   }
 
+  void abrirDetalheOs(OsOperacao os) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OsDetailScreen(os: os),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('OS em andamento'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: atualizar,
-        child: _buildContent(),
+      body: Column(
+        children: [
+          const AppHeader(
+            title: 'OS em andamento',
+            subtitle: 'Selecione uma operação para iniciar a conferência',
+            icon: Icons.assignment_turned_in_outlined,
+          ),
+
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: atualizar,
+              color: AppColors.techBlue,
+              child: _buildContent(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -78,8 +109,34 @@ class _OsListScreenState extends State<OsListScreen> {
         children: [
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(erro!),
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 42,
+                    color: AppColors.techBlue,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    erro!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    height: 46,
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: carregarOs,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tentar novamente'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -89,11 +146,53 @@ class _OsListScreenState extends State<OsListScreen> {
     if (osList.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
+        children: [
           Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Nenhuma OS em andamento encontrada.'),
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                children: [
+                  Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.inbox_outlined,
+                      size: 34,
+                      color: AppColors.techBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Nenhuma OS em andamento',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Quando houver operações em andamento no Synchro, elas aparecerão aqui.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.mutedText,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 46,
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: carregarOs,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Atualizar'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -102,40 +201,36 @@ class _OsListScreenState extends State<OsListScreen> {
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: osList.length,
+      itemCount: osList.length + 1,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final os = osList[index];
-
-        return Card(
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: const CircleAvatar(
-              child: Icon(Icons.assignment_outlined),
-            ),
-            title: Text(
-              os.numeroOs,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                '${os.cliente}\n'
-                '${os.descricaoOperacao}\n'
-                'Equipamentos: ${os.equipamentos.length}',
-              ),
-            ),
-            isThreeLine: true,
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => OsDetailScreen(os: os),
+        if (index == 0) {
+          return Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${osList.length} OS encontrada${osList.length == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              );
-            },
-          ),
+              ),
+              IconButton(
+                onPressed: carregarOs,
+                icon: const Icon(Icons.refresh),
+                color: AppColors.techBlue,
+                tooltip: 'Atualizar',
+              ),
+            ],
+          );
+        }
+
+        final os = osList[index - 1];
+
+        return OsCard(
+          os: os,
+          onTap: () => abrirDetalheOs(os),
         );
       },
     );

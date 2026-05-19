@@ -1,71 +1,84 @@
-import { OrigemManutencao, Prisma, StatusManutencao } from '@prisma/client';
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  OrigemManutencao,
+  Prisma,
+  StatusManutencao,
+  StatusRecebimentoOperacional,
+} from '@prisma/client';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SynchroIntegrationService } from '../integracoes/synchro/synchro-integration.service';
 
 @Injectable()
 export class RecebimentosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly synchroIntegrationService: SynchroIntegrationService,
+  ) {}
 
   private validarEquipamentosRecebidos(
     equipamentos: any[],
     arquivos: Express.Multer.File[],
   ) {
-        for (const equipamento of equipamentos) {
-            const identificador = equipamento.tag ?? equipamento.numeroSerie;
+    for (const equipamento of equipamentos) {
+      const identificador = equipamento.tag ?? equipamento.numeroSerie;
 
-            if (!identificador) {
-            throw new BadRequestException(
-                'Todo equipamento precisa ter TAG ou número de série.',
-            );
-            }
+      if (!identificador) {
+        throw new BadRequestException(
+          'Todo equipamento precisa ter TAG ou número de série.',
+        );
+      }
 
-            if (!equipamento.retornouFisicamente) {
-            throw new BadRequestException(
-                `O equipamento ${identificador} precisa estar marcado como retornou fisicamente.`,
-            );
-            }
+      if (!equipamento.retornouFisicamente) {
+        throw new BadRequestException(
+          `O equipamento ${identificador} precisa estar marcado como retornou fisicamente.`,
+        );
+      }
 
-            if (!equipamento.equipamentoConferido) {
-            throw new BadRequestException(
-                `O equipamento ${identificador} precisa estar marcado como conferido.`,
-            );
-            }
+      if (!equipamento.equipamentoConferido) {
+        throw new BadRequestException(
+          `O equipamento ${identificador} precisa estar marcado como conferido.`,
+        );
+      }
 
-            const fotosDoEquipamento = arquivos.filter((arquivo) => {
-            return arquivo.originalname.includes(identificador);
-            });
+      const fotosDoEquipamento = arquivos.filter((arquivo) => {
+        return arquivo.originalname.includes(identificador);
+      });
 
-            const temFotoGeral = fotosDoEquipamento.some((arquivo) =>
-            arquivo.originalname.toUpperCase().includes('GERAL'),
-            );
+      const temFotoGeral = fotosDoEquipamento.some((arquivo) =>
+        arquivo.originalname.toUpperCase().includes('GERAL'),
+      );
 
-            const temFotoIdentificacao = fotosDoEquipamento.some((arquivo) =>
-            arquivo.originalname.toUpperCase().includes('IDENTIFICACAO'),
-            );
+      const temFotoIdentificacao = fotosDoEquipamento.some((arquivo) =>
+        arquivo.originalname.toUpperCase().includes('IDENTIFICACAO'),
+      );
 
-            const temFotoAvaria = fotosDoEquipamento.some((arquivo) =>
-            arquivo.originalname.toUpperCase().includes('AVARIA'),
-            );
+      const temFotoAvaria = fotosDoEquipamento.some((arquivo) =>
+        arquivo.originalname.toUpperCase().includes('AVARIA'),
+      );
 
-            if (!temFotoGeral) {
-            throw new BadRequestException(
-                `O equipamento ${identificador} precisa ter foto geral.`,
-            );
-            }
+      if (!temFotoGeral) {
+        throw new BadRequestException(
+          `O equipamento ${identificador} precisa ter foto geral.`,
+        );
+      }
 
-            if (!temFotoIdentificacao) {
-            throw new BadRequestException(
-                `O equipamento ${identificador} precisa ter foto de identificação/TAG.`,
-            );
-            }
+      if (!temFotoIdentificacao) {
+        throw new BadRequestException(
+          `O equipamento ${identificador} precisa ter foto de identificação/TAG.`,
+        );
+      }
 
-            if (equipamento.possuiAvaria && !temFotoAvaria) {
-            throw new BadRequestException(
-                `O equipamento ${identificador} possui avaria e precisa ter foto da avaria.`,
-            );
-            }
-        }
+      if (equipamento.possuiAvaria && !temFotoAvaria) {
+        throw new BadRequestException(
+          `O equipamento ${identificador} possui avaria e precisa ter foto da avaria.`,
+        );
+      }
     }
+  }
 
   async criarRecebimento(dadosRaw: string, arquivos: Express.Multer.File[]) {
     if (!dadosRaw) {
@@ -85,27 +98,27 @@ export class RecebimentosService {
       throw new BadRequestException('Número da OS é obrigatório.');
     }
     const recebimentoExistente =
-        await this.prisma.recebimentoOperacional.findFirst({
+      await this.prisma.recebimentoOperacional.findFirst({
         where: {
-            numeroOs: dados.numeroOs,
+          numeroOs: dados.numeroOs,
         },
-    });
+      });
 
     if (recebimentoExistente) {
-        throw new BadRequestException(
-            `A OS ${dados.numeroOs} já possui recebimento registrado.`,
-        );
+      throw new BadRequestException(
+        `A OS ${dados.numeroOs} já possui recebimento registrado.`,
+      );
     }
 
     if (!Array.isArray(dados.equipamentos) || dados.equipamentos.length === 0) {
-      throw new BadRequestException('É necessário enviar ao menos um equipamento.');
+      throw new BadRequestException(
+        'É necessário enviar ao menos um equipamento.',
+      );
     }
 
-
-    
     this.validarEquipamentosRecebidos(dados.equipamentos, arquivos);
 
-    return this.prisma.$transaction(async (tx) => {
+    const recebimentoCriado = await this.prisma.$transaction(async (tx) => {
       const recebimento = await tx.recebimentoOperacional.create({
         data: {
           osIdSynchro: dados.osId?.toString() ?? null,
@@ -113,6 +126,8 @@ export class RecebimentosService {
           cliente: dados.cliente ?? null,
           descricaoOperacao: dados.descricaoOperacao ?? null,
           statusOperacao: dados.status ?? null,
+          statusRecebimento: StatusRecebimentoOperacional.PENDENTE_SYNCHRO,
+          sincronizadoSynchro: false,
           dataRecebimento: dados.dataRecebimento
             ? new Date(dados.dataRecebimento)
             : new Date(),
@@ -139,42 +154,42 @@ export class RecebimentosService {
             })
           : null;
 
-if (manutencaoExistente) {
-  throw new BadRequestException(
-    `Já existe manutenção aberta para o equipamento ${equipamento.tag ?? equipamento.numeroSerie}.`,
-  );
-}
+        if (manutencaoExistente) {
+          throw new BadRequestException(
+            `Já existe manutenção aberta para o equipamento ${equipamento.tag ?? equipamento.numeroSerie}.`,
+          );
+        }
 
-    const manutencao = await tx.manutencao.create({
-    data: {
-        origem: OrigemManutencao.APP_RECEBIMENTO,
-        tipoEquipamentoNome: equipamento.tipoEquipamento ?? null,
-        modeloEquipamento: equipamento.modelo ?? null,
-        tag: equipamento.tag ?? null,
-        situacaoEquipamento: 'Retornou para a base',
-        dataRetornoBase: dados.dataRecebimento
-        ? new Date(dados.dataRecebimento)
-        : new Date(),
-        statusManutencao: StatusManutencao.EM_QUARENTENA,
-        diagnostico: equipamento.observacao ?? null,
-    },
-    });
+        const manutencao = await tx.manutencao.create({
+          data: {
+            origem: OrigemManutencao.APP_RECEBIMENTO,
+            tipoEquipamentoNome: equipamento.tipoEquipamento ?? null,
+            modeloEquipamento: equipamento.modelo ?? null,
+            tag: equipamento.tag ?? null,
+            situacaoEquipamento: 'Retornou para a base',
+            dataRetornoBase: dados.dataRecebimento
+              ? new Date(dados.dataRecebimento)
+              : new Date(),
+            statusManutencao: StatusManutencao.EM_QUARENTENA,
+            diagnostico: equipamento.observacao ?? null,
+          },
+        });
 
-    const recebimentoEquipamento = await tx.recebimentoEquipamento.create({
-    data: {
-        recebimentoId: recebimento.id,
-        manutencaoId: manutencao.id,
-        equipamentoIdSynchro: equipamento.equipamentoId?.toString() ?? null,
-        tag: equipamento.tag ?? null,
-        numeroSerie: equipamento.numeroSerie ?? null,
-        tipoEquipamento: equipamento.tipoEquipamento ?? null,
-        modelo: equipamento.modelo ?? null,
-        retornouFisicamente: equipamento.retornouFisicamente ?? false,
-        equipamentoConferido: equipamento.equipamentoConferido ?? false,
-        possuiAvaria: equipamento.possuiAvaria ?? false,
-        observacao: equipamento.observacao ?? null,
-    },
-    });
+        const recebimentoEquipamento = await tx.recebimentoEquipamento.create({
+          data: {
+            recebimentoId: recebimento.id,
+            manutencaoId: manutencao.id,
+            equipamentoIdSynchro: equipamento.equipamentoId?.toString() ?? null,
+            tag: equipamento.tag ?? null,
+            numeroSerie: equipamento.numeroSerie ?? null,
+            tipoEquipamento: equipamento.tipoEquipamento ?? null,
+            modelo: equipamento.modelo ?? null,
+            retornouFisicamente: equipamento.retornouFisicamente ?? false,
+            equipamentoConferido: equipamento.equipamentoConferido ?? false,
+            possuiAvaria: equipamento.possuiAvaria ?? false,
+            observacao: equipamento.observacao ?? null,
+          },
+        });
 
         const fotosDoEquipamento = arquivos.filter((arquivo) => {
           return arquivo.originalname.includes(equipamento.tag);
@@ -183,12 +198,12 @@ if (manutencaoExistente) {
         for (const foto of fotosDoEquipamento) {
           await tx.fotoRecebimentoEquipamento.create({
             data: {
-                recebimentoEquipamentoId: recebimentoEquipamento.id,
-                tag: equipamento.tag ?? null,
-                numeroSerie: equipamento.numeroSerie ?? null,
-                tipoFoto: this.identificarTipoFoto(foto.originalname),
-                nomeArquivo: foto.filename,
-                caminhoArquivo: `/uploads/recebimentos/${foto.filename}`,
+              recebimentoEquipamentoId: recebimentoEquipamento.id,
+              tag: equipamento.tag ?? null,
+              numeroSerie: equipamento.numeroSerie ?? null,
+              tipoFoto: this.identificarTipoFoto(foto.originalname),
+              nomeArquivo: foto.filename,
+              caminhoArquivo: `/uploads/recebimentos/${foto.filename}`,
             },
           });
         }
@@ -196,25 +211,128 @@ if (manutencaoExistente) {
 
       return tx.recebimentoOperacional.findUnique({
         where: {
-            id: recebimento.id,
+          id: recebimento.id,
         },
         include: {
-            equipamentos: {
+          equipamentos: {
             include: {
-                manutencao: true,
-                fotos: true,
+              manutencao: true,
+              fotos: true,
             },
-            },
+          },
         },
-        });
+      });
     });
+
+    if (!recebimentoCriado) {
+      throw new InternalServerErrorException(
+        'Recebimento criado, mas não foi possível carregar o registro completo.',
+      );
+    }
+
+    let sincronizadoSynchro = false;
+    let erroSincronizacaoSynchro: string | null = null;
+
+    try {
+      sincronizadoSynchro =
+        await this.synchroIntegrationService.marcarEquipamentosComoRetornados({
+          osId: dados.osId?.toString() ?? null,
+          numeroOs: dados.numeroOs,
+          dataRecebimento: dados.dataRecebimento ?? new Date().toISOString(),
+          equipamentos: dados.equipamentos.map((equipamento) => ({
+            equipamentoId: equipamento.equipamentoId?.toString() ?? null,
+            tag: equipamento.tag ?? null,
+            numeroSerie: equipamento.numeroSerie ?? null,
+          })),
+        });
+    } catch (error) {
+      erroSincronizacaoSynchro =
+        error instanceof Error
+          ? error.message
+          : 'Erro desconhecido ao sincronizar com Synchro.';
+    }
+
+    const statusRecebimento = sincronizadoSynchro
+      ? StatusRecebimentoOperacional.SINCRONIZADO_SYNCHRO
+      : StatusRecebimentoOperacional.PENDENTE_SYNCHRO;
+
+    const recebimentoAtualizado =
+      await this.prisma.recebimentoOperacional.update({
+        where: {
+          id: recebimentoCriado.id,
+        },
+        data: {
+          sincronizadoSynchro,
+          erroSincronizacaoSynchro,
+          dataSincronizacaoSynchro: sincronizadoSynchro ? new Date() : null,
+          statusRecebimento,
+        },
+        include: {
+          equipamentos: {
+            include: {
+              manutencao: true,
+              fotos: true,
+            },
+          },
+        },
+      });
+
+    return recebimentoAtualizado;
   }
 
-  async listar() {
+  async listar(filtros: {
+    numeroOs?: string;
+    tag?: string;
+    numeroSerie?: string;
+    sincronizadoSynchro?: string;
+    statusRecebimento?: StatusRecebimentoOperacional;
+  }) {
+    const where: any = {};
+
+    if (filtros.numeroOs) {
+      where.numeroOs = {
+        contains: filtros.numeroOs,
+        mode: 'insensitive',
+      };
+    }
+
+    if (filtros.sincronizadoSynchro !== undefined) {
+      where.sincronizadoSynchro = filtros.sincronizadoSynchro === 'true';
+    }
+
+    if (filtros.statusRecebimento) {
+      where.statusRecebimento = filtros.statusRecebimento;
+    }
+
+    if (filtros.tag || filtros.numeroSerie) {
+      where.equipamentos = {
+        some: {
+          ...(filtros.tag
+            ? {
+                tag: {
+                  contains: filtros.tag,
+                  mode: 'insensitive',
+                },
+              }
+            : {}),
+          ...(filtros.numeroSerie
+            ? {
+                numeroSerie: {
+                  contains: filtros.numeroSerie,
+                  mode: 'insensitive',
+                },
+              }
+            : {}),
+        },
+      };
+    }
+
     return this.prisma.recebimentoOperacional.findMany({
+      where,
       include: {
         equipamentos: {
           include: {
+            manutencao: true,
             fotos: true,
           },
         },
@@ -256,37 +374,113 @@ if (manutencaoExistente) {
 
   async buscarPorNumeroOs(numeroOs: string) {
     const recebimentos = await this.prisma.recebimentoOperacional.findMany({
-        where: {
+      where: {
         numeroOs,
-        },
-        include: {
+      },
+      include: {
         equipamentos: {
-            include: {
+          include: {
             manutencao: true,
             fotos: true,
-            },
+          },
         },
-        },
-        orderBy: {
+      },
+      orderBy: {
         criadoEm: 'desc',
-        },
+      },
     });
 
     if (recebimentos.length === 0) {
-        return {
+      return {
         numeroOs,
         recebido: false,
         mensagem: 'Nenhum recebimento encontrado para esta OS.',
         recebimentos: [],
-        };
+      };
     }
 
     return {
-        numeroOs,
-        recebido: true,
-        totalRecebimentos: recebimentos.length,
-        ultimoRecebimento: recebimentos[0],
-        recebimentos,
+      numeroOs,
+      recebido: true,
+      totalRecebimentos: recebimentos.length,
+      ultimoRecebimento: recebimentos[0],
+      recebimentos,
+    };
+  }
+
+  async reprocessarSincronizacaoSynchro(id: string) {
+    const recebimento = await this.prisma.recebimentoOperacional.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        equipamentos: true,
+      },
+    });
+
+    if (!recebimento) {
+      throw new BadRequestException('Recebimento não encontrado.');
+    }
+
+    if (recebimento.sincronizadoSynchro) {
+      return {
+        mensagem: 'Este recebimento já está sincronizado com o Synchro.',
+        recebimento,
+      };
+    }
+
+    let sincronizadoSynchro = false;
+    let erroSincronizacaoSynchro: string | null = null;
+
+    try {
+      sincronizadoSynchro =
+        await this.synchroIntegrationService.marcarEquipamentosComoRetornados({
+          osId: recebimento.osIdSynchro,
+          numeroOs: recebimento.numeroOs,
+          dataRecebimento: recebimento.dataRecebimento.toISOString(),
+          equipamentos: recebimento.equipamentos.map((equipamento) => ({
+            equipamentoId: equipamento.equipamentoIdSynchro,
+            tag: equipamento.tag,
+            numeroSerie: equipamento.numeroSerie,
+          })),
+        });
+    } catch (error) {
+      erroSincronizacaoSynchro =
+        error instanceof Error
+          ? error.message
+          : 'Erro desconhecido ao sincronizar com Synchro.';
+    }
+
+    const statusRecebimento = sincronizadoSynchro
+      ? StatusRecebimentoOperacional.SINCRONIZADO_SYNCHRO
+      : StatusRecebimentoOperacional.PENDENTE_SYNCHRO;
+
+    const recebimentoAtualizado =
+      await this.prisma.recebimentoOperacional.update({
+        where: {
+          id,
+        },
+        data: {
+          sincronizadoSynchro,
+          erroSincronizacaoSynchro,
+          dataSincronizacaoSynchro: sincronizadoSynchro ? new Date() : null,
+          statusRecebimento,
+        },
+        include: {
+          equipamentos: {
+            include: {
+              manutencao: true,
+              fotos: true,
+            },
+          },
+        },
+      });
+
+    return {
+      mensagem: sincronizadoSynchro
+        ? 'Recebimento sincronizado com o Synchro com sucesso.'
+        : 'Não foi possível sincronizar com o Synchro.',
+      recebimento: recebimentoAtualizado,
     };
   }
 }

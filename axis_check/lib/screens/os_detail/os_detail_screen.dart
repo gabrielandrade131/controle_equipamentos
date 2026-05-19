@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../models/checklist_recebimento_model.dart';
 import '../../models/equipamento_operacao_model.dart';
 import '../../models/os_operacao_model.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/equipamento_recebimento_card.dart';
+import '../../widgets/progress_summary_card.dart';
 import '../checklist/equipamento_checklist_screen.dart';
 import 'finalizar_recebimento_screen.dart';
 
@@ -59,21 +63,21 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
     }
 
     Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => FinalizarRecebimentoScreen(
-            os: widget.os,
-            checklistsPorEquipamento: checklistsPorEquipamento,
-          ),
+      context,
+      MaterialPageRoute(
+        builder: (_) => FinalizarRecebimentoScreen(
+          os: widget.os,
+          checklistsPorEquipamento: checklistsPorEquipamento,
         ),
-      );
+      ),
+    );
   }
-  
+
   void marcarTodosRetornaram() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Agora faça o checklist e as fotos de cada equipamento para finalizar.',
+          'Agora faça o checklist e tire as fotos de cada equipamento.',
         ),
       ),
     );
@@ -84,13 +88,10 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
     final os = widget.os;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(os.numeroOs),
-      ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
         child: SizedBox(
-          height: 52,
+          height: 54,
           child: ElevatedButton.icon(
             onPressed: todosEquipamentosConferidos ? finalizarRecebimento : null,
             icon: const Icon(Icons.cloud_upload_outlined),
@@ -102,95 +103,161 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          Card(
-            child: Padding(
+          AppHeader(
+            title: os.numeroOs,
+            subtitle: 'Conferência dos equipamentos da operação',
+            icon: Icons.inventory_2_outlined,
+          ),
+
+          Expanded(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    os.numeroOs,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Dados da operação',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        _InfoLinha(
+                          label: 'Cliente',
+                          valor: os.cliente.isEmpty
+                              ? 'Não informado'
+                              : os.cliente,
+                        ),
+                        _InfoLinha(
+                          label: 'Operação',
+                          valor: os.descricaoOperacao.isEmpty
+                              ? 'Não informada'
+                              : os.descricaoOperacao,
+                        ),
+                        _InfoLinha(
+                          label: 'Status',
+                          valor: os.status,
+                        ),
+                        _InfoLinha(
+                          label: 'Equipamentos',
+                          valor: '${os.equipamentos.length}',
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text('Cliente: ${os.cliente}'),
-                  Text('Operação: ${os.descricaoOperacao}'),
-                  Text('Status: ${os.status}'),
-                  Text('Equipamentos: ${os.equipamentos.length}'),
-                  Text('Conferidos: $totalConferidos/${os.equipamentos.length}'),
-                ],
+                ),
+
+                const SizedBox(height: 14),
+
+                ProgressSummaryCard(
+                  total: os.equipamentos.length,
+                  concluido: totalConferidos,
+                ),
+
+                const SizedBox(height: 14),
+
+                SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: marcarTodosRetornaram,
+                    icon: const Icon(Icons.done_all_rounded),
+                    label: const Text('Todos os equipamentos retornaram'),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Equipamentos',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '$totalConferidos/${os.equipamentos.length}',
+                      style: const TextStyle(
+                        color: AppColors.techBlue,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                ...os.equipamentos.map(
+                  (equipamento) {
+                    final checklist =
+                        checklistsPorEquipamento[equipamento.id];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: EquipamentoRecebimentoCard(
+                        equipamento: equipamento,
+                        checklist: checklist,
+                        onTap: () => abrirChecklist(equipamento),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoLinha extends StatelessWidget {
+  final String label;
+  final String valor;
+
+  const _InfoLinha({
+    required this.label,
+    required this.valor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 105,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                color: AppColors.mutedText,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          SizedBox(
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: marcarTodosRetornaram,
-              icon: const Icon(Icons.done_all),
-              label: const Text('Todos os equipamentos retornaram'),
+          Expanded(
+            child: Text(
+              valor,
+              style: const TextStyle(
+                color: AppColors.black,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          const Text(
-            'Equipamentos da operação',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          ...os.equipamentos.map(
-            (equipamento) {
-              final checklist = checklistsPorEquipamento[equipamento.id];
-              final conferido = checklist != null;
-
-              return Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: CircleAvatar(
-                    backgroundColor: conferido ? Colors.green : null,
-                    child: Icon(
-                      conferido
-                          ? Icons.check
-                          : Icons.precision_manufacturing_outlined,
-                      color: conferido ? Colors.white : null,
-                    ),
-                  ),
-                  title: Text(
-                    equipamento.tipoEquipamento,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      'Modelo: ${equipamento.modelo}\n'
-                      'Série: ${equipamento.numeroSerie}\n'
-                      'TAG: ${equipamento.tag}\n'
-                      'Status: ${conferido ? 'Conferido' : 'Pendente'}',
-                    ),
-                  ),
-                  isThreeLine: true,
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () => abrirChecklist(equipamento),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 80),
         ],
       ),
     );

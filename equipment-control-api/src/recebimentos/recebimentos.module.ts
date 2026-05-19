@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { RecebimentosController } from './recebimentos.controller';
 import { RecebimentosService } from './recebimentos.service';
+import { RecebimentosController } from './recebimentos.controller';
+import { SynchroIntegrationModule } from '../integracoes/synchro/synchro-integration.module';
 
 @Module({
+  imports: [SynchroIntegrationModule],
   controllers: [RecebimentosController],
-  providers: [RecebimentosService]
+  providers: [RecebimentosService],
 })
 export class RecebimentosModule {}

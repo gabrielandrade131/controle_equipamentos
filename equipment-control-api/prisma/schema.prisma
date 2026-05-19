@@ -220,6 +220,11 @@ model RecebimentoOperacional {
 
   dataRecebimento      DateTime                 @default(now())
 
+  statusRecebimento          StatusRecebimentoOperacional @default(CONCLUIDO)
+  sincronizadoSynchro        Boolean                       @default(false)
+  erroSincronizacaoSynchro   String?
+  dataSincronizacaoSynchro   DateTime?
+
   criadoEm             DateTime                 @default(now())
   atualizadoEm         DateTime                 @updatedAt
 
@@ -227,6 +232,8 @@ model RecebimentoOperacional {
 
   @@index([numeroOs])
   @@index([osIdSynchro])
+  @@index([statusRecebimento])
+  @@index([sincronizadoSynchro])
 }
 
 model RecebimentoEquipamento {
@@ -295,4 +302,11 @@ enum StatusProducao {
   EM_ANDAMENTO
   CONCLUIDA
   PARALISADA
+}
+
+enum StatusRecebimentoOperacional {
+  CONCLUIDO
+  PENDENTE_SYNCHRO
+  SINCRONIZADO_SYNCHRO
+  ERRO_SYNCHRO
 }

@@ -1,9 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+
+import '../../core/theme/app_theme.dart';
+import '../../models/checklist_recebimento_model.dart';
 import '../../models/equipamento_operacao_model.dart';
 import '../../models/foto_recebimento_model.dart';
-import '../../models/checklist_recebimento_model.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/checklist_option_card.dart';
+import '../../widgets/foto_action_card.dart';
 
 class EquipamentoChecklistScreen extends StatefulWidget {
   final EquipamentoOperacao equipamento;
@@ -20,47 +23,53 @@ class EquipamentoChecklistScreen extends StatefulWidget {
 
 class _EquipamentoChecklistScreenState
     extends State<EquipamentoChecklistScreen> {
-  final observacaoController = TextEditingController();
-  final picker = ImagePicker();
-
   bool retornouFisicamente = false;
   bool equipamentoConferido = false;
   bool possuiAvaria = false;
-  bool fotoIdentificacaoObrigatoria = false;
+
+  final TextEditingController observacaoController = TextEditingController();
 
   final List<FotoRecebimento> fotos = [];
 
-  Future<void> adicionarFoto(String tipo) async {
-    final imagem = await picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 70,
-      maxWidth: 1600,
-    );
+  int get fotosGerais =>
+      fotos.where((foto) => foto.tipo == 'GERAL').length;
 
-    if (imagem == null) {
-      return;
-    }
+  int get fotosIdentificacao =>
+      fotos.where((foto) => foto.tipo == 'IDENTIFICACAO').length;
 
-    setState(() {
-      fotos.add(
-        FotoRecebimento(
-          path: imagem.path,
-          tipo: tipo,
-          criadoEm: DateTime.now(),
-        ),
-      );
-    });
-  }
+  int get fotosAvaria =>
+      fotos.where((foto) => foto.tipo == 'AVARIA').length;
 
   bool get podeSalvar {
-    final temFotoGeral = fotos.any((foto) => foto.tipo == 'GERAL');
-    final temFotoIdentificacao =
-        fotos.any((foto) => foto.tipo == 'IDENTIFICACAO');
+    final checklistOk = retornouFisicamente && equipamentoConferido;
+    final fotosObrigatoriasOk = fotosGerais > 0 && fotosIdentificacao > 0;
+    final avariaOk = !possuiAvaria || fotosAvaria > 0;
 
-    return retornouFisicamente &&
-        equipamentoConferido &&
-        temFotoGeral &&
-        temFotoIdentificacao;
+    return checklistOk && fotosObrigatoriasOk && avariaOk;
+  }
+
+  @override
+  void dispose() {
+    observacaoController.dispose();
+    super.dispose();
+  }
+
+  void adicionarFoto(String tipo) {
+    final foto = FotoRecebimento(
+      path: 'mock_${widget.equipamento.tag}_${tipo}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      tipo: tipo,
+      criadoEm: DateTime.now(),
+    );
+
+    setState(() {
+      fotos.add(foto);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Foto $tipo adicionada.'),
+      ),
+    );
   }
 
   void salvarChecklist() {
@@ -76,31 +85,18 @@ class _EquipamentoChecklistScreenState
     }
 
     final checklist = ChecklistRecebimento(
-    equipamentoId: widget.equipamento.id,
-    tag: widget.equipamento.tag,
-    numeroSerie: widget.equipamento.numeroSerie,
-    retornouFisicamente: retornouFisicamente,
-    equipamentoConferido: equipamentoConferido,
-    possuiAvaria: possuiAvaria,
-    observacao: observacaoController.text,
-    fotos: List.from(fotos),
-    criadoEm: DateTime.now(),
-  );
+      equipamentoId: widget.equipamento.id,
+      tag: widget.equipamento.tag,
+      numeroSerie: widget.equipamento.numeroSerie,
+      retornouFisicamente: retornouFisicamente,
+      equipamentoConferido: equipamentoConferido,
+      possuiAvaria: possuiAvaria,
+      observacao: observacaoController.text.trim(),
+      fotos: List.from(fotos),
+      criadoEm: DateTime.now(),
+    );
 
-  debugPrint('CHECKLIST SALVO: ${checklist.tag}');
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Checklist salvo localmente.'),
-    ),
-  );
-
-Navigator.pop(context, checklist);
-}
-  @override
-  void dispose() {
-    observacaoController.dispose();
-    super.dispose();
+    Navigator.pop(context, checklist);
   }
 
   @override
@@ -108,60 +104,79 @@ Navigator.pop(context, checklist);
     final equipamento = widget.equipamento;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Checklist do Equipamento'),
-      ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
         child: SizedBox(
-          height: 52,
+          height: 54,
           child: ElevatedButton.icon(
-            onPressed: salvarChecklist,
-            icon: const Icon(Icons.save_outlined),
+            onPressed: podeSalvar ? salvarChecklist : null,
+            icon: const Icon(Icons.check_circle_outline),
             label: const Text('Salvar checklist'),
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    equipamento.tipoEquipamento,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _InfoLinha(label: 'Modelo', valor: equipamento.modelo),
-                  _InfoLinha(
-                    label: 'Número de Série',
-                    valor: equipamento.numeroSerie,
-                  ),
-                  _InfoLinha(label: 'TAG', valor: equipamento.tag),
-                  _InfoLinha(
-                    label: 'Situação',
-                    valor: equipamento.situacaoAtual,
-                  ),
-                ],
-              ),
-            ),
+          AppHeader(
+            title: equipamento.tipoEquipamento,
+            subtitle: 'Checklist e fotos do equipamento',
+            icon: Icons.fact_check_rounded,
           ),
 
-          const SizedBox(height: 16),
-
-          Card(
-            child: Column(
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                SwitchListTile(
-                  title: const Text('Equipamento retornou fisicamente?'),
-                  subtitle: const Text('Confirma que o item chegou na base.'),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Dados do equipamento',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        _InfoLinha(
+                          label: 'Modelo',
+                          valor: equipamento.modelo,
+                        ),
+                        _InfoLinha(
+                          label: 'Série',
+                          valor: equipamento.numeroSerie,
+                        ),
+                        _InfoLinha(
+                          label: 'TAG',
+                          valor: equipamento.tag,
+                        ),
+                        _InfoLinha(
+                          label: 'Situação',
+                          valor: equipamento.situacaoAtual,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                const Text(
+                  'Checklist',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                ChecklistOptionCard(
+                  title: 'Retornou fisicamente',
+                  subtitle: 'Confirme que o equipamento chegou à base.',
+                  icon: Icons.local_shipping_outlined,
                   value: retornouFisicamente,
                   onChanged: (value) {
                     setState(() {
@@ -169,10 +184,13 @@ Navigator.pop(context, checklist);
                     });
                   },
                 ),
-                const Divider(height: 1),
-                SwitchListTile(
-                  title: const Text('Equipamento conferido?'),
-                  subtitle: const Text('TAG/série conferidos visualmente.'),
+
+                const SizedBox(height: 12),
+
+                ChecklistOptionCard(
+                  title: 'Equipamento conferido',
+                  subtitle: 'Confirme TAG, série, modelo e identificação.',
+                  icon: Icons.verified_outlined,
                   value: equipamentoConferido,
                   onChanged: (value) {
                     setState(() {
@@ -180,10 +198,13 @@ Navigator.pop(context, checklist);
                     });
                   },
                 ),
-                const Divider(height: 1),
-                SwitchListTile(
-                  title: const Text('Possui avaria visível?'),
-                  subtitle: const Text('Marcas, danos, peças faltando etc.'),
+
+                const SizedBox(height: 12),
+
+                ChecklistOptionCard(
+                  title: 'Possui avaria',
+                  subtitle: 'Marque caso exista dano, falta ou irregularidade.',
+                  icon: Icons.report_problem_outlined,
                   value: possuiAvaria,
                   onChanged: (value) {
                     setState(() {
@@ -191,142 +212,109 @@ Navigator.pop(context, checklist);
                     });
                   },
                 ),
+
+                const SizedBox(height: 22),
+
+                const Text(
+                  'Fotos obrigatórias',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                FotoActionCard(
+                  title: 'Foto geral',
+                  subtitle: 'Tire uma foto geral do equipamento.',
+                  icon: Icons.photo_camera_outlined,
+                  quantidade: fotosGerais,
+                  obrigatoria: true,
+                  onTap: () => adicionarFoto('GERAL'),
+                ),
+
+                const SizedBox(height: 12),
+
+                FotoActionCard(
+                  title: 'Foto da identificação/TAG',
+                  subtitle: 'Tire uma foto mostrando TAG ou número de série.',
+                  icon: Icons.badge_outlined,
+                  quantidade: fotosIdentificacao,
+                  obrigatoria: true,
+                  onTap: () => adicionarFoto('IDENTIFICACAO'),
+                ),
+
+                if (possuiAvaria) ...[
+                  const SizedBox(height: 12),
+                  FotoActionCard(
+                    title: 'Foto da avaria',
+                    subtitle: 'Registre visualmente o dano encontrado.',
+                    icon: Icons.warning_amber_rounded,
+                    quantidade: fotosAvaria,
+                    obrigatoria: true,
+                    onTap: () => adicionarFoto('AVARIA'),
+                  ),
+                ],
+
+                const SizedBox(height: 22),
+
+                const Text(
+                  'Observações',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: observacaoController,
+                  minLines: 4,
+                  maxLines: 6,
+                  decoration: const InputDecoration(
+                    hintText:
+                        'Descreva a condição do equipamento, avarias, peças faltantes ou observações importantes.',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                if (!podeSalvar)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.techBlue.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.techBlue.withValues(alpha: 0.18),
+                      ),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: AppColors.techBlue,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Para salvar, confirme o checklist e adicione pelo menos a foto geral e a foto de identificação.',
+                            style: TextStyle(
+                              color: AppColors.techBlue,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 80),
               ],
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: observacaoController,
-            minLines: 3,
-            maxLines: 5,
-            decoration: const InputDecoration(
-              labelText: 'Observações',
-              hintText: 'Descreva como o equipamento retornou...',
-              alignLabelWithHint: true,
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          const Text(
-            'Fotos obrigatórias',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => adicionarFoto('GERAL'),
-                  icon: const Icon(Icons.camera_alt_outlined),
-                  label: const Text('Foto geral'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => adicionarFoto('IDENTIFICACAO'),
-                  icon: const Icon(Icons.badge_outlined),
-                  label: const Text('Foto TAG'),
-                ),
-              ),
-            ],
-          ),
-
-          if (possuiAvaria) ...[
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => adicionarFoto('AVARIA'),
-              icon: const Icon(Icons.report_problem_outlined),
-              label: const Text('Adicionar foto da avaria'),
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          if (fotos.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Nenhuma foto adicionada ainda.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            )
-          else
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: fotos.map((foto) {
-                return Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        File(foto.path),
-                        width: 110,
-                        height: 110,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned(
-                      left: 6,
-                      bottom: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.65),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          foto.tipo,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            fotos.remove(foto);
-                          });
-                        },
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
-
-          const SizedBox(height: 80),
         ],
       ),
     );
@@ -344,23 +332,31 @@ class _InfoLinha extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final valorTratado = valor.isEmpty ? 'Não informado' : valor;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 130,
+            width: 92,
             child: Text(
               '$label:',
               style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.black54,
+                color: AppColors.mutedText,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
           Expanded(
-            child: Text(valor),
+            child: Text(
+              valorTratado,
+              style: const TextStyle(
+                color: AppColors.black,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),

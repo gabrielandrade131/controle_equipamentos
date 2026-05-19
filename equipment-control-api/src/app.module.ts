@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TiposEquipamentoModule } from './tipos-equipamento/tipos-equipamento.module';
 import { ManutencoesModule } from './manutencoes/manutencoes.module';
+import { LotesProducaoModule } from './lotes-producao/lotes-producao.module';
 
 const serveStaticModules =
   process.env.SERVE_FRONTEND === 'true'
@@ -45,6 +46,7 @@ const serveStaticModules =
     TiposEquipamentoModule,
     ManutencoesModule,
     ...serveStaticModules,
+    LotesProducaoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

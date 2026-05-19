@@ -17,17 +17,7 @@ model Equipment {
   numeroOrdem                       Int                                       @unique @default(autoincrement())
   numeroSerie                       String?   
   tag                               String?                                   @unique
-  dataSolicitacao                   DateTime?
-  dataNecessidade                   DateTime?
-  solicitante                       String?   
 
-  dataInicio                        DateTime?
-  previsaoTermino                   DateTime?
-  dataTermino                       DateTime?
-  statusProducao                    StatusProducao                           @default(PROGRAMADA)
-  tipoEquipamentoId                 String?
-  tipoEquipamento                   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
-  modelo                            String? 
   descricao                         String?
 
   listaPecas                        String?
@@ -44,6 +34,9 @@ model Equipment {
   registrosInspecaoMontagem         RegistroInspecaoMontagem[]
   historicoAlteracoes               HistoricoProducao[]
   historicoEquipamentoRegistros     HistoricoEquipamentoRegistro[]
+
+  loteProducaoId                    String           
+  loteProducao                      LoteProducao      @relation(fields: [loteProducaoId], references: [id]) 
 
   ativo                             Boolean           @default(true)
   excluidoEm                        DateTime?         
@@ -114,7 +107,7 @@ model TipoEquipamento {
   criadoEm          DateTime        @default(now())
   atualizadoEm      DateTime        @updatedAt
 
-  equipments Equipment[]
+  lotesProducao     LoteProducao[]
 }
 
 model RegistroInspecaoMontagem {
@@ -148,7 +141,7 @@ model Manutencao {
   previsaoTermino         DateTime?
   dataTermino             DateTime?
 
-  statusManutencao        StatusManutencao    @default(PENDENTE)
+  statusManutencao        StatusManutencao    @default(EM_QUARENTENA)
   avaliacaoFinalConforme  Boolean?
   diagnostico             String?
   responsavelManutencao   String?
@@ -178,12 +171,46 @@ model HistoricoManutencao {
   @@index([manutencaoId])
 }
 
+model LoteProducao {
+  id                        String          @id @default(uuid())
+  numeroLote                Int             @unique @default(autoincrement())
+
+  tipoEquipamentoId         String?           
+  modelo                    String?
+  descricao                 String?
+  solicitante               String?
+  quantidade                Int?
+
+  dataSolicitacao           DateTime?
+  dataInicio                DateTime?
+  dataNecessidade           DateTime?
+  previsaoTermino           DateTime?
+  dataTermino               DateTime?
+  statusProducao            StatusProducao                           @default(PROGRAMADA)
+
+
+  ativo                     Boolean           @default(true)
+  excluidoEm                DateTime?         
+
+  criadoEm                  DateTime            @default(now())
+  atualizadoEm              DateTime            @updatedAt
+
+  tipoEquipamento           TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id]) 
+  equipamentos              Equipment[]
+
+  @@index([numeroLote])
+  @@index([statusProducao])
+  @@index([tipoEquipamentoId])
+
+}
+
 enum OrigemManutencao {
   SYNCHRO
   MANUAL
 }
 
 enum StatusManutencao {
+  EM_QUARENTENA
   PENDENTE
   EM_MANUTENCAO
   CONCLUIDA

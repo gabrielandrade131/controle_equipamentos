@@ -246,6 +246,7 @@ export class ManutencoesService {
               ativo: true,
               statusManutencao: {
                 in: [
+                  StatusManutencao.EM_QUARENTENA,
                   StatusManutencao.PENDENTE,
                   StatusManutencao.EM_MANUTENCAO,
                   StatusManutencao.PARALISADA,
@@ -273,7 +274,7 @@ export class ManutencoesService {
         tag,
         situacaoEquipamento: data.situacaoEquipamento,
         dataRetornoBase,
-        statusManutencao: StatusManutencao.PENDENTE,
+        statusManutencao: StatusManutencao.EM_QUARENTENA,
       },
     });
 

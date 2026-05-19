@@ -177,6 +177,10 @@ const OrdemProducao: React.FC = () => {
                   <p>{selected.data.numeroOrdem}</p>
                 </div>
                 <div className="detail-item">
+                  <label>Número do Lote:</label>
+                  <p>{selected.data.numeroLote ?? '-'}</p>
+                </div>
+                <div className="detail-item">
                   <label>Serie:</label>
                   <p>{selected.data.numeroSerie || '-'}</p>
                 </div>
@@ -311,6 +315,7 @@ const OrdemProducao: React.FC = () => {
           )}
         </div>
       </div>
+
     </div>
   );
 };

@@ -23,7 +23,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
   onSubmit,
   onCancel,
   inspecaoInicial,
-  titulo = 'Inspecao de Montagem',
+  titulo = 'Inspeção de Montagem',
 }) => {
   const formularioPadrao = criarFormularioInspecaoMontagemVazio();
   const PREFIXO_NUMERO_SERIE = 'NºSérie:';
@@ -262,7 +262,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     {
       itemIndex: 0,
       titulo: 'Check dos Itens dos Seriados',
-      detalhes: ['(Números de série do motor, caixa elétrica e plug conferem com Ordem Produção?)'],
+      detalhes: ['(Números de série do motor, caixa elétrica e plug conferem com a Ordem de Produção?)'],
       instrumentoFixo: 'AVALIAÇÃO VISUAL',
       solicitarNumeroSerie: false,
     },
@@ -373,7 +373,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     {
       itemIndex: 7,
       titulo: 'Teste de Temperatura',
-      detalhes: ['Range: 30 a 40 graus celsius'],
+      detalhes: ['Range: 30 a 40 graus Celsius'],
       instrumentoFixo: 'TERMÔMETRO LASER',
       solicitarNumeroSerie: true,
     },

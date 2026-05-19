@@ -73,7 +73,7 @@ export const Manutencao: React.FC = () => {
     if (!selected) return;
 
     if (selected.data.statusManutencao === 'CONCLUIDA') {
-      alert('Manutencao concluida nao pode ser editada.');
+      alert('Manutenção concluída não pode ser editada.');
       setModo('lista');
       return;
     }
@@ -82,11 +82,11 @@ export const Manutencao: React.FC = () => {
       .then((inspecaoAtualizada) => {
         setSelected({ id: inspecaoAtualizada.id || selected.id, data: inspecaoAtualizada });
         setModo('lista');
-        alert('Manutencao atualizada com sucesso!');
+        alert('Manutenção atualizada com sucesso!');
       })
       .catch((error) => {
-        console.error('Erro ao atualizar manutencao:', error);
-        alert(error.response?.data?.message || 'Nao foi possivel atualizar a manutencao.');
+        console.error('Erro ao atualizar manutenção:', error);
+        alert(error.response?.data?.message || 'Não foi possível atualizar a manutenção.');
       });
   };
 
@@ -101,7 +101,7 @@ export const Manutencao: React.FC = () => {
       })
       .catch((error) => {
         console.error('Erro ao atualizar detalhes:', error);
-        alert(error.response?.data?.message || 'Nao foi possivel atualizar os detalhes.');
+        alert(error.response?.data?.message || 'Não foi possível atualizar os detalhes.');
       });
   };
 
@@ -158,7 +158,7 @@ export const Manutencao: React.FC = () => {
       <div className="page-header">
         <h2>Manutenção</h2>
         <div className="page-toolbar">
-          <button className="btn-primary" onClick={() => setModo('criar-nova')}>Criar OM</button>
+          <button className="btn-primary" onClick={() => setModo('criar-nova')}>Gerar Ordem de Produção</button>
         </div>
       </div>
 
@@ -232,11 +232,11 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.dataInicio ? new Date(selected.data.dataInicio).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Retorno a Base:</label>
+                  <label>Retorno à Base:</label>
                   <p>{selected.data.dataRetornoBase ? new Date(selected.data.dataRetornoBase).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Previsao de Termino:</label>
+                  <label>Previsão de Término:</label>
                   <p>{selected.data.previsaoTermino ? new Date(selected.data.previsaoTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -244,7 +244,7 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.dataTermino ? new Date(selected.data.dataTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Responsavel:</label>
+                  <label>Responsável:</label>
                   <p>{selected.data.responsavel || '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -256,7 +256,7 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.diasEsperaManutencao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Dias em Manutencao:</label>
+                  <label>Dias em Manutenção:</label>
                   <p>{selected.data.diasManutencao ?? '-'}</p>
                 </div>
               </div>

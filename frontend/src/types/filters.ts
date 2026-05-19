@@ -13,8 +13,8 @@ export interface InspecaoFilter {
 }
 
 export interface HistoricoFilter {
-  tag?: string;
-  status?: string;
+  numeroSerie?: string;
+  modelo?: string;
 }
 
 export interface ManutencaoFilter {

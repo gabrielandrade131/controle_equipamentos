@@ -19,7 +19,7 @@ interface FormularioOrdemProps {
 const STATUS_OPTIONS: Array<{ value: StatusProducao; label: string }> = [
   { value: 'PROGRAMADA', label: 'Programada' },
   { value: 'EM_ANDAMENTO', label: 'Em andamento' },
-  { value: 'CONCLUIDA', label: 'Concluida' },
+  { value: 'CONCLUIDA', label: 'Concluída' },
   { value: 'PARALISADA', label: 'Paralisada' },
 ];
 
@@ -33,13 +33,13 @@ type CampoDocumentoAnexo =
   | 'procedimentoTestes';
 
 const CAMPOS_DOCUMENTOS_ANEXOS: Array<{ campo: CampoDocumentoAnexo; label: string }> = [
-  { campo: 'listaPecas', label: 'Lista de Pecas' },
+  { campo: 'listaPecas', label: 'Lista de Peças' },
   { campo: 'sequencialMontagem', label: 'Sequencial de Montagem' },
-  { campo: 'inspecaoMontagem', label: 'Inspecao de Montagem' },
-  { campo: 'historicoEquipamento', label: 'Historico do equipamento' },
+  { campo: 'inspecaoMontagem', label: 'Inspeção de Montagem' },
+  { campo: 'historicoEquipamento', label: 'Histórico do equipamento' },
   {
     campo: 'procedimentoTestes',
-    label: 'Procedimento para Testes e Inspecao de Montagem',
+    label: 'Procedimento para Testes e Inspeção de Montagem',
   },
 ];
 
@@ -277,15 +277,15 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   return (
     <form onSubmit={handleSubmit} className="formulario-ordem">
       <div className="form-header">
-        <h2>{isEditing ? 'Editar Ordem de Producao' : 'Nova Ordem de Producao'}</h2>
+        <h2>{isEditing ? 'Editar Ordem de Produção' : 'Nova Ordem de Produção'}</h2>
       </div>
 
       <div className="form-section">
-        <h3>Informacoes basicas</h3>
+        <h3>Informações básicas</h3>
 
         <div className="form-grid">
           <div className="form-group">
-            <label htmlFor="numeroOrdem">Numero da ordem</label>
+            <label htmlFor="numeroOrdem">Número da ordem</label>
             <input
               type="text"
               id="numeroOrdem"
@@ -296,7 +296,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="numeroSerie">Numero de serie</label>
+            <label htmlFor="numeroSerie">Número de série</label>
             <input
               type="text"
               id="numeroSerie"
@@ -330,7 +330,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               name="tag"
               value={formData.tag || ''}
               onChange={handleInputChange}
-              placeholder={tagPodeSerEditada ? 'Ex: TAG-0001' : 'Disponivel ao concluir'}
+              placeholder={tagPodeSerEditada ? 'Ex: TAG-0001' : 'Disponível ao concluir'}
               disabled={!tagPodeSerEditada}
             />
           </div>
@@ -338,7 +338,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
           {!isEditing && (
             <>
               <div className="form-group">
-                <label htmlFor="dataSolicitacao">Data solicitacao</label>
+                <label htmlFor="dataSolicitacao">Data solicitação</label>
                 <input
                   type="date"
                   id="dataSolicitacao"
@@ -349,7 +349,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               </div>
 
               <div className="form-group">
-                <label htmlFor="dataNecessidade">Data necessidade</label>
+                <label htmlFor="dataNecessidade">Data de Necessidade</label>
                 <input
                   type="date"
                   id="dataNecessidade"
@@ -364,7 +364,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
           {isEditing && (
             <>
               <div className="form-group">
-                <label htmlFor="dataInicio">Data inicio</label>
+                <label htmlFor="dataInicio">Data de início</label>
                 <input
                   type="date"
                   id="dataInicio"
@@ -375,7 +375,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               </div>
 
               <div className="form-group">
-                <label htmlFor="dataPrevisao">Previsao de termino</label>
+                <label htmlFor="dataPrevisao">Previsão de término</label>
                 <input
                   type="date"
                   id="dataPrevisao"
@@ -386,7 +386,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               </div>
 
               <div className="form-group">
-                <label htmlFor="dataTermino">Data termino</label>
+                <label htmlFor="dataTermino">Data de término</label>
                 <input
                   type="date"
                   id="dataTermino"
@@ -429,7 +429,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
           </div>
 
           <div className="form-group full">
-            <label htmlFor="descricao">Descricao complementar</label>
+            <label htmlFor="descricao">Descrição complementar</label>
             <textarea
               id="descricao"
               name="descricao"
@@ -438,7 +438,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               placeholder={
                 tipoSelecionado
                   ? `Complemento para ${tipoSelecionado.nome}`
-                  : 'Ex: EXAUSTOR 420 MONOFASICO'
+                  : 'Ex: EXAUSTOR 420 MONOFÁSICO'
               }
               rows={3}
             />
@@ -450,18 +450,18 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
         <h3>Itens Seriados</h3>
 
         <div className="form-group">
-          <label htmlFor="descItem">Descricao do Item:</label>
+          <label htmlFor="descItem">Descrição do Item:</label>
           <input
             type="text"
             value={novoItem.descricao}
             onChange={(e) => setNovoItem({ ...novoItem, descricao: e.target.value })}
-            placeholder="Descricao do item"
+            placeholder="Descrição do item"
           />
           <input
             type="text"
             value={novoItem.numeroSerie}
             onChange={(e) => setNovoItem({ ...novoItem, numeroSerie: e.target.value })}
-            placeholder="Serie"
+            placeholder="Série"
           />
           <button type="button" onClick={handleAdicionarItem} className="btn-add">
             Adicionar
@@ -475,7 +475,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
                 <div className="item-info">
                   <strong>Item {item.numero}</strong>
                   <p>{item.descricao}</p>
-                  {item.numeroSerie && <small>Serie: {item.numeroSerie}</small>}
+                  {item.numeroSerie && <small>Série: {item.numeroSerie}</small>}
                 </div>
                 <button
                   type="button"

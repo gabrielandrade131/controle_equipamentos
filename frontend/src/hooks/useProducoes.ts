@@ -41,7 +41,7 @@ const buildDocumentos = (producao: any): Documento[] => {
 
   const listaPecas = formatarCodigoDocumento(producao.listaPecas);
   if (listaPecas) {
-    documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Pecas', codigo: listaPecas });
+    documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Peças', codigo: listaPecas });
   }
   const sequencialMontagem = producao.sequenciaMontagem ?? producao.sequencialMontagem;
   const sequencialMontagemCodigo = formatarCodigoDocumento(sequencialMontagem);
@@ -50,11 +50,11 @@ const buildDocumentos = (producao: any): Documento[] => {
   }
   const inspecaoMontagem = formatarCodigoDocumento(producao.inspecaoMontagem);
   if (inspecaoMontagem) {
-    documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspecao de Montagem', codigo: inspecaoMontagem });
+    documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspeção de Montagem', codigo: inspecaoMontagem });
   }
   const historicoEquipamento = formatarCodigoDocumento(producao.historicoEquipamento);
   if (historicoEquipamento) {
-    documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Historico do Equipamento', codigo: historicoEquipamento });
+    documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Histórico do Equipamento', codigo: historicoEquipamento });
   }
   const procedimentoTestes = producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes;
   const procedimentoTestesCodigo = formatarCodigoDocumento(procedimentoTestes);
@@ -190,7 +190,7 @@ export const useProducoes = () => {
       setProducoes(response.data.data.map(mapApiToProducao));
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Erro ao carregar producoes');
+      setError(err.response?.data?.message || err.message || 'Erro ao carregar produções');
     } finally {
       setLoading(false);
     }

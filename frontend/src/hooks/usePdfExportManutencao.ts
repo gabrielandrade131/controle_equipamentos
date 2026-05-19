@@ -75,16 +75,16 @@ export const usePdfExportManutencao = () => {
       const drawDataGrid = () => {
         const rows = [
           [
-            { label: 'Data de retorno a base', value: formatDate(inspecao.dataRetornoBase) },
+            { label: 'Data de retorno à base', value: formatDate(inspecao.dataRetornoBase) },
             { label: 'Data de início', value: formatDate(inspecao.dataInicio) },
           ],
           [
-            { label: 'Previsao de termino', value: formatDate(inspecao.previsaoTermino) },
-            { label: 'Data de termino', value: formatDate(inspecao.dataTermino) },
+            { label: 'Previsão de término', value: formatDate(inspecao.previsaoTermino) },
+            { label: 'Data de término', value: formatDate(inspecao.dataTermino) },
           ],
           [
             { label: 'Status', value: inspecao.statusManutencao || '-' },
-            { label: 'Responsavel', value: inspecao.responsavel || '-' },
+            { label: 'Responsável', value: inspecao.responsavel || '-' },
           ],
           [
             { label: 'Fabricante', value: inspecao.fabricante || '-' },
@@ -96,7 +96,7 @@ export const usePdfExportManutencao = () => {
           ],
           [
             { label: 'Destino', value: inspecao.destino || '-' },
-            { label: 'Local da manutencao', value: inspecao.localManutencao || '-' },
+            { label: 'Local da manutenção', value: inspecao.localManutencao || '-' },
           ],
         ];
 
@@ -161,7 +161,7 @@ export const usePdfExportManutencao = () => {
           const answer = normalizeResposta(item.resposta);
           const optionY = y + 4;
           drawCheckbox(optionStartX, optionY, answer === 'SIM', 'SIM');
-          drawCheckbox(optionStartX + 20, optionY, answer === 'NAO', 'NAO');
+          drawCheckbox(optionStartX + 20, optionY, answer === 'NAO', 'NÃO');
           drawCheckbox(optionStartX + 40, optionY, answer === 'N/A', 'N/A');
 
           y += rowHeight;
@@ -175,7 +175,7 @@ export const usePdfExportManutencao = () => {
 
         if (!observacoes.length) return;
 
-        sectionHeader('OBSERVACOES DIARIAS');
+        sectionHeader('OBSERVAÇÕES DIÁRIAS');
 
         observacoes.forEach((obs) => {
           const dateStr = formatDate(obs.data);
@@ -195,36 +195,36 @@ export const usePdfExportManutencao = () => {
         });
       };
 
-      drawText('HISTORICO DE INSPECAO DE MANUTENCAO', marginX, y, {
+      drawText('HISTÓRICO DE INSPEÇÃO DE MANUTENÇÃO', marginX, y, {
         bold: true,
         size: 14,
       });
       y += 10;
 
-      sectionHeader('DADOS DA MANUTENCAO');
+      sectionHeader('DADOS DA MANUTENÇÃO');
       drawDataGrid();
 
-      drawSection('CERTIFICACOES E DOCUMENTACAO', inspecao.certificacoes);
-      drawSection('ESTRUTURA E INTEGRIDADE MECANICA', inspecao.estruturaMecanica);
-      drawSection('SISTEMA HIDRAULICO', inspecao.sistemaHidraulico);
-      drawSection('SISTEMA PNEUMATICO', inspecao.sistemaPneumatico);
-      drawSection('SISTEMA ELETRICO', inspecao.sistemaEletrico);
-      drawSection('DISPOSITIVOS DE SEGURANCA', inspecao.dispositivoSeguranca);
+      drawSection('CERTIFICAÇÕES E DOCUMENTAÇÃO', inspecao.certificacoes);
+      drawSection('ESTRUTURA E INTEGRIDADE MECÂNICA', inspecao.estruturaMecanica);
+      drawSection('SISTEMA HIDRÁULICO', inspecao.sistemaHidraulico);
+      drawSection('SISTEMA PNEUMÁTICO', inspecao.sistemaPneumatico);
+      drawSection('SISTEMA ELÉTRICO', inspecao.sistemaEletrico);
+      drawSection('DISPOSITIVOS DE SEGURANÇA', inspecao.dispositivoSeguranca);
       drawSection('COMPONENTES OPERACIONAIS', inspecao.componentesOperacionais);
-      drawSection('ACESSORIOS E ITENS ESPECIFICOS', inspecao.acessorios);
+      drawSection('ACESSÓRIOS E ITENS ESPECÍFICOS', inspecao.acessorios);
       drawSection('TESTES OPERACIONAIS', inspecao.testesOperacionais);
 
-      sectionHeader('AVALIACAO FINAL');
+      sectionHeader('AVALIAÇÃO FINAL');
       ensureSpace(10);
       const finalAnswer = normalizeResposta(inspecao.avaliacaoFinal);
       drawCheckbox(marginX, y + 2, finalAnswer === 'CONFORME', 'CONFORME');
-      drawCheckbox(marginX + 55, y + 2, finalAnswer === 'NAO CONFORME', 'NAO CONFORME');
+      drawCheckbox(marginX + 55, y + 2, finalAnswer === 'NAO CONFORME', 'NÃO CONFORME');
       y += 11;
 
       drawObservacoesDiarias();
 
       if (inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0) {
-        sectionHeader('FOTOS DA MANUTENCAO');
+        sectionHeader('FOTOS DA MANUTENÇÃO');
         
         const imagensPerPage = 2;
         const imageWidth = 85;
@@ -237,7 +237,7 @@ export const usePdfExportManutencao = () => {
           if (indexInPage === 0 && i > 0) {
             pdf.addPage();
             y = 14;
-            sectionHeader('FOTOS DA MANUTENCAO (Continuação)');
+            sectionHeader('FOTOS DA MANUTENÇÃO (Continuação)');
           }
           
           ensureSpace(imageHeight + 10);
@@ -271,7 +271,7 @@ export const usePdfExportManutencao = () => {
 
       sectionHeader('ASSINATURA');
       ensureSpace(24);
-      drawText(`Responsavel: ${inspecao.responsavel || '-'}`, marginX, y + 2, { size: 9 });
+      drawText(`Responsável: ${inspecao.responsavel || '-'}`, marginX, y + 2, { size: 9 });
       y += 12;
       pdf.setDrawColor(0, 0, 0);
       pdf.line(marginX, y, marginX + 85, y);

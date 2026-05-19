@@ -211,7 +211,7 @@ export const FormularioHistorico: React.FC<FormularioHistoricoProps> = ({
                 name="assinatura"
                 value={novoRegistro.assinatura}
                 onChange={handleRegistroInputChange}
-                placeholder="Nome de quem responsável"
+                placeholder="Nome do responsável"
               />
             </div>
 

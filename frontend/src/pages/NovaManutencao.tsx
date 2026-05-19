@@ -11,12 +11,12 @@ export const NovaManutencao: React.FC = () => {
   const handleSalvarInspecao = (inspecao: InspecaoManutencao) => {
     adicionarInspecao(inspecao)
       .then(() => {
-        alert('Inspecao salva com sucesso!');
+      alert('Inspeção salva com sucesso!');
         navigate('/manutencao');
       })
       .catch((error) => {
-        console.error('Erro ao criar manutencao:', error);
-        alert(error.response?.data?.message || 'Nao foi possivel criar a manutencao.');
+      console.error('Erro ao criar manutenção:', error);
+      alert(error.response?.data?.message || 'Não foi possível criar a manutenção.');
       });
   };
 

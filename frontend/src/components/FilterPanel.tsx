@@ -15,6 +15,7 @@ interface FilterPanelProps {
   onFiltersChange: (filters: FilterType) => void;
   fields: FilterField[];
   titulo?: string;
+  onDraftChange?: (filters: FilterType) => void;
 }
 
 export const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -22,19 +23,25 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onFiltersChange,
   fields,
   titulo = 'Filtros',
+  onDraftChange,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [draftFilters, setDraftFilters] = useState<FilterType>(filters);
 
   useEffect(() => {
     setDraftFilters(filters);
-  }, [filters]);
+    onDraftChange?.(filters);
+  }, [filters, onDraftChange]);
 
   const handleInputChange = (key: keyof FilterType, value: any) => {
-    setDraftFilters((prev) => ({
-      ...prev,
-      [key]: value || undefined,
-    }));
+    setDraftFilters((prev) => {
+      const next = {
+        ...prev,
+        [key]: value || undefined,
+      };
+      onDraftChange?.(next);
+      return next;
+    });
   };
 
   const handleClearFilters = () => {
@@ -43,6 +50,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       return acc;
     }, {} as FilterType);
     setDraftFilters(clearedFilters);
+    onDraftChange?.(clearedFilters);
     onFiltersChange(clearedFilters);
   };
 

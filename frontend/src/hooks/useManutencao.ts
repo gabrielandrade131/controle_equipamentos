@@ -70,7 +70,7 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   tipoEquipamentoNome: inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
   tag: inspecao.tag || undefined,
-  situacaoEquipamento: inspecao.destino || 'Manutencao manual',
+  situacaoEquipamento: inspecao.destino || 'Manutenção manual',
   dataRetornoBase: inspecao.dataRetornoBase || undefined,
   dataInicio: inspecao.dataInicio || undefined,
   previsaoTermino: inspecao.previsaoTermino || undefined,
@@ -99,7 +99,7 @@ export const useManutencao = () => {
       setHistorico(response.data.data.map(mapApiToInspecao));
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Erro ao carregar manutencoes');
+      setError(err.response?.data?.message || err.message || 'Erro ao carregar manutenções');
     } finally {
       setLoading(false);
     }

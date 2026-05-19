@@ -120,7 +120,7 @@ const VERIFICACAO_POSMONTAGEM_TEMPLATES: VerificacaoTemplate[] = [
     nome: 'Teste de Rotação - Modelo CSEX550SS (1.800 rpm, com tolerância de -150 rpm)',
   },
   {
-    nome: 'Teste de Temperatura (Range: 30 a 40 graus C)',
+    nome: 'Teste de Temperatura (Range: 30 a 40 graus Celsius)',
     instrumentoMedicao: 'TERMÔMETRO LASER\nNºSérie:',
   },
   {
@@ -153,7 +153,7 @@ export const LINHAS_PREMONTAGEM_INSPECAO_PDF: LinhaVerificacaoInspecaoPdf[] = [
   {
     itemIndex: 0,
     titulo: 'Check dos Itens dos Seriados',
-    detalhes: ['(Números de série do motor, caixa elétrica e plug conferem com Ordem Produção?)'],
+    detalhes: ['(Números de série do motor, caixa elétrica e plug conferem com a Ordem de Produção?)'],
     instrumentoPadrao: 'AVALIAÇÃO VISUAL',
   },
   {
@@ -249,7 +249,7 @@ export const LINHAS_POSMONTAGEM_INSPECAO_PDF: LinhaVerificacaoInspecaoPdf[] = [
   {
     itemIndex: 7,
     titulo: 'Teste de Temperatura',
-    detalhes: ['Range: 30 a 40 graus celsius'],
+    detalhes: ['Range: 30 a 40 graus Celsius'],
     instrumentoPadrao: 'TERMÔMETRO LASER\nNºSérie:',
   },
   {

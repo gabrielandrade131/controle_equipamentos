@@ -27,7 +27,7 @@ const ListaEquipamentos: React.FC = () => {
         }}>
           <thead>
             <tr style={{ backgroundColor: '#f0f0f0' }}>
-              <th style={{ border: '1px solid #ddd', padding: '10px' }}>Número Ordem</th>
+              <th style={{ border: '1px solid #ddd', padding: '10px' }}>Número da Ordem</th>
               <th style={{ border: '1px solid #ddd', padding: '10px' }}>Série</th>
               <th style={{ border: '1px solid #ddd', padding: '10px' }}>Modelo</th>
               <th style={{ border: '1px solid #ddd', padding: '10px' }}>Data Solicitação</th>

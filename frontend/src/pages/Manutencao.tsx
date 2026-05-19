@@ -7,9 +7,11 @@ import { useManutencao } from '../hooks/useManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import { useFilters } from '../hooks/useFilters';
 import { InspecaoManutencao, criarInspecaoVazia } from '../types/manutencao';
+import { buildSelectOptions } from '../utils/filterOptions';
 import './Manutencao.css';
 
 const STATUS_LABELS: Record<string, string> = {
+  EM_QUARENTENA: 'Em quarentena',
   PENDENTE: 'Pendente',
   EM_MANUTENCAO: 'Em manutenção',
   PARALISADA: 'Paralisada',
@@ -28,15 +30,25 @@ export const Manutencao: React.FC = () => {
   const { historico, atualizarInspecao } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
   const { filters, updateFilters } = useFilters('manutencao-filters', {});
+  const tagOptions = useMemo(
+    () => buildSelectOptions(historico.map((item) => item.tag)),
+    [historico],
+  );
+  const fabricanteOptions = useMemo(
+    () => buildSelectOptions(historico.map((item) => item.fabricante)),
+    [historico],
+  );
+  const responsavelOptions = useMemo(
+    () => buildSelectOptions(historico.map((item) => item.responsavel)),
+    [historico],
+  );
 
   const filteredHistorico = useMemo(() => {
     return historico.filter((item) => {
-      if (filters.dataInicio && item.dataInicio && item.dataInicio < filters.dataInicio) return false;
-      if (filters.dataFinal && item.dataInicio && item.dataInicio > filters.dataFinal) return false;
       if (filters.status && item.statusManutencao !== filters.status) return false;
-      if (filters.tag && !item.tag?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
-      if (filters.fabricante && !item.fabricante?.toLowerCase().includes(filters.fabricante.toLowerCase())) return false;
-      if (filters.responsavel && !item.responsavel?.toLowerCase().includes(filters.responsavel.toLowerCase())) return false;
+      if (filters.tag && String(item.tag ?? '').trim() !== filters.tag) return false;
+      if (filters.fabricante && String(item.fabricante ?? '').trim() !== filters.fabricante) return false;
+      if (filters.responsavel && String(item.responsavel ?? '').trim() !== filters.responsavel) return false;
       return true;
     });
   }, [historico, filters]);
@@ -61,7 +73,7 @@ export const Manutencao: React.FC = () => {
     if (!selected) return;
 
     if (selected.data.statusManutencao === 'CONCLUIDA') {
-      alert('Manutencao concluida nao pode ser editada.');
+      alert('Manutenção concluída não pode ser editada.');
       setModo('lista');
       return;
     }
@@ -70,11 +82,11 @@ export const Manutencao: React.FC = () => {
       .then((inspecaoAtualizada) => {
         setSelected({ id: inspecaoAtualizada.id || selected.id, data: inspecaoAtualizada });
         setModo('lista');
-        alert('Manutencao atualizada com sucesso!');
+        alert('Manutenção atualizada com sucesso!');
       })
       .catch((error) => {
-        console.error('Erro ao atualizar manutencao:', error);
-        alert(error.response?.data?.message || 'Nao foi possivel atualizar a manutencao.');
+        console.error('Erro ao atualizar manutenção:', error);
+        alert(error.response?.data?.message || 'Não foi possível atualizar a manutenção.');
       });
   };
 
@@ -89,7 +101,7 @@ export const Manutencao: React.FC = () => {
       })
       .catch((error) => {
         console.error('Erro ao atualizar detalhes:', error);
-        alert(error.response?.data?.message || 'Nao foi possivel atualizar os detalhes.');
+        alert(error.response?.data?.message || 'Não foi possível atualizar os detalhes.');
       });
   };
 
@@ -146,7 +158,7 @@ export const Manutencao: React.FC = () => {
       <div className="page-header">
         <h2>Manutenção</h2>
         <div className="page-toolbar">
-          <button className="btn-primary" onClick={() => setModo('criar-nova')}>Criar OM</button>
+          <button className="btn-primary" onClick={() => setModo('criar-nova')}>Gerar Ordem de Produção</button>
         </div>
       </div>
 
@@ -156,22 +168,21 @@ export const Manutencao: React.FC = () => {
             filters={filters}
             onFiltersChange={updateFilters}
             fields={[
-              { key: 'dataInicio', label: 'Data Inicial', type: 'date' },
-              { key: 'dataFinal', label: 'Data Final', type: 'date' },
               {
                 key: 'status',
                 label: 'Status',
                 type: 'select',
                 options: [
+                  { value: 'EM_QUARENTENA', label: 'Em quarentena' },
                   { value: 'PENDENTE', label: 'Pendente' },
                   { value: 'EM_MANUTENCAO', label: 'Em Manutenção' },
                   { value: 'PARALISADA', label: 'Paralisada' },
                   { value: 'CONCLUIDA', label: 'Concluída' },
                 ],
               },
-              { key: 'tag', label: 'TAG', type: 'text', placeholder: 'Buscar TAG...' },
-              { key: 'fabricante', label: 'Fabricante', type: 'text', placeholder: 'Buscar fabricante...' },
-              { key: 'responsavel', label: 'Responsável', type: 'text', placeholder: 'Buscar responsável...' },
+              { key: 'tag', label: 'TAG', type: 'select', options: tagOptions },
+              { key: 'fabricante', label: 'Fabricante', type: 'select', options: fabricanteOptions },
+              { key: 'responsavel', label: 'Responsável', type: 'select', options: responsavelOptions },
             ]}
             titulo="Filtros"
           />
@@ -221,11 +232,11 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.dataInicio ? new Date(selected.data.dataInicio).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Retorno a Base:</label>
+                  <label>Retorno à Base:</label>
                   <p>{selected.data.dataRetornoBase ? new Date(selected.data.dataRetornoBase).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Previsao de Termino:</label>
+                  <label>Previsão de Término:</label>
                   <p>{selected.data.previsaoTermino ? new Date(selected.data.previsaoTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -233,7 +244,7 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.dataTermino ? new Date(selected.data.dataTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Responsavel:</label>
+                  <label>Responsável:</label>
                   <p>{selected.data.responsavel || '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -245,7 +256,7 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.diasEsperaManutencao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Dias em Manutencao:</label>
+                  <label>Dias em Manutenção:</label>
                   <p>{selected.data.diasManutencao ?? '-'}</p>
                 </div>
               </div>

@@ -118,7 +118,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
             </div>
 
             <div className="form-group">
-              <label>Retorno a Base</label>
+              <label>Retorno à Base</label>
               <input
                 type="date"
                 value={formData.dataRetornoBase || ''}
@@ -159,6 +159,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
                 value={formData.statusManutencao}
                 onChange={(e) => handleInputChange('statusManutencao', e.target.value)}
               >
+                <option value="EM_QUARENTENA">Em quarentena</option>
                 <option value="PENDENTE">Pendente</option>
                 <option value="EM_MANUTENCAO">Em Manutenção</option>
                 <option value="PARALISADA">Paralisada</option>

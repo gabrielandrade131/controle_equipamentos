@@ -2,7 +2,12 @@
 
 export type RespostaBinaria = 'SIM' | 'NÃO' | 'N/A' | '';
 
-export type StatusManutencao = 'PENDENTE' | 'EM_MANUTENCAO' | 'CONCLUIDA' | 'PARALISADA';
+export type StatusManutencao =
+  | 'EM_QUARENTENA'
+  | 'PENDENTE'
+  | 'EM_MANUTENCAO'
+  | 'CONCLUIDA'
+  | 'PARALISADA';
 
 export interface ItemInspecao {
   id: string;

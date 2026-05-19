@@ -5,6 +5,7 @@ import { useFilters } from '../hooks/useFilters';
 import { PdfExporterInspecao } from '../components/PdfExporterInspecao';
 import { useInspecoes } from '../hooks/useInspecoes';
 import { InspecaoMontagem } from '../types/inspecao';
+import { buildSelectOptions } from '../utils/filterOptions';
 import '../pages/Producao.css';
 
 interface SelectedInspecao {
@@ -24,14 +25,20 @@ const InspecaoMontagemPage: React.FC = () => {
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const { filters, updateFilters } = useFilters('inspecao-filters', {});
+  const modeloOptions = useMemo(
+    () => buildSelectOptions(inspecoes.map((inspecao) => inspecao.modelo)),
+    [inspecoes],
+  );
+  const numeroSerieOptions = useMemo(
+    () => buildSelectOptions(inspecoes.map((inspecao) => inspecao.numeroSerie)),
+    [inspecoes],
+  );
 
   const filteredInspecoes = useMemo(() => {
     return inspecoes.filter((i) => {
-      if (filters.dataInicio && i.data && i.data < filters.dataInicio) return false;
-      if (filters.dataFinal && i.data && i.data > filters.dataFinal) return false;
       if (filters.resultado && i.resultadoFinal !== filters.resultado) return false;
-      if (filters.modelo && !i.modelo?.toLowerCase().includes(filters.modelo.toLowerCase())) return false;
-      if (filters.numeroSerie && !i.numeroSerie?.toLowerCase().includes(filters.numeroSerie.toLowerCase())) return false;
+      if (filters.modelo && String(i.modelo ?? '').trim() !== filters.modelo) return false;
+      if (filters.numeroSerie && String(i.numeroSerie ?? '').trim() !== filters.numeroSerie) return false;
       return true;
     });
   }, [inspecoes, filters]);
@@ -58,9 +65,9 @@ const InspecaoMontagemPage: React.FC = () => {
         },
       });
       setEditando(false);
-      alert('Inspecao de montagem salva com sucesso!');
+      alert('Inspeção de montagem salva com sucesso!');
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao salvar inspecao de montagem.');
+      alert(error.response?.data?.message || 'Erro ao salvar inspeção de montagem.');
     } finally {
       setSalvando(false);
     }
@@ -80,7 +87,7 @@ const InspecaoMontagemPage: React.FC = () => {
         <FormularioInspecaoNovo
           key={selected.id}
           inspecaoInicial={selected.data}
-          titulo={`Inspecao de montagem - ${selected.data.numeroSerie || selected.data.modelo}`}
+          titulo={`Inspeção de montagem - ${selected.data.numeroSerie || selected.data.modelo}`}
           onSubmit={handleSalvarInspecao}
           onCancel={() => setEditando(false)}
         />
@@ -91,7 +98,7 @@ const InspecaoMontagemPage: React.FC = () => {
 
   return (
     <div className="producao-page">
-      <h2>Inspecao de Montagem</h2>
+      <h2>Inspeção de Montagem</h2>
 
       <div className="page-content">
         <div className="page-list-section">
@@ -99,8 +106,6 @@ const InspecaoMontagemPage: React.FC = () => {
             filters={filters}
             onFiltersChange={updateFilters}
             fields={[
-              { key: 'dataInicio', label: 'Data Inicial', type: 'date' },
-              { key: 'dataFinal', label: 'Data Final', type: 'date' },
               {
                 key: 'resultado',
                 label: 'Resultado',
@@ -110,8 +115,8 @@ const InspecaoMontagemPage: React.FC = () => {
                   { value: 'REPROVADO', label: 'Reprovado' },
                 ],
               },
-              { key: 'modelo', label: 'Modelo', type: 'text', placeholder: 'Buscar modelo...' },
-              { key: 'numeroSerie', label: 'Número de Série', type: 'text', placeholder: 'Buscar série...' },
+              { key: 'modelo', label: 'Modelo', type: 'select', options: modeloOptions },
+              { key: 'numeroSerie', label: 'Número de Série', type: 'select', options: numeroSerieOptions },
             ]}
             titulo="Filtros"
           />
@@ -126,7 +131,7 @@ const InspecaoMontagemPage: React.FC = () => {
                   className={selected?.id === inspecao.id ? 'active' : ''}
                   onClick={() => handleSelectInspecao(inspecao)}
                 >
-                  <strong>{inspecao.numeroSerie || 'Sem serie'}</strong>
+                  <strong>{inspecao.numeroSerie || 'Sem série'}</strong>
                   <small>{inspecao.modelo || 'Sem modelo'}</small>
                 </li>
               ))}
@@ -137,10 +142,10 @@ const InspecaoMontagemPage: React.FC = () => {
         <div className="page-detail-section">
           {selected ? (
             <div className="inspecao-detail">
-              <h3>Inspecao vinculada a producao</h3>
+              <h3>Inspeção vinculada à produção</h3>
               <div className="page-detail-grid">
                 <div className="detail-item">
-                  <label>Numero de serie:</label>
+                  <label>Número de série:</label>
                   <p>{selected.data.numeroSerie || '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -148,14 +153,14 @@ const InspecaoMontagemPage: React.FC = () => {
                   <p>{selected.data.modelo || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data da inspecao:</label>
+                  <label>Data da inspeção:</label>
                   <p>{selected.data.data}</p>
                 </div>
                 <div className="detail-item">
                   <label>Resultado:</label>
                   <p>
                     <strong style={{ color: getResultadoColor(selected.data.resultadoFinal) }}>
-                      {selected.data.resultadoFinal || 'Nao preenchida'}
+                      {selected.data.resultadoFinal || 'Não preenchida'}
                     </strong>
                   </p>
                 </div>
@@ -167,14 +172,14 @@ const InspecaoMontagemPage: React.FC = () => {
                   className="btn-primary"
                   onClick={() => setEditando(true)}
                 >
-                  Preencher inspecao
+                  Preencher inspeção
                 </button>
                 <PdfExporterInspecao inspecao={selected.data} />
               </div>
             </div>
           ) : (
             <div className="page-detail-section">
-              <p>Selecione uma producao para preencher a inspecao de montagem</p>
+              <p>Selecione uma produção para preencher a inspeção de montagem</p>
             </div>
           )}
         </div>

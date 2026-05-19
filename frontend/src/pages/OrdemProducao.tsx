@@ -5,6 +5,7 @@ import { useFilters } from '../hooks/useFilters';
 import { CreateProducaoDto, Producao } from '../types/producao';
 import { PdfExporter } from '../components/PdfExporter';
 import { FormularioOrdem } from '../components/FormularioOrdem';
+import { buildSelectOptions } from '../utils/filterOptions';
 import '../pages/Producao.css';
 
 interface SelectedProducao {
@@ -35,14 +36,28 @@ const OrdemProducao: React.FC = () => {
   const [selected, setSelected] = useState<SelectedProducao | null>(null);
   const [modo, setModo] = useState<'lista' | 'criar' | 'editar'>('lista');
   const { filters, updateFilters } = useFilters('ordem-filters', {});
+  const loteOptions = useMemo(
+    () => buildSelectOptions(producoes.map((producao) => producao.numeroLote)),
+    [producoes],
+  );
+  const tagOptions = useMemo(
+    () => buildSelectOptions(producoes.map((producao) => producao.tag)),
+    [producoes],
+  );
+  const modeloOptions = useMemo(
+    () => buildSelectOptions(producoes.map((producao) => producao.modelo)),
+    [producoes],
+  );
 
   const filteredProducoes = useMemo(() => {
     return producoes.filter((p) => {
-      if (filters.dataInicio && p.dataInicio && p.dataInicio < filters.dataInicio) return false;
-      if (filters.dataFinal && p.dataInicio && p.dataInicio > filters.dataFinal) return false;
       if (filters.status && p.statusProducao !== filters.status) return false;
-      if (filters.tag && !p.tag?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
-      if (filters.modelo && !p.modelo?.toLowerCase().includes(filters.modelo.toLowerCase())) return false;
+      if (filters.tag && String(p.tag ?? '').trim() !== filters.tag) return false;
+      if (filters.modelo && String(p.modelo ?? '').trim() !== filters.modelo) return false;
+      if (filters.numeroLote) {
+        const loteProducao = p.numeroLote != null ? String(p.numeroLote).trim() : '';
+        if (loteProducao !== filters.numeroLote) return false;
+      }
       return true;
     });
   }, [producoes, filters]);
@@ -58,11 +73,11 @@ const OrdemProducao: React.FC = () => {
     criarProducao(novaProducao)
       .then(() => {
         setModo('lista');
-        alert('Ordem de producao criada com sucesso!');
+        alert('Ordem de produção criada com sucesso!');
       })
       .catch((error) => {
-        console.error('Erro ao criar ordem de producao:', error);
-        alert(error.response?.data?.message || 'Nao foi possivel criar a ordem de producao.');
+        console.error('Erro ao criar ordem de produção:', error);
+        alert(error.response?.data?.message || 'Não foi possível criar a ordem de produção.');
       });
   };
 
@@ -73,11 +88,11 @@ const OrdemProducao: React.FC = () => {
       .then((producao) => {
         setSelected({ id: producao.id, data: producao });
         setModo('lista');
-        alert('Ordem de producao atualizada com sucesso!');
+        alert('Ordem de produção atualizada com sucesso!');
       })
       .catch((error) => {
-        console.error('Erro ao atualizar ordem de producao:', error);
-        alert(error.response?.data?.message || 'Nao foi possivel atualizar a ordem de producao.');
+        console.error('Erro ao atualizar ordem de produção:', error);
+        alert(error.response?.data?.message || 'Não foi possível atualizar a ordem de produção.');
       });
   };
 
@@ -113,14 +128,14 @@ const OrdemProducao: React.FC = () => {
 
   return (
     <div className="producao-page">
-      <h2>Ordem de Producao</h2>
+      <h2>Ordem de Produção</h2>
 
       <div className="page-toolbar">
         <button
           onClick={() => setModo('criar')}
           className="btn-primary"
         >
-          Gerar Ordem de Producao
+          Gerar Ordem de Produção
         </button>
       </div>
 
@@ -130,20 +145,20 @@ const OrdemProducao: React.FC = () => {
             filters={filters}
             onFiltersChange={updateFilters}
             fields={[
-              { key: 'dataInicio', label: 'Data Inicial', type: 'date' },
-              { key: 'dataFinal', label: 'Data Final', type: 'date' },
               {
                 key: 'status',
                 label: 'Status',
                 type: 'select',
                 options: [
-                  { value: 'CRIADA', label: 'Criada' },
-                  { value: 'INICIADA', label: 'Iniciada' },
-                  { value: 'FINALIZADA', label: 'Finalizada' },
+                  { value: 'PROGRAMADA', label: 'Programada' },
+                  { value: 'EM_ANDAMENTO', label: 'Em andamento' },
+                  { value: 'CONCLUIDA', label: 'Concluída' },
+                  { value: 'PARALISADA', label: 'Paralisada' },
                 ],
               },
-              { key: 'tag', label: 'TAG', type: 'text', placeholder: 'Buscar TAG...' },
-              { key: 'modelo', label: 'Modelo', type: 'text', placeholder: 'Buscar modelo...' },
+              { key: 'numeroLote', label: 'Lote', type: 'select', options: loteOptions },
+              { key: 'tag', label: 'TAG', type: 'select', options: tagOptions },
+              { key: 'modelo', label: 'Modelo', type: 'select', options: modeloOptions },
             ]}
             titulo="Filtros"
           />
@@ -173,7 +188,7 @@ const OrdemProducao: React.FC = () => {
               <h2>Detalhes da Ordem</h2>
               <div className="page-detail-grid">
                 <div className="detail-item">
-                  <label>Numero Ordem:</label>
+                  <label>Número da Ordem:</label>
                   <p>{selected.data.numeroOrdem}</p>
                 </div>
                 <div className="detail-item">
@@ -181,7 +196,7 @@ const OrdemProducao: React.FC = () => {
                   <p>{selected.data.numeroLote ?? '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Serie:</label>
+                  <label>Série:</label>
                   <p>{selected.data.numeroSerie || '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -193,7 +208,7 @@ const OrdemProducao: React.FC = () => {
                   <p>{selected.data.tag || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Tipo Equipamento:</label>
+                  <label>Tipo de Equipamento:</label>
                   <p>{selected.data.tipoEquipamentoNome || '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -201,31 +216,31 @@ const OrdemProducao: React.FC = () => {
                   <p>{selected.data.modelo}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Solicitacao:</label>
+                  <label>Data Solicitação:</label>
                   <p>{selected.data.dataSolicitacao}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Necessidade:</label>
+                  <label>Data de Necessidade:</label>
                   <p>{selected.data.dataNecessidade || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Inicio:</label>
+                  <label>Data de Início:</label>
                   <p>{selected.data.dataInicio || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Previsao:</label>
+                  <label>Data de Previsão:</label>
                   <p>{selected.data.dataPrevisao || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Data Termino:</label>
+                  <label>Data de Término:</label>
                   <p>{selected.data.dataTermino || '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Dias Solicitacao:</label>
+                  <label>Dias Solicitação:</label>
                   <p>{selected.data.diasSolicitacao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Dias Producao:</label>
+                  <label>Dias Produção:</label>
                   <p>
                     {selected.data.diasProducao ??
                       calcularDiasProducao(
@@ -236,17 +251,17 @@ const OrdemProducao: React.FC = () => {
                   </p>
                 </div>
                 <div className="detail-item">
-                  <label>Situacao Prazo:</label>
+                  <label>Situação do Prazo:</label>
                   <p>{formatarRotulo(selected.data.situacaoPrazo)}</p>
                 </div>
                 <div className="detail-item">
-                  <label>Resultado Prazo:</label>
+                  <label>Resultado do Prazo:</label>
                   <p>{formatarRotulo(selected.data.resultadoPrazo)}</p>
                 </div>
               </div>
 
               <div className="detail-item full">
-                <label>Descricao:</label>
+                <label>Descrição:</label>
                 <p>{selected.data.descricao}</p>
               </div>
 
@@ -257,7 +272,7 @@ const OrdemProducao: React.FC = () => {
                     <div key={item.id} className="doc-item">
                       <strong>Item {item.numero}</strong>
                       <p>{item.descricao}</p>
-                      {item.numeroSerie && <small>Serie: {item.numeroSerie}</small>}
+                      {item.numeroSerie && <small>Série: {item.numeroSerie}</small>}
                     </div>
                   ))}
                 </div>

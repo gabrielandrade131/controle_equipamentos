@@ -1,27 +1,23 @@
 // Tipos genéricos para filtros
-export interface BaseFilter {
-  dataInicio?: string;
-  dataFinal?: string;
-}
-
-export interface OrdemFilter extends BaseFilter {
+export interface OrdemFilter {
   status?: string;
   tag?: string;
   modelo?: string;
+  numeroLote?: string;
 }
 
-export interface InspecaoFilter extends BaseFilter {
+export interface InspecaoFilter {
   resultado?: string;
   modelo?: string;
   numeroSerie?: string;
 }
 
-export interface HistoricoFilter extends BaseFilter {
-  tag?: string;
-  status?: string;
+export interface HistoricoFilter {
+  numeroSerie?: string;
+  modelo?: string;
 }
 
-export interface ManutencaoFilter extends BaseFilter {
+export interface ManutencaoFilter {
   status?: string;
   tag?: string;
   fabricante?: string;
@@ -30,6 +26,4 @@ export interface ManutencaoFilter extends BaseFilter {
 
 export type FilterType = {
   [key: string]: string | undefined;
-  dataInicio?: string;
-  dataFinal?: string;
 };

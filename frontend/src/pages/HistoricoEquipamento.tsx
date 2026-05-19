@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { FormularioHistorico } from '../components/FormularioHistorico';
 import { FilterPanel } from '../components/FilterPanel';
 import { useFilters } from '../hooks/useFilters';
 import { PdfExporterHistorico } from '../components/PdfExporterHistorico';
 import { useHistorico } from '../hooks/useHistorico';
 import { HistoricoEquipamentoData } from '../types/historico';
+import { FilterType } from '../types/filters';
+import { buildSelectOptions } from '../utils/filterOptions';
 import '../pages/Producao.css';
 
 interface SelectedHistorico {
@@ -18,10 +20,33 @@ const HistoricoEquipamento: React.FC = () => {
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const { filters, updateFilters } = useFilters('historico-filters', {});
+  const [draftFilters, setDraftFilters] = useState<FilterType>(filters);
+  const modeloOptions = useMemo(
+    () => buildSelectOptions(historicos.map((historico) => historico.modelo)),
+    [historicos],
+  );
+  const serieOptionsSource = useMemo(() => {
+    const modeloSelecionado = String(draftFilters.modelo ?? '').trim();
+    if (!modeloSelecionado) {
+      return historicos;
+    }
+    return historicos.filter(
+      (historico) => String(historico.modelo ?? '').trim() === modeloSelecionado,
+    );
+  }, [draftFilters.modelo, historicos]);
+  const numeroSerieOptions = useMemo(
+    () => buildSelectOptions(serieOptionsSource.map((historico) => historico.numeroSerie)),
+    [serieOptionsSource],
+  );
+
+  useEffect(() => {
+    setDraftFilters(filters);
+  }, [filters]);
 
   const filteredHistoricos = useMemo(() => {
     return historicos.filter((h) => {
-      if (filters.tag && !h.numeroSerie?.toLowerCase().includes(filters.tag.toLowerCase())) return false;
+      if (filters.modelo && String(h.modelo ?? '').trim() !== filters.modelo) return false;
+      if (filters.numeroSerie && String(h.numeroSerie ?? '').trim() !== filters.numeroSerie) return false;
       return true;
     });
   }, [historicos, filters]);
@@ -45,9 +70,9 @@ const HistoricoEquipamento: React.FC = () => {
         data: historicoAtualizado,
       });
       setEditando(false);
-      alert('Historico do equipamento salvo com sucesso!');
+      alert('Histórico do equipamento salvo com sucesso!');
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao salvar historico do equipamento.');
+      alert(error.response?.data?.message || 'Erro ao salvar histórico do equipamento.');
     } finally {
       setSalvando(false);
     }
@@ -78,15 +103,17 @@ const HistoricoEquipamento: React.FC = () => {
 
   return (
     <div className="producao-page">
-      <h2>Historico do Equipamento</h2>
+      <h2>Histórico do Equipamento</h2>
 
       <div className="page-content">
         <div className="page-list-section">
           <FilterPanel
             filters={filters}
             onFiltersChange={updateFilters}
+            onDraftChange={setDraftFilters}
             fields={[
-              { key: 'tag', label: 'Número de Série', type: 'text', placeholder: 'Buscar série...' },
+              { key: 'modelo', label: 'Modelo', type: 'select', options: modeloOptions },
+              { key: 'numeroSerie', label: 'Número de Série', type: 'select', options: numeroSerieOptions },
             ]}
             titulo="Filtros"
           />
@@ -101,7 +128,7 @@ const HistoricoEquipamento: React.FC = () => {
                   className={selected?.id === historico.id ? 'active' : ''}
                   onClick={() => handleSelectHistorico(historico)}
                 >
-                  <strong>{historico.numeroSerie || 'Sem serie'}</strong>
+                  <strong>{historico.numeroSerie || 'Sem série'}</strong>
                   <small>{historico.modelo || 'Sem modelo'}</small>
                 </li>
               ))}
@@ -112,10 +139,10 @@ const HistoricoEquipamento: React.FC = () => {
         <div className="page-detail-section">
           {selected ? (
             <div className="historico-detail">
-              <h3>Historico vinculado a producao</h3>
+              <h3>Histórico vinculado à produção</h3>
               <div className="page-detail-grid">
                 <div className="detail-item">
-                  <label>Numero de serie:</label>
+                  <label>Número de série:</label>
                   <p>{selected.data.numeroSerie || '-'}</p>
                 </div>
                 <div className="detail-item">
@@ -138,7 +165,7 @@ const HistoricoEquipamento: React.FC = () => {
                       <thead>
                         <tr>
                           <th>Data</th>
-                          <th>Historico</th>
+                          <th>Histórico</th>
                           <th>Assinatura</th>
                         </tr>
                       </thead>
@@ -169,7 +196,7 @@ const HistoricoEquipamento: React.FC = () => {
             </div>
           ) : (
             <div className="no-selection">
-              <p>Selecione uma producao para visualizar ou preencher o historico do equipamento</p>
+              <p>Selecione uma produção para visualizar ou preencher o histórico do equipamento</p>
             </div>
           )}
         </div>

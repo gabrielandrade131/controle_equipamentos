@@ -188,4 +188,3 @@ export const PdfExporterHistorico: React.FC<PdfExporterHistoricoProps> = ({ hist
     </button>
   );
 };
-

@@ -5,6 +5,7 @@ import { useFilters } from '../hooks/useFilters';
 import { PdfExporterInspecao } from '../components/PdfExporterInspecao';
 import { useInspecoes } from '../hooks/useInspecoes';
 import { InspecaoMontagem } from '../types/inspecao';
+import { buildSelectOptions } from '../utils/filterOptions';
 import '../pages/Producao.css';
 
 interface SelectedInspecao {
@@ -24,14 +25,20 @@ const InspecaoMontagemPage: React.FC = () => {
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const { filters, updateFilters } = useFilters('inspecao-filters', {});
+  const modeloOptions = useMemo(
+    () => buildSelectOptions(inspecoes.map((inspecao) => inspecao.modelo)),
+    [inspecoes],
+  );
+  const numeroSerieOptions = useMemo(
+    () => buildSelectOptions(inspecoes.map((inspecao) => inspecao.numeroSerie)),
+    [inspecoes],
+  );
 
   const filteredInspecoes = useMemo(() => {
     return inspecoes.filter((i) => {
-      if (filters.dataInicio && i.data && i.data < filters.dataInicio) return false;
-      if (filters.dataFinal && i.data && i.data > filters.dataFinal) return false;
       if (filters.resultado && i.resultadoFinal !== filters.resultado) return false;
-      if (filters.modelo && !i.modelo?.toLowerCase().includes(filters.modelo.toLowerCase())) return false;
-      if (filters.numeroSerie && !i.numeroSerie?.toLowerCase().includes(filters.numeroSerie.toLowerCase())) return false;
+      if (filters.modelo && String(i.modelo ?? '').trim() !== filters.modelo) return false;
+      if (filters.numeroSerie && String(i.numeroSerie ?? '').trim() !== filters.numeroSerie) return false;
       return true;
     });
   }, [inspecoes, filters]);
@@ -99,8 +106,6 @@ const InspecaoMontagemPage: React.FC = () => {
             filters={filters}
             onFiltersChange={updateFilters}
             fields={[
-              { key: 'dataInicio', label: 'Data Inicial', type: 'date' },
-              { key: 'dataFinal', label: 'Data Final', type: 'date' },
               {
                 key: 'resultado',
                 label: 'Resultado',
@@ -110,8 +115,8 @@ const InspecaoMontagemPage: React.FC = () => {
                   { value: 'REPROVADO', label: 'Reprovado' },
                 ],
               },
-              { key: 'modelo', label: 'Modelo', type: 'text', placeholder: 'Buscar modelo...' },
-              { key: 'numeroSerie', label: 'Número de Série', type: 'text', placeholder: 'Buscar série...' },
+              { key: 'modelo', label: 'Modelo', type: 'select', options: modeloOptions },
+              { key: 'numeroSerie', label: 'Número de Série', type: 'select', options: numeroSerieOptions },
             ]}
             titulo="Filtros"
           />

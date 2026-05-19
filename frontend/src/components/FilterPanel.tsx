@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FilterType } from '../types/filters';
 import './FilterPanel.css';
 
@@ -24,12 +24,17 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   titulo = 'Filtros',
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [draftFilters, setDraftFilters] = useState<FilterType>(filters);
+
+  useEffect(() => {
+    setDraftFilters(filters);
+  }, [filters]);
 
   const handleInputChange = (key: keyof FilterType, value: any) => {
-    onFiltersChange({
-      ...filters,
+    setDraftFilters((prev) => ({
+      ...prev,
       [key]: value || undefined,
-    });
+    }));
   };
 
   const handleClearFilters = () => {
@@ -37,6 +42,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       acc[field.key] = undefined;
       return acc;
     }, {} as FilterType);
+    setDraftFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   };
 
@@ -66,7 +72,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                   <input
                     type="text"
                     placeholder={field.placeholder}
-                    value={(filters[field.key] as string) || ''}
+                    value={(draftFilters[field.key] as string) || ''}
                     onChange={(e) => handleInputChange(field.key, e.target.value)}
                     className="filter-input"
                   />
@@ -74,14 +80,14 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 {field.type === 'date' && (
                   <input
                     type="date"
-                    value={(filters[field.key] as string) || ''}
+                    value={(draftFilters[field.key] as string) || ''}
                     onChange={(e) => handleInputChange(field.key, e.target.value)}
                     className="filter-input"
                   />
                 )}
                 {field.type === 'select' && (
                   <select
-                    value={(filters[field.key] as string) || ''}
+                    value={(draftFilters[field.key] as string) || ''}
                     onChange={(e) => handleInputChange(field.key, e.target.value)}
                     className="filter-input"
                   >
@@ -101,7 +107,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <button
               className="btn-apply-filter"
               onClick={() => {
-                // Filtros já são aplicados em tempo real
+                onFiltersChange(draftFilters);
+                setIsExpanded(false);
               }}
             >
               Aplicar

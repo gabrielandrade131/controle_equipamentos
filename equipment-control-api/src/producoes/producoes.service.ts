@@ -263,6 +263,34 @@ export class ProducoesService {
         return where;
     }
 
+    private resolverOrdenacao(filters: FilterProducaoDto) {
+        const allowedSortBy = [
+            'criadoEm',
+            'dataSolicitacao',
+            'dataInicio',
+            'previsaoTermino',
+            'dataTermino',
+            'numeroOrdem',
+            'modelo',
+            'statusProducao',
+        ] as const;
+
+        const sortBy = filters.sortBy ?? 'criadoEm';
+        if (!allowedSortBy.includes(sortBy)) {
+            throw new BadRequestException(
+                `sortBy inválido: ${String(sortBy)}. Use: ${allowedSortBy.join(', ')}.`
+            );
+        }
+
+        const sortOrder = filters.sortOrder ?? 'desc';
+        if (sortOrder !== 'asc' && sortOrder !== 'desc') {
+            throw new BadRequestException(
+                `sortOrder inválido: ${String(sortOrder)}. Use: asc ou desc.`
+            );
+        }
+
+        return { sortBy, sortOrder };
+    }
 
     async findAll(filters: FilterProducaoDto) {
        const where = this.montarWhere(filters);
@@ -270,8 +298,7 @@ export class ProducoesService {
        const page = filters.page ?? 1;
        const limit = filters.limit ?? 10;
        const skip = (page - 1) * limit;
-       const sortBy = filters.sortBy ?? 'criadoEm';
-       const sortOrder = filters.sortOrder ?? 'desc';
+       const { sortBy, sortOrder } = this.resolverOrdenacao(filters);
 
        const [data, total] = await Promise.all([
         this.prisma.equipment.findMany({
@@ -717,8 +744,7 @@ export class ProducoesService {
     async exportExcel(filters: FilterProducaoDto) {
         const where = this.montarWhere(filters);
 
-        const sortBy = filters.sortBy ?? 'criadoEm';
-        const sortOrder = filters.sortOrder ?? 'desc';
+        const { sortBy, sortOrder } = this.resolverOrdenacao(filters);
 
         const producoes = await this.prisma.equipment.findMany({
             where,

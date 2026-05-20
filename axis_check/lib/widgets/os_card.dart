@@ -48,21 +48,22 @@ class OsCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          os.numeroOs,
+                          'OS \\${os.numeroOs}',
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w900,
                             color: AppColors.black,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         Text(
                           os.cliente.isEmpty ? 'Cliente não informado' : os.cliente,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppColors.mutedText,
-                            fontSize: 13,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -70,31 +71,18 @@ class OsCard extends StatelessWidget {
                   ),
 
                   StatusBadge(
-                    label: os.status,
+                    label: os.status.isEmpty ? 'Sem status' : os.status,
                     backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.35),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 14),
-
-              Text(
-                os.descricaoOperacao.isEmpty
-                    ? 'Operação não informada'
-                    : os.descricaoOperacao,
-                style: const TextStyle(
-                  color: AppColors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: const Color(0xFFF7F8FB),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: AppColors.border,

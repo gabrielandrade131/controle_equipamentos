@@ -48,7 +48,7 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
 
     final jaRecebida = await recebimentoService.osJaFoiRecebida(
       numeroOs: os.numeroOs,
-      usarMock: true,
+      usarMock: false,
     );
 
     if (!context.mounted) return;
@@ -68,7 +68,7 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
     final sucesso = await recebimentoService.enviarRecebimento(
       os: os,
       checklistsPorEquipamento: checklistsPorEquipamento,
-      usarMock: true,
+      usarMock: false,
     );
 
     if (!context.mounted) return;

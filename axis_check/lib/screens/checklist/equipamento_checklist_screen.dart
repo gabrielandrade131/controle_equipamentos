@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/checklist_recebimento_model.dart';
@@ -54,9 +55,20 @@ class _EquipamentoChecklistScreenState
     super.dispose();
   }
 
-  void adicionarFoto(String tipo) {
+  Future<void> adicionarFoto(String tipo) async {
+    final picker = ImagePicker();
+
+    final imagem = await picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 75,
+    );
+
+    if (imagem == null) {
+      return;
+    }
+
     final foto = FotoRecebimento(
-      path: 'mock_${widget.equipamento.tag}_${tipo}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      path: imagem.path,
       tipo: tipo,
       criadoEm: DateTime.now(),
     );
@@ -64,6 +76,10 @@ class _EquipamentoChecklistScreenState
     setState(() {
       fotos.add(foto);
     });
+
+    if (!mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

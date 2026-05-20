@@ -41,7 +41,7 @@ class _OsListScreenState extends State<OsListScreen> {
 
     try {
       final resultado = await synchroService.listarOsEmAndamento(
-        usarMock: true,
+        usarMock: false,
       );
 
       if (!mounted) return;
@@ -202,7 +202,7 @@ class _OsListScreenState extends State<OsListScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: osList.length + 1,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index == 0) {
           return Row(

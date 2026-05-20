@@ -1,4 +1,4 @@
-package com.example.axis_check
+package com.ambipar.axischeck
 
 import io.flutter.embedding.android.FlutterActivity
 

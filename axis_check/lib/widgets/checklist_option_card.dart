@@ -75,7 +75,7 @@ class ChecklistOptionCard extends StatelessWidget {
 
               Switch(
                 value: value,
-                activeColor: AppColors.primaryGreen,
+                activeThumbColor: AppColors.primaryGreen,
                 activeTrackColor: AppColors.techBlue,
                 onChanged: onChanged,
               ),

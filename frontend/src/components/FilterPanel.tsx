@@ -25,7 +25,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   titulo = 'Filtros',
   onDraftChange,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [draftFilters, setDraftFilters] = useState<FilterType>(filters);
 
   useEffect(() => {
@@ -63,7 +63,12 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           className="filter-toggle"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isExpanded ? '▼' : '▶'} {titulo}
+          <span className="filter-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z" fill="currentColor" />
+            </svg>
+          </span>
+          {titulo}
           {hasActiveFilters && (
             <span className="filter-badge">{fields.filter((f) => filters[f.key]).length} ativo(s)</span>
           )}

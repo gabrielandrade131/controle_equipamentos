@@ -61,4 +61,24 @@ class OsOperacao {
       'equipamentos': equipamentos.map((item) => item.toJson()).toList(),
     };
   }
+
+  OsOperacao copyWith({
+    String? id,
+    String? numeroOs,
+    String? cliente,
+    String? unidade,
+    String? descricaoOperacao,
+    String? status,
+    List<EquipamentoOperacao>? equipamentos,
+  }) {
+    return OsOperacao(
+      id: id ?? this.id,
+      numeroOs: numeroOs ?? this.numeroOs,
+      cliente: cliente ?? this.cliente,
+      unidade: unidade ?? this.unidade,
+      descricaoOperacao: descricaoOperacao ?? this.descricaoOperacao,
+      status: status ?? this.status,
+      equipamentos: equipamentos ?? this.equipamentos,
+    );
+  }
 }

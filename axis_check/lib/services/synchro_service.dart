@@ -24,9 +24,13 @@ class SynchroService {
       final data = response.data;
 
       if (data is List) {
-        return data
+        final lista = data;
+
+        final osConvertidas = lista
             .map((item) => OsOperacao.fromJson(Map<String, dynamic>.from(item)))
             .toList();
+
+        return _agruparOsPorNumero(osConvertidas);
       }
 
       return [];
@@ -107,5 +111,35 @@ class SynchroService {
         ],
       ),
     ];
+  }
+
+  List<OsOperacao> _agruparOsPorNumero(List<OsOperacao> lista) {
+    final Map<String, OsOperacao> mapa = {};
+
+    for (final os in lista) {
+      final chave = os.numeroOs;
+
+      if (!mapa.containsKey(chave)) {
+        mapa[chave] = os;
+        continue;
+      }
+
+      final osExistente = mapa[chave]!;
+
+      final equipamentosAgrupados = [
+        ...osExistente.equipamentos,
+        ...os.equipamentos,
+      ];
+
+      final equipamentosSemDuplicidade = {
+        for (final equipamento in equipamentosAgrupados) equipamento.id: equipamento,
+      }.values.toList();
+
+      mapa[chave] = osExistente.copyWith(
+        equipamentos: equipamentosSemDuplicidade,
+      );
+    }
+
+    return mapa.values.toList();
   }
 }

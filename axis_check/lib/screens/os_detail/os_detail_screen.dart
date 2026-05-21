@@ -23,8 +23,10 @@ class OsDetailScreen extends StatefulWidget {
 class _OsDetailScreenState extends State<OsDetailScreen> {
   final Map<String, ChecklistRecebimento> checklistsPorEquipamento = {};
 
-  bool get todosEquipamentosConferidos {
-    return checklistsPorEquipamento.length == widget.os.equipamentos.length;
+  bool get possuiEquipamentoParaEnviar {
+    return checklistsPorEquipamento.values.any(
+      (checklist) => checklist.retornouFisicamente,
+    );
   }
 
   int get totalConferidos => checklistsPorEquipamento.length;
@@ -52,11 +54,11 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
   }
 
   void finalizarRecebimento() {
-    if (!todosEquipamentosConferidos) {
+    if (!possuiEquipamentoParaEnviar) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Todos os equipamentos precisam ter checklist e fotos antes de finalizar.',
+            'Marque pelo menos um equipamento como retornado para enviar à manutenção.',
           ),
         ),
       );
@@ -85,11 +87,11 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
         child: SizedBox(
           height: 54,
           child: ElevatedButton(
-            onPressed: todosEquipamentosConferidos ? finalizarRecebimento : null,
+            onPressed: possuiEquipamentoParaEnviar ? finalizarRecebimento : null,
             child: Text(
-              todosEquipamentosConferidos
-                  ? 'Finalizar recebimento'
-                  : 'Checklist pendente ($totalConferidos/$total)',
+              possuiEquipamentoParaEnviar
+                  ? 'Enviar equipamentos recebidos'
+                  : 'Nenhum equipamento recebido',
             ),
           ),
         ),

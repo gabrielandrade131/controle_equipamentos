@@ -30,7 +30,11 @@ class SynchroService {
             .map((item) => OsOperacao.fromJson(Map<String, dynamic>.from(item)))
             .toList();
 
-        return _agruparOsPorNumero(osConvertidas);
+        final osAgrupadas = _agruparOsPorNumero(osConvertidas);
+
+        return osAgrupadas.where((os) {
+          return os.equipamentos.isNotEmpty;
+        }).toList();
       }
 
       return [];

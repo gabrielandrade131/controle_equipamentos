@@ -89,7 +89,7 @@ class OsCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        '$totalEquipamentos equipamento${totalEquipamentos == 1 ? '' : 's'}',
+                        '$totalEquipamentos pendente${totalEquipamentos == 1 ? '' : 's'}',
                         style: const TextStyle(
                           color: AppColors.mutedText,
                           fontSize: 13,

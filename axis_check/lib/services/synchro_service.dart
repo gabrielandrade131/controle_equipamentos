@@ -32,6 +32,8 @@ class SynchroService {
 
         final osAgrupadas = _agruparOsPorNumero(osConvertidas);
 
+        // futuramente aqui vamos remover equipamentos já recebidos
+
         return osAgrupadas.where((os) {
           return os.equipamentos.isNotEmpty;
         }).toList();

@@ -39,3 +39,5 @@ export const AlertModal: React.FC<AlertModalProps> = ({
     </div>
   );
 };
+
+export default AlertModal;

@@ -178,7 +178,7 @@ const InspecaoMontagemPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="page-detail-section">
+            <div className="page-detail-section no-selection">
               <p>Selecione uma produção para preencher a inspeção de montagem</p>
             </div>
           )}

@@ -35,4 +35,41 @@ export class UsersService {
       where: { id },
     });
   }
+
+  async findAll() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        ativo: true,
+        precisaTrocarSenha: true,
+        criadoEm: true,
+      },
+      orderBy: {
+        criadoEm: 'desc',
+      },
+    });
+  }
+
+  async update(
+    id: string,
+    data: {
+      nome?: string;
+      email?: string;
+      ativo?: boolean;
+      precisaTrocarSenha?: boolean;
+    }
+  ) {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async delete(id: string) {
+    return this.prisma.user.delete({
+      where: { id },
+    });
+  }
 }

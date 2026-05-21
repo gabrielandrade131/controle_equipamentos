@@ -1,6 +1,10 @@
 import jsPDF from 'jspdf';
 import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
-import { LINHAS_PREMONTAGEM_INSPECAO_PDF, LINHAS_POSMONTAGEM_INSPECAO_PDF } from '../constants/inspecaoMontagem';
+import {
+    LINHAS_PREMONTAGEM_INSPECAO_PDF,
+    LINHAS_POSMONTAGEM_INSPECAO_PDF,
+    NOMES_INSTRUMENTOS_AFERICAO,
+} from '../constants/inspecaoMontagem';
 
 export const usePdfExportInspecao = () => {
     const exportInspecaoToPdf = async (inspecao: InspecaoMontagem, filename: string, logoPath?: string) => {
@@ -70,11 +74,36 @@ export const usePdfExportInspecao = () => {
                 return segments.flatMap((segment) => pdf.splitTextToSize(segment, width) as string[]);
             };
 
-            const normalizeConformidade = (value?: string | boolean | null) => {
+            const normalizeConformidade = (value?: string | boolean | null): VerificacaoItem['conformidade'] => {
                 if (value === true || value === 'SIM') return 'SIM';
                 if (value === false || value === 'NÃO' || value === 'NAO') return 'NÃO';
                 if (value === 'N/A' || value === 'NA') return 'N/A';
-                return '-';
+                return '';
+            };
+
+            const normalizePdfInstrumentText = (value?: string) => {
+                if (!value) return '-';
+
+                return value
+                    .split('\n')
+                    .map((line) => {
+                        const serialMatch = line.match(/^n\s*[º°o]?\s*s\s*e\s*r\s*i\s*e:?\s*(.*)$/i);
+                        if (serialMatch) {
+                            const serial = serialMatch[1]?.trim();
+                            return serial ? `Nº Série: ${serial}` : 'Nº Série:';
+                        }
+
+                        return line
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[☐☑]/g, '')
+                            .replace(/\s*&\s*/g, ' / ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                    })
+                    .filter(Boolean)
+                    .join('\n')
+                    .trim();
             };
 
             const drawTextLines = (lines: string[], x: number, startY: number, lineHeight: number) => {
@@ -101,7 +130,23 @@ export const usePdfExportInspecao = () => {
             }
 
             // Instrumentos de aferição
-            if (inspecao.instrumentosAferição && inspecao.instrumentosAferição.length > 0) {
+            const instrumentosAfericaoOriginais = inspecao.instrumentosAferição ?? [];
+            const instrumentosAfericao: VerificacaoItem[] = NOMES_INSTRUMENTOS_AFERICAO.length
+                ? NOMES_INSTRUMENTOS_AFERICAO.map((nome, index) => {
+                      const origem = instrumentosAfericaoOriginais[index];
+                      return {
+                          id: origem?.id ?? String(index),
+                          nome: origem?.nome ?? nome,
+                          conformidade: normalizeConformidade((origem as any)?.conformidade),
+                      } as VerificacaoItem;
+                  })
+                : instrumentosAfericaoOriginais.map((origem, index) => ({
+                      ...origem,
+                      id: origem.id ?? String(index),
+                      conformidade: normalizeConformidade((origem as any)?.conformidade),
+                  }));
+
+            if (instrumentosAfericao.length > 0) {
                 checkPageBreak(25);
                 addSection('INSTRUMENTOS DE AFERIÇÃO');
                 const colWidths = [maxWidth * 0.65, maxWidth * 0.35];
@@ -120,8 +165,8 @@ export const usePdfExportInspecao = () => {
                 };
 
                 drawInstrumentsHeader();
-                inspecao.instrumentosAferição.forEach((it: VerificacaoItem) => {
-                    const instrumentLines = wrapTextLines(it.nome || '-', colWidths[0] - 4);
+                instrumentosAfericao.forEach((it: VerificacaoItem) => {
+                    const instrumentLines = wrapTextLines(normalizePdfInstrumentText(it.nome), colWidths[0] - 4);
                     const conformityLines = wrapTextLines(it.conformidade || '-', colWidths[1] - 4);
                     const rowH = Math.max(instrumentLines.length, conformityLines.length, 1) * rowLineHeight + 4;
                     const startedNew = checkPageBreak(rowH);
@@ -138,6 +183,11 @@ export const usePdfExportInspecao = () => {
 
             // Verificações gerais (pré e pós montagem)
             const renderVerificacoes = (title: string, items?: VerificacaoItem[]) => {
+                const resolveInstrumento = (value?: string, fallback?: string) => {
+                    const trimmed = (value ?? '').trim();
+                    if (trimmed) return trimmed;
+                    return (fallback ?? '').trim();
+                };
                 const cleanInstrument = (instr?: string) => {
                     if (!instr) return instr;
                     return instr.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim();
@@ -151,7 +201,9 @@ export const usePdfExportInspecao = () => {
                                 id: origem?.id ?? String(linha.itemIndex),
                                 nome: linha.titulo,
                                 valorObservado: origem?.valorObservado ?? '',
-                                instrumentoMedicao: origem?.instrumentoMedicao ?? linha.instrumentoPadrao,
+                                instrumentoMedicao: normalizePdfInstrumentText(
+                                    resolveInstrumento(origem?.instrumentoMedicao, linha.instrumentoPadrao),
+                                ),
                                 conformidade: normalizeConformidade(
                                     origem?.conformidade ?? (origem as any)?.conformidades,
                                 ),
@@ -166,7 +218,11 @@ export const usePdfExportInspecao = () => {
                                 id: origem?.id ?? String(linha.itemIndex),
                                 nome: linha.titulo,
                                 valorObservado: origem?.valorObservado ?? '',
-                                instrumentoMedicao: cleanInstrument(origem?.instrumentoMedicao ?? linha.instrumentoPadrao),
+                                instrumentoMedicao: normalizePdfInstrumentText(
+                                    cleanInstrument(
+                                        resolveInstrumento(origem?.instrumentoMedicao, linha.instrumentoPadrao),
+                                    ),
+                                ),
                                 conformidade: normalizeConformidade(
                                     origem?.conformidade ?? (origem as any)?.conformidades,
                                 ),
@@ -205,7 +261,7 @@ export const usePdfExportInspecao = () => {
                 effectiveItems.forEach((it: VerificacaoItem) => {
                     const itemLines = wrapTextLines(it.nome || '-', colWidths[0] - 4);
                     const valorText = it.valorObservado?.trim() || '-';
-                    const instrumentoText = it.instrumentoMedicao || '-';
+                    const instrumentoText = normalizePdfInstrumentText(it.instrumentoMedicao);
                     const valorLines = wrapTextLines(valorText, colWidths[1] - 4);
                     const instrumentoLines = wrapTextLines(instrumentoText, colWidths[2] - 4);
                     const conformidadeLines = wrapTextLines(it.conformidade || '-', colWidths[3] - 4);

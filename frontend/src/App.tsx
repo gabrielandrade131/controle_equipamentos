@@ -11,6 +11,8 @@ import HistoricoEquipamento from './pages/HistoricoEquipamento';
 import { Manutencao } from './pages/Manutencao';
 import { NovaManutencao } from './pages/NovaManutencao';
 import Login from './pages/login';
+import CadastroUsuarios from './pages/CadastroUsuarios';
+import ListaUsuarios from './pages/ListaUsuarios';
 
 function AppContent() {
   const location = useLocation();
@@ -85,6 +87,26 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <NovaManutencao />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* CADASTRO DE USUÁRIOS */}
+        <Route
+          path="/usuarios/cadastro"
+          element={
+            <ProtectedRoute>
+              <CadastroUsuarios />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* LISTA DE USUÁRIOS */}
+        <Route
+          path="/usuarios"
+          element={
+            <ProtectedRoute>
+              <ListaUsuarios />
             </ProtectedRoute>
           }
         />

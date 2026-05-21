@@ -22,6 +22,11 @@ const Navbar: React.FC = () => {
             Manutenção
           </button>
         </li>
+        <li>
+          <button onClick={() => handleNavigate('/usuarios')} className="nav-link">
+            Usuários
+          </button>
+        </li>
       </ul>
     </nav>
   );

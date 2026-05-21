@@ -82,7 +82,7 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
         ),
       );
 
-      Navigator.popUntil(context, (route) => route.isFirst);
+      Navigator.pop(context, true);
       return;
     }
 

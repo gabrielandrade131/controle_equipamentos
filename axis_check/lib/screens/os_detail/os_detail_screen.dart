@@ -53,7 +53,7 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
     });
   }
 
-  void finalizarRecebimento() {
+  Future<void> finalizarRecebimento() async {
     if (!possuiEquipamentoParaEnviar) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -65,7 +65,7 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
       return;
     }
 
-    Navigator.push(
+    final enviado = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => FinalizarRecebimentoScreen(
@@ -74,6 +74,10 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
         ),
       ),
     );
+
+    if (enviado == true && mounted) {
+      Navigator.pop(context, true);
+    }
   }
 
   @override
@@ -498,4 +502,4 @@ class _SummaryLine extends StatelessWidget {
       ],
     );
   }
-}
+}

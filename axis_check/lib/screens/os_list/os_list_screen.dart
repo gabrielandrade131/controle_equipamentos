@@ -4,6 +4,7 @@ import '../../core/storage/token_storage.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/os_operacao_model.dart';
 import '../../services/synchro_service.dart';
+import '../../services/recebimento_service.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/os_card.dart';
 import '../os_detail/os_detail_screen.dart';
@@ -17,6 +18,7 @@ class OsListScreen extends StatefulWidget {
 
 class _OsListScreenState extends State<OsListScreen> {
   late final SynchroService synchroService;
+  late final RecebimentoService recebimentoService;
 
   bool loading = true;
   String? erro;
@@ -41,6 +43,7 @@ class _OsListScreenState extends State<OsListScreen> {
     super.initState();
 
     synchroService = SynchroService(tokenStorage: TokenStorage());
+    recebimentoService = RecebimentoService(tokenStorage: TokenStorage());
 
     carregarOs();
   }
@@ -52,17 +55,49 @@ class _OsListScreenState extends State<OsListScreen> {
     });
 
     try {
-      final resultado = await synchroService.listarOsEmAndamento(
-        usarMock: true,
+      final resultadoSynchro = await synchroService.listarOsEmAndamento(
+        usarMock: false,
       );
+
+      final equipamentosRecebidos =
+          await recebimentoService.listarEquipamentosRecebidos();
+
+      final tagsRecebidas = equipamentosRecebidos
+          .map((item) => item.tag.trim().toUpperCase())
+          .where((tag) => tag.isNotEmpty)
+          .toSet();
+
+      final seriesRecebidas = equipamentosRecebidos
+          .map((item) => item.numeroSerie.trim().toUpperCase())
+          .where((serie) => serie.isNotEmpty)
+          .toSet();
+
+      final osFiltradas = resultadoSynchro.map((os) {
+        final equipamentosPendentes = os.equipamentos.where((equipamento) {
+          final tag = equipamento.tag.trim().toUpperCase();
+          final serie = equipamento.numeroSerie.trim().toUpperCase();
+
+          final tagJaRecebida = tag.isNotEmpty && tagsRecebidas.contains(tag);
+          final serieJaRecebida =
+              serie.isNotEmpty && seriesRecebidas.contains(serie);
+
+          return !tagJaRecebida && !serieJaRecebida;
+        }).toList();
+
+        return os.copyWith(
+          equipamentos: equipamentosPendentes,
+        );
+      }).where((os) {
+        return os.equipamentos.isNotEmpty;
+      }).toList();
 
       if (!mounted) return;
 
       setState(() {
-        osList = resultado;
+        osList = osFiltradas;
         loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -76,11 +111,15 @@ class _OsListScreenState extends State<OsListScreen> {
     await carregarOs();
   }
 
-  void abrirDetalheOs(OsOperacao os) {
-    Navigator.push(
+  Future<void> abrirDetalheOs(OsOperacao os) async {
+    final precisaAtualizar = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => OsDetailScreen(os: os)),
     );
+
+    if (precisaAtualizar == true) {
+      carregarOs();
+    }
   }
 
   @override

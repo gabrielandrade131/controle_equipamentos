@@ -60,6 +60,15 @@ class RecebimentoService {
     required OsOperacao os,
     required Map<String, ChecklistRecebimento> checklistsPorEquipamento,
   }) {
+    final checklistsRecebidos = checklistsPorEquipamento.values
+        .where((checklist) => checklist.retornouFisicamente)
+        .toList();
+
+    final equipamentosRecebidos = os.equipamentos.where((equipamento) {
+      final checklist = checklistsPorEquipamento[equipamento.id];
+      return checklist?.retornouFisicamente == true;
+    }).toList();
+
     return {
       'osId': os.id,
       'numeroOs': os.numeroOs,
@@ -67,7 +76,7 @@ class RecebimentoService {
       'descricaoOperacao': os.descricaoOperacao,
       'status': os.status,
       'dataRecebimento': DateTime.now().toIso8601String(),
-      'equipamentos': checklistsPorEquipamento.values.map((checklist) {
+      'equipamentos': checklistsRecebidos.map((checklist) {
         return {
           'equipamentoId': checklist.equipamentoId,
           'tag': checklist.tag,
@@ -103,7 +112,11 @@ class RecebimentoService {
       MapEntry('dados', jsonEncode(payload)),
     );
 
-    for (final checklist in checklistsPorEquipamento.values) {
+    final checklistsRecebidos = checklistsPorEquipamento.values
+        .where((checklist) => checklist.retornouFisicamente)
+        .toList();
+
+    for (final checklist in checklistsRecebidos) {
       for (int i = 0; i < checklist.fotos.length; i++) {
         final foto = checklist.fotos[i];
 

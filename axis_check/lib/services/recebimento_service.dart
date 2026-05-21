@@ -5,6 +5,7 @@ import '../core/http/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../models/checklist_recebimento_model.dart';
 import '../models/os_operacao_model.dart';
+import '../models/equipamento_recebido_model.dart';
 
 class RecebimentoService {
   final TokenStorage tokenStorage;
@@ -162,6 +163,31 @@ class RecebimentoService {
     }
 
     return formData;
+  }
+
+  Future<List<EquipamentoRecebido>> listarEquipamentosRecebidos({bool usarMock = true}) async {
+    if (usarMock) {
+      return [];
+    }
+
+    try {
+      final response = await apiClient.axisDio().get(
+        '/recebimentos/equipamentos-recebidos',
+      );
+
+      final data = response.data;
+
+      if (data is List) {
+        return data
+            .map((item) => EquipamentoRecebido.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('ERRO AO LISTAR EQUIPAMENTOS RECEBIDOS: $e');
+      throw Exception('Erro ao buscar equipamentos já recebidos.');
+    }
   }
 
   Future<bool> osJaFoiRecebida({

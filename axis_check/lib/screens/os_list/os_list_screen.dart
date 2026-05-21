@@ -21,14 +21,26 @@ class _OsListScreenState extends State<OsListScreen> {
   bool loading = true;
   String? erro;
   List<OsOperacao> osList = [];
+  String filtroBusca = '';
+
+  List<OsOperacao> get osFiltradas {
+    if (filtroBusca.trim().isEmpty) {
+      return osList;
+    }
+
+    final termo = filtroBusca.toLowerCase();
+
+    return osList.where((os) {
+      return os.numeroOs.toLowerCase().contains(termo) ||
+        os.cliente.toLowerCase().contains(termo);
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
 
-    synchroService = SynchroService(
-      tokenStorage: TokenStorage(),
-    );
+    synchroService = SynchroService(tokenStorage: TokenStorage());
 
     carregarOs();
   }
@@ -67,9 +79,7 @@ class _OsListScreenState extends State<OsListScreen> {
   void abrirDetalheOs(OsOperacao os) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => OsDetailScreen(os: os),
-      ),
+      MaterialPageRoute(builder: (_) => OsDetailScreen(os: os)),
     );
   }
 
@@ -82,6 +92,7 @@ class _OsListScreenState extends State<OsListScreen> {
             title: 'OS em andamento',
             subtitle: 'Selecione uma operação para iniciar a conferência',
             icon: Icons.assignment_turned_in_outlined,
+            showBackButton: true,
           ),
 
           Expanded(
@@ -98,9 +109,7 @@ class _OsListScreenState extends State<OsListScreen> {
 
   Widget _buildContent() {
     if (loading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (erro != null) {
@@ -121,9 +130,7 @@ class _OsListScreenState extends State<OsListScreen> {
                   Text(
                     erro!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -168,18 +175,13 @@ class _OsListScreenState extends State<OsListScreen> {
                   const SizedBox(height: 14),
                   const Text(
                     'Nenhuma OS em andamento',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 6),
                   const Text(
                     'Quando houver operações em andamento no Synchro, elas aparecerão aqui.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.mutedText,
-                    ),
+                    style: TextStyle(color: AppColors.mutedText),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -200,33 +202,58 @@ class _OsListScreenState extends State<OsListScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: osList.length + 1,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      itemCount: osFiltradas.length + 1,
       separatorBuilder: (_, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index == 0) {
-          return Row(
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  '${osList.length} OS encontrada${osList.length == 1 ? '' : 's'}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
+              Text(
+                '${osFiltradas.length} OS encontrada${osFiltradas.length == 1 ? '' : 's'}',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mutedText,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                onChanged: (value) {
+                  setState(() {
+                    filtroBusca = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Buscar OS ou cliente',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: AppColors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.border,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.border,
+                    ),
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: carregarOs,
-                icon: const Icon(Icons.refresh),
-                color: AppColors.techBlue,
-                tooltip: 'Atualizar',
-              ),
+              const SizedBox(height: 18),
             ],
           );
         }
 
-        final os = osList[index - 1];
+        final os = osFiltradas[index - 1];
 
         return OsCard(
           os: os,

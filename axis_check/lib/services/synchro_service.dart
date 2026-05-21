@@ -7,33 +7,25 @@ class SynchroService {
   final TokenStorage tokenStorage;
   late final ApiClient apiClient;
 
-  SynchroService({
-    required this.tokenStorage,
-  }) {
+  SynchroService({required this.tokenStorage}) {
     apiClient = ApiClient(tokenStorage: tokenStorage);
   }
 
-  Future<List<OsOperacao>> listarOsEmAndamento({
-    bool usarMock = true,
-  }) async {
+  Future<List<OsOperacao>> listarOsEmAndamento({bool usarMock = true}) async {
     if (usarMock) {
       return _listarOsMockadas();
     }
 
     try {
       final response = await apiClient.synchroDio().get(
-            '/api/mobile/os-em-andamento',
-          );
+        '/api/mobile/os-em-andamento',
+      );
 
       final data = response.data;
 
       if (data is List) {
         return data
-            .map(
-              (item) => OsOperacao.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
-            )
+            .map((item) => OsOperacao.fromJson(Map<String, dynamic>.from(item)))
             .toList();
       }
 
@@ -59,12 +51,10 @@ class SynchroService {
 
     try {
       final response = await apiClient.synchroDio().get(
-            '/api/mobile/os/$osId/equipamentos',
-          );
-
-      return OsOperacao.fromJson(
-        Map<String, dynamic>.from(response.data),
+        '/api/mobile/os/$osId/equipamentos',
       );
+
+      return OsOperacao.fromJson(Map<String, dynamic>.from(response.data));
     } catch (_) {
       return null;
     }
@@ -76,6 +66,7 @@ class SynchroService {
         id: '1',
         numeroOs: 'OS-001',
         cliente: 'Cliente Offshore A',
+        unidade: 'MV-24',
         descricaoOperacao: 'Limpeza de tanque',
         status: 'EM ANDAMENTO',
         equipamentos: [
@@ -101,6 +92,7 @@ class SynchroService {
         id: '2',
         numeroOs: 'OS-002',
         cliente: 'Cliente Industrial B',
+        unidade: 'MV-24',
         descricaoOperacao: 'Operação de transferência',
         status: 'EM ANDAMENTO',
         equipamentos: [

@@ -25,6 +25,18 @@
   text-align: left;
 }
 
+.filter-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.filter-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .filter-toggle:hover {
   color: #FF1C20;
 }

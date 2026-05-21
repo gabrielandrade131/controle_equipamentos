@@ -4,14 +4,16 @@ class OsOperacao {
   final String id;
   final String numeroOs;
   final String cliente;
+  final String unidade;
   final String descricaoOperacao;
   final String status;
   final List<EquipamentoOperacao> equipamentos;
 
-  OsOperacao({
+  const OsOperacao({
     required this.id,
     required this.numeroOs,
     required this.cliente,
+    required this.unidade,
     required this.descricaoOperacao,
     required this.status,
     required this.equipamentos,
@@ -19,7 +21,6 @@ class OsOperacao {
 
   factory OsOperacao.fromJson(Map<String, dynamic> json) {
     final equipamentosJson = json['equipamentos'];
-
     return OsOperacao(
       id: json['id']?.toString() ??
           json['osId']?.toString() ??
@@ -30,6 +31,9 @@ class OsOperacao {
           json['os']?.toString() ??
           '',
       cliente: json['cliente']?.toString() ?? '',
+      unidade: json['unidade']?.toString() ??
+          json['unidadeOS']?.toString() ??
+          'MV-24',
       descricaoOperacao: json['descricaoOperacao']?.toString() ??
           json['operacao']?.toString() ??
           json['descricao']?.toString() ??
@@ -39,11 +43,8 @@ class OsOperacao {
           'EM ANDAMENTO',
       equipamentos: equipamentosJson is List
           ? equipamentosJson
-              .map(
-                (item) => EquipamentoOperacao.fromJson(
-                  Map<String, dynamic>.from(item),
-                ),
-              )
+              .map((item) => EquipamentoOperacao.fromJson(
+                  Map<String, dynamic>.from(item)))
               .toList()
           : [],
     );
@@ -54,6 +55,7 @@ class OsOperacao {
       'id': id,
       'numeroOs': numeroOs,
       'cliente': cliente,
+      'unidade': unidade,
       'descricaoOperacao': descricaoOperacao,
       'status': status,
       'equipamentos': equipamentos.map((item) => item.toJson()).toList(),

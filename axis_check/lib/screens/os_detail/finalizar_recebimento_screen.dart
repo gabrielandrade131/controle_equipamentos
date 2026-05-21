@@ -200,6 +200,7 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
             title: 'Finalizar',
             subtitle: 'Revise o recebimento antes de enviar',
             icon: Icons.task_alt_rounded,
+            showBackButton: true,
           ),
 
           Expanded(

@@ -92,6 +92,7 @@ class _OsListScreenState extends State<OsListScreen> {
             title: 'OS em andamento',
             subtitle: 'Selecione uma operação para iniciar a conferência',
             icon: Icons.assignment_turned_in_outlined,
+            showBackButton: true,
           ),
 
           Expanded(
@@ -201,51 +202,63 @@ class _OsListScreenState extends State<OsListScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       itemCount: osFiltradas.length + 1,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 0),
       itemBuilder: (context, index) {
         if (index == 0) {
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${osFiltradas.length} OS encontrada${osFiltradas.length == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: carregarOs,
-                    icon: const Icon(Icons.refresh),
-                    color: AppColors.techBlue,
-                    tooltip: 'Atualizar',
-                  ),
-                ],
+              Text(
+                '${osFiltradas.length} OS encontrada${osFiltradas.length == 1 ? '' : 's'}',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mutedText,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               TextField(
                 onChanged: (value) {
                   setState(() {
                     filtroBusca = value;
                   });
                 },
-                decoration: const InputDecoration(
-                  hintText: 'Buscar por número da OS ou cliente',
-                  prefixIcon: Icon(Icons.search),
+                decoration: InputDecoration(
+                  hintText: 'Buscar OS ou cliente',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: AppColors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.border,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.border,
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 18),
             ],
           );
         }
 
         final os = osFiltradas[index - 1];
 
-        return OsCard(os: os, onTap: () => abrirDetalheOs(os));
+        return OsCard(
+          os: os,
+          onTap: () => abrirDetalheOs(os),
+        );
       },
     );
   }

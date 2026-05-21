@@ -69,7 +69,8 @@
 
 .usuarios-table th {
   padding: 16px;
-  text-align: left;
+  text-align: center;
+  vertical-align: middle;
   font-weight: 600;
   font-size: 14px;
   text-transform: uppercase;
@@ -79,6 +80,8 @@
 .usuarios-table td {
   padding: 16px;
   border-bottom: 1px solid #e0e0e0;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .usuarios-table tbody tr:hover {

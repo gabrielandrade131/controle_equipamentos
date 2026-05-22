@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -153,6 +155,15 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
                   unidade: os.unidade,
                   totalEquipamentos: total,
                 ),
+
+                const SizedBox(height: 16),
+
+                _FotosSection(
+                  os: os,
+                  checklistsPorEquipamento: checklistsPorEquipamento,
+                ),
+
+                const SizedBox(height: 16),
 
                 const SizedBox(height: 26),
 
@@ -403,6 +414,83 @@ class _EquipamentoListItem extends StatelessWidget {
 }
 
 // Helper widget classes
+
+class _FotosSection extends StatelessWidget {
+  final OsOperacao os;
+  final Map<String, ChecklistRecebimento> checklistsPorEquipamento;
+
+  const _FotosSection({
+    required this.os,
+    required this.checklistsPorEquipamento,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final List<FotoRecebimento> fotos = [];
+
+    for (final equipamento in os.equipamentos) {
+      final checklist = checklistsPorEquipamento[equipamento.id];
+      if (checklist != null && checklist.fotos.isNotEmpty) {
+        fotos.addAll(checklist.fotos);
+      }
+    }
+
+    if (fotos.isEmpty) return const SizedBox.shrink();
+
+    return _InfoSection(
+      title: 'Fotos',
+      children: [
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: fotos.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final foto = fotos[index];
+
+              return GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => Dialog(
+                      insetPadding: const EdgeInsets.all(12),
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: InteractiveViewer(
+                          child: Image.file(
+                            File(foto.path),
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    File(foto.path),
+                    width: 160,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 160,
+                      height: 100,
+                      color: AppColors.border,
+                      child: const Icon(Icons.broken_image, color: AppColors.mutedText),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 class _OperationSummary extends StatelessWidget {
   final String numeroOs;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/checklist_recebimento_model.dart';
 import '../../models/equipamento_operacao_model.dart';
+import '../../models/foto_recebimento_model.dart';
 import '../../models/os_operacao_model.dart';
 import '../../widgets/app_header.dart';
 import '../checklist/equipamento_checklist_screen.dart';

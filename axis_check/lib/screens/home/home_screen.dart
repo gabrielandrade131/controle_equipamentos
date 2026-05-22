@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../services/synchro_service.dart';
 import '../../widgets/app_header.dart';
 import '../os_list/os_list_screen.dart';
+import '../recebimentos/ultimos_recebimentos_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -59,6 +60,15 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => const OsListScreen(),
       ),
     ).then((_) => carregarResumo());
+  }
+
+  void abrirUltimosRecebimentos() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const UltimosRecebimentosScreen(),
+      ),
+    );
   }
 
   @override
@@ -144,16 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: abrirOsEmAndamento,
                   ),
                   _HomeActionItem(
-                    title: 'Pendências de envio',
-                    subtitle: 'Recebimentos aguardando sincronização',
-                    icon: Icons.cloud_sync_outlined,
-                    onTap: () {},
-                  ),
-                  _HomeActionItem(
                     title: 'Últimos recebimentos',
                     subtitle: 'Visualizar conferências realizadas',
                     icon: Icons.history_outlined,
-                    onTap: () {},
+                    onTap: abrirUltimosRecebimentos,
                     showDivider: false,
                   ),
                 ],

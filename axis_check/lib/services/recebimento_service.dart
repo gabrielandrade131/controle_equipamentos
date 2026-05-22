@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../core/http/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../models/checklist_recebimento_model.dart';
+import '../models/recebimento_resumo_model.dart';
 import '../models/os_operacao_model.dart';
 import '../models/equipamento_recebido_model.dart';
 
@@ -228,6 +229,34 @@ class RecebimentoService {
       debugPrint('ERRO AO CONSULTAR RECEBIMENTO DA OS: $e');
 
       return false;
+    }
+  }
+
+  Future<List<RecebimentoResumo>> listarUltimosRecebimentos({
+    bool usarMock = true,
+  }) async {
+    if (usarMock) {
+      return [];
+    }
+
+    try {
+      final response = await apiClient.axisDio().get('/recebimentos');
+      final data = response.data;
+
+      if (data is List) {
+        return data
+            .map(
+              (item) => RecebimentoResumo.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('ERRO AO LISTAR ULTIMOS RECEBIMENTOS: $e');
+      throw Exception('Erro ao buscar historico de recebimentos.');
     }
   }
 }

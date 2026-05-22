@@ -61,8 +61,10 @@ class RecebimentoService {
     required OsOperacao os,
     required Map<String, ChecklistRecebimento> checklistsPorEquipamento,
   }) {
-    final checklistsRecebidos = checklistsPorEquipamento.values
-        .where((checklist) => checklist.retornouFisicamente)
+    final checklistsRecebidos = os.equipamentos
+        .map((equipamento) => checklistsPorEquipamento[equipamento.id])
+        .where((checklist) => checklist != null && checklist!.retornouFisicamente)
+        .cast<ChecklistRecebimento>()
         .toList();
 
     return {
@@ -110,8 +112,10 @@ class RecebimentoService {
       MapEntry('dados', jsonEncode(payload)),
     );
 
-    final checklistsRecebidos = checklistsPorEquipamento.values
-        .where((checklist) => checklist.retornouFisicamente)
+    final checklistsRecebidos = os.equipamentos
+        .map((equipamento) => checklistsPorEquipamento[equipamento.id])
+        .where((checklist) => checklist != null && checklist!.retornouFisicamente)
+        .cast<ChecklistRecebimento>()
         .toList();
 
     for (final checklist in checklistsRecebidos) {

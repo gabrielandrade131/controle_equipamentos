@@ -80,6 +80,8 @@ class RecebimentoService {
       'equipamentos': checklistsRecebidos.map((checklist) {
         return {
           'equipamentoId': checklist.equipamentoId,
+          'equipamentoIdSynchro': checklist.equipamentoId,
+          'numeroOs': os.numeroOs,
           'tag': checklist.tag,
           'numeroSerie': checklist.numeroSerie,
           'retornouFisicamente': checklist.retornouFisicamente,

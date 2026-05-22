@@ -62,26 +62,66 @@ class _OsListScreenState extends State<OsListScreen> {
       final equipamentosRecebidos =
           await recebimentoService.listarEquipamentosRecebidos();
 
-      final tagsRecebidas = equipamentosRecebidos
-          .map((item) => item.tag.trim().toUpperCase())
-          .where((tag) => tag.isNotEmpty)
+      // Debug rápido
+      debugPrint('Recebidos no Axis: ${equipamentosRecebidos.length}');
+
+      for (final item in equipamentosRecebidos) {
+        debugPrint(
+          'RECEBIDO -> OS: ${item.numeroOs} | ID: ${item.equipamentoIdSynchro} | TAG: ${item.tag} | Série: ${item.numeroSerie}',
+        );
+      }
+
+      for (final os in resultadoSynchro) {
+        debugPrint('SYNCHRO -> OS ${os.numeroOs} | Equipamentos: ${os.equipamentos.length}');
+
+        for (final equipamento in os.equipamentos) {
+          debugPrint(
+            'PENDENTE SYNCHRO -> ID: ${equipamento.id} | TAG: ${equipamento.tag} | Série: ${equipamento.numeroSerie}',
+          );
+        }
+      }
+
+      final idsRecebidos = equipamentosRecebidos
+          .map((item) => item.equipamentoIdSynchro.trim())
+          .where((id) => id.isNotEmpty)
           .toSet();
 
-      final seriesRecebidas = equipamentosRecebidos
-          .map((item) => item.numeroSerie.trim().toUpperCase())
-          .where((serie) => serie.isNotEmpty)
+      final chavesTagRecebidas = equipamentosRecebidos
+          .map((item) {
+            final numeroOs = item.numeroOs.trim().toUpperCase();
+            final tag = item.tag.trim().toUpperCase();
+            return '$numeroOs|$tag';
+          })
+          .where((chave) => !chave.endsWith('|'))
+          .toSet();
+
+      final chavesSerieRecebidas = equipamentosRecebidos
+          .map((item) {
+            final numeroOs = item.numeroOs.trim().toUpperCase();
+            final serie = item.numeroSerie.trim().toUpperCase();
+            return '$numeroOs|$serie';
+          })
+          .where((chave) => !chave.endsWith('|'))
           .toSet();
 
       final osFiltradas = resultadoSynchro.map((os) {
+        final numeroOs = os.numeroOs.trim().toUpperCase();
+
         final equipamentosPendentes = os.equipamentos.where((equipamento) {
+          final equipamentoId = equipamento.id.trim();
           final tag = equipamento.tag.trim().toUpperCase();
           final serie = equipamento.numeroSerie.trim().toUpperCase();
 
-          final tagJaRecebida = tag.isNotEmpty && tagsRecebidas.contains(tag);
-          final serieJaRecebida =
-              serie.isNotEmpty && seriesRecebidas.contains(serie);
+          final recebidoPorId =
+              equipamentoId.isNotEmpty && idsRecebidos.contains(equipamentoId);
 
-          return !tagJaRecebida && !serieJaRecebida;
+          final recebidoPorTag =
+              tag.isNotEmpty && chavesTagRecebidas.contains('$numeroOs|$tag');
+
+          final recebidoPorSerie =
+              serie.isNotEmpty && chavesSerieRecebidas.contains('$numeroOs|$serie');
+
+          return !recebidoPorId && !recebidoPorTag && !recebidoPorSerie;
         }).toList();
 
         return os.copyWith(
@@ -101,7 +141,7 @@ class _OsListScreenState extends State<OsListScreen> {
       if (!mounted) return;
 
       setState(() {
-        erro = 'Não foi possível carregar as OS em andamento.';
+        erro = 'Erro ao carregar OS.';
         loading = false;
       });
     }

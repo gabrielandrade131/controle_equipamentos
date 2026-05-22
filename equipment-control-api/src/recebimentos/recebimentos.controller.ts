@@ -90,6 +90,11 @@ export class RecebimentosController {
     return this.recebimentosService.buscarPorNumeroOs(numeroOs);
   }
 
+  @Get('equipamentos-recebidos')
+  listarEquipamentosRecebidos() {
+    return this.recebimentosService.listarEquipamentosRecebidos();
+  }
+
   @Post(':id/reprocessar-synchro')
   reprocessarSynchro(@Param('id') id: string) {
     return this.recebimentosService.reprocessarSincronizacaoSynchro(id);

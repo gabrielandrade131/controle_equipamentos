@@ -46,25 +46,6 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
       },
     );
 
-    final jaRecebida = await recebimentoService.osJaFoiRecebida(
-      numeroOs: os.numeroOs,
-      usarMock: false,
-    );
-
-    if (!context.mounted) return;
-
-    if (jaRecebida) {
-      Navigator.pop(context);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('A OS ${os.numeroOs} já possui recebimento registrado.'),
-        ),
-      );
-
-      return;
-    }
-
     final sucesso = await recebimentoService.enviarRecebimento(
       os: os,
       checklistsPorEquipamento: checklistsPorEquipamento,

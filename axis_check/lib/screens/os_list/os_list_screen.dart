@@ -62,25 +62,6 @@ class _OsListScreenState extends State<OsListScreen> {
       final equipamentosRecebidos =
           await recebimentoService.listarEquipamentosRecebidos();
 
-      // Debug rápido
-      debugPrint('Recebidos no Axis: ${equipamentosRecebidos.length}');
-
-      for (final item in equipamentosRecebidos) {
-        debugPrint(
-          'RECEBIDO -> OS: ${item.numeroOs} | ID: ${item.equipamentoIdSynchro} | TAG: ${item.tag} | Série: ${item.numeroSerie}',
-        );
-      }
-
-      for (final os in resultadoSynchro) {
-        debugPrint('SYNCHRO -> OS ${os.numeroOs} | Equipamentos: ${os.equipamentos.length}');
-
-        for (final equipamento in os.equipamentos) {
-          debugPrint(
-            'PENDENTE SYNCHRO -> ID: ${equipamento.id} | TAG: ${equipamento.tag} | Série: ${equipamento.numeroSerie}',
-          );
-        }
-      }
-
       final idsRecebidos = equipamentosRecebidos
           .map((item) => item.equipamentoIdSynchro.trim())
           .where((id) => id.isNotEmpty)

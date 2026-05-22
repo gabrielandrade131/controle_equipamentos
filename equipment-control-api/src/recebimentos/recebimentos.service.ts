@@ -97,18 +97,6 @@ export class RecebimentosService {
     if (!dados.numeroOs) {
       throw new BadRequestException('Número da OS é obrigatório.');
     }
-    const recebimentoExistente =
-      await this.prisma.recebimentoOperacional.findFirst({
-        where: {
-          numeroOs: dados.numeroOs,
-        },
-      });
-
-    if (recebimentoExistente) {
-      throw new BadRequestException(
-        `A OS ${dados.numeroOs} já possui recebimento registrado.`,
-      );
-    }
 
     if (!Array.isArray(dados.equipamentos) || dados.equipamentos.length === 0) {
       throw new BadRequestException(
@@ -135,6 +123,44 @@ export class RecebimentosService {
       });
 
       for (const equipamento of dados.equipamentos) {
+        const filtrosRecebimentoEquipamento: Prisma.RecebimentoEquipamentoWhereInput[] = [];
+
+        if (equipamento.equipamentoId) {
+          filtrosRecebimentoEquipamento.push({
+            equipamentoIdSynchro: equipamento.equipamentoId.toString(),
+          });
+        }
+
+        if (equipamento.tag) {
+          filtrosRecebimentoEquipamento.push({
+            tag: equipamento.tag,
+          });
+        }
+
+        if (equipamento.numeroSerie) {
+          filtrosRecebimentoEquipamento.push({
+            numeroSerie: equipamento.numeroSerie,
+          });
+        }
+
+        const recebimentoEquipamentoExistente =
+          filtrosRecebimentoEquipamento.length
+            ? await tx.recebimentoEquipamento.findFirst({
+                where: {
+                  OR: filtrosRecebimentoEquipamento,
+                  recebimento: {
+                    numeroOs: dados.numeroOs,
+                  },
+                },
+              })
+            : null;
+
+        if (recebimentoEquipamentoExistente) {
+          throw new BadRequestException(
+            `O equipamento ${equipamento.tag ?? equipamento.numeroSerie ?? equipamento.equipamentoId} já foi recebido para a OS ${dados.numeroOs}.`,
+          );
+        }
+
         const filtrosEquipamento: Prisma.ManutencaoWhereInput[] = [];
 
         if (equipamento.tag) {
@@ -406,6 +432,56 @@ export class RecebimentosService {
       ultimoRecebimento: recebimentos[0],
       recebimentos,
     };
+  }
+
+  async listarEquipamentosRecebidos() {
+    const equipamentos = await this.prisma.recebimentoEquipamento.findMany({
+      where: {
+        retornouFisicamente: true,
+      },
+      select: {
+        equipamentoIdSynchro: true,
+        tag: true,
+        numeroSerie: true,
+        recebimento: {
+          select: {
+            numeroOs: true,
+          },
+        },
+      },
+      orderBy: {
+        criadoEm: 'desc',
+      },
+    });
+
+    const unicos = new Map<
+      string,
+      {
+        numeroOs: string;
+        equipamentoIdSynchro: string;
+        tag: string;
+        numeroSerie: string;
+      }
+    >();
+
+    for (const equipamento of equipamentos) {
+      const numeroOs = equipamento.recebimento.numeroOs ?? '';
+      const equipamentoIdSynchro = equipamento.equipamentoIdSynchro ?? '';
+      const tag = equipamento.tag ?? '';
+      const numeroSerie = equipamento.numeroSerie ?? '';
+      const chave = `${numeroOs}|${equipamentoIdSynchro}|${tag}|${numeroSerie}`;
+
+      if (!unicos.has(chave)) {
+        unicos.set(chave, {
+          numeroOs,
+          equipamentoIdSynchro,
+          tag,
+          numeroSerie,
+        });
+      }
+    }
+
+    return Array.from(unicos.values());
   }
 
   async reprocessarSincronizacaoSynchro(id: string) {

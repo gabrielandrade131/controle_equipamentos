@@ -65,11 +65,6 @@ class RecebimentoService {
         .where((checklist) => checklist.retornouFisicamente)
         .toList();
 
-    final equipamentosRecebidos = os.equipamentos.where((equipamento) {
-      final checklist = checklistsPorEquipamento[equipamento.id];
-      return checklist?.retornouFisicamente == true;
-    }).toList();
-
     return {
       'osId': os.id,
       'numeroOs': os.numeroOs,

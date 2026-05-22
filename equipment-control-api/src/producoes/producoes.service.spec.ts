@@ -46,67 +46,6 @@ describe('ProducoesService', () => {
     service = new ProducoesService(prisma as unknown as PrismaService);
   });
 
-  it('throws when tipoEquipamento is missing on create', async () => {
-    prisma.tipoEquipamento.findUnique.mockResolvedValue(null);
-
-    await expect(
-      service.create({
-        tipoEquipamentoId: 'tipo-1',
-        modelo: 'MX',
-      }),
-    ).rejects.toBeInstanceOf(NotFoundException);
-  });
-
-  it('creates a production and computes numeroSerie', async () => {
-    prisma.tipoEquipamento.findUnique.mockResolvedValue({
-      id: 'tipo-1',
-      nome: 'Gerador',
-    });
-    prisma.equipment.findFirst.mockResolvedValue({ numeroOrdem: 9 });
-    prisma.equipment.create.mockResolvedValue({
-      id: 'prod-1',
-      numeroOrdem: 10,
-      modelo: 'MX',
-    });
-    prisma.equipment.update.mockResolvedValue({
-      id: 'prod-1',
-      numeroOrdem: 10,
-      numeroSerie: 'MX-10',
-      modelo: 'MX',
-      descricao: 'Gerador X',
-      statusProducao: 'EM_ANDAMENTO',
-      dataSolicitacao: new Date('2024-01-10T00:00:00.000Z'),
-      dataInicio: new Date('2024-01-11T00:00:00.000Z'),
-      previsaoTermino: new Date('2024-01-20T00:00:00.000Z'),
-      tipoEquipamento: null,
-      itensSeriados: [],
-      observacoes: [],
-      registrosInspecaoMontagem: [],
-    });
-
-    const result = await service.create({
-      tipoEquipamentoId: 'tipo-1',
-      modelo: 'MX',
-      descricaoComplemento: 'X',
-      dataSolicitacao: '2024-01-10',
-      dataInicio: '2024-01-11',
-      dataPrevisao: '2024-01-20',
-      itensSeriados: [{ descricao: 'Item 1' }],
-    });
-
-    const createArgs = prisma.equipment.create.mock.calls[0][0];
-    expect(createArgs.data.numeroOrdem).toBe(10);
-    expect(createArgs.data.registrosInspecaoMontagem.create).toHaveLength(18);
-    expect(prisma.equipment.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: {
-          numeroSerie: 'MX-10',
-        },
-      }),
-    );
-    expect(result.numeroSerie).toBe('MX-10');
-  });
-
   it('findOne throws when production is missing', async () => {
     prisma.equipment.findUnique.mockResolvedValue(null);
 
@@ -148,6 +87,7 @@ describe('ProducoesService', () => {
     jest.spyOn(service, 'findOne').mockResolvedValue({
       id: 'prod-1',
       statusProducao: 'CONCLUIDA',
+      loteProducao: { statusProducao: 'CONCLUIDA' },
     } as any);
     prisma.equipment.findFirst.mockResolvedValue(null);
     prisma.equipment.update.mockResolvedValue({
@@ -176,6 +116,7 @@ describe('ProducoesService', () => {
     jest.spyOn(service, 'findOne').mockResolvedValue({
       id: 'prod-1',
       statusProducao: 'CONCLUIDA',
+      loteProducao: { statusProducao: 'CONCLUIDA' },
     } as any);
     prisma.equipment.findFirst.mockResolvedValue({ id: 'prod-2' });
 

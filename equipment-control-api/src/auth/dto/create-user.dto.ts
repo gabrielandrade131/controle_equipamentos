@@ -12,6 +12,6 @@ export class CreateUserDto {
 
   @ApiProperty({ example: 'senhaSegura123' })
   @IsString()
-  @MinLength(6)
+  @MinLength(5)
   senha: string;
 }

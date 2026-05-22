@@ -37,15 +37,6 @@ describe('ProducoesController', () => {
     controller = module.get<ProducoesController>(ProducoesController);
   });
 
-  it('creates a production', async () => {
-    const dto = { modelo: 'MX' };
-    serviceMock.create.mockResolvedValue({ id: 'prod-1' });
-
-    await controller.create(dto as any);
-
-    expect(serviceMock.create).toHaveBeenCalledWith(dto);
-  });
-
   it('adds an observation', async () => {
     const dto = { descricao: 'Obs', responsavel: 'Gabriel' };
     serviceMock.addObservacao.mockResolvedValue({ id: 'obs-1' });

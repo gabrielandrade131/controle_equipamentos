@@ -82,8 +82,8 @@ const CadastroUsuarios: React.FC = () => {
       return false;
     }
 
-    if (formData.senha.length < 6) {
-      showAlert('Senha deve ter no mínimo 6 caracteres', 'warning');
+    if (formData.senha.length < 5) {
+      showAlert('Senha deve ter no mínimo 5 caracteres', 'warning');
       return false;
     }
 
@@ -175,7 +175,7 @@ const CadastroUsuarios: React.FC = () => {
               name="senha"
               value={formData.senha}
               onChange={handleInputChange}
-              placeholder="Digite a senha (mínimo 6 caracteres)"
+              placeholder="Digite a senha (mínimo 5 caracteres)"
               disabled={loading}
               required
             />

@@ -60,7 +60,9 @@ class _OsListScreenState extends State<OsListScreen> {
       );
 
       final equipamentosRecebidos =
-          await recebimentoService.listarEquipamentosRecebidos();
+          await recebimentoService.listarEquipamentosRecebidos(
+        usarMock: false,
+      );
 
       final idsRecebidos = equipamentosRecebidos
           .map((item) => item.equipamentoIdSynchro.trim())

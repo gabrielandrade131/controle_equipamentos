@@ -173,6 +173,8 @@ export class RecebimentosService {
           ? await tx.manutencao.findFirst({
               where: {
                 OR: filtrosEquipamento,
+                ativo: true,
+                excluidoEm: null,
                 statusManutencao: {
                   not: StatusManutencao.CONCLUIDA,
                 },

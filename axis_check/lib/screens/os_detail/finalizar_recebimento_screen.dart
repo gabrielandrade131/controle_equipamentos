@@ -46,7 +46,7 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
       },
     );
 
-    final sucesso = await recebimentoService.enviarRecebimento(
+    final erroEnvio = await recebimentoService.enviarRecebimento(
       os: os,
       checklistsPorEquipamento: checklistsPorEquipamento,
       usarMock: false,
@@ -56,7 +56,7 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
 
     Navigator.pop(context);
 
-    if (sucesso) {
+    if (erroEnvio == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Recebimento enviado para o Axis com sucesso.'),
@@ -68,8 +68,8 @@ class FinalizarRecebimentoScreen extends StatelessWidget {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Erro ao enviar recebimento. Tente novamente.'),
+      SnackBar(
+        content: Text(erroEnvio),
       ),
     );
   }

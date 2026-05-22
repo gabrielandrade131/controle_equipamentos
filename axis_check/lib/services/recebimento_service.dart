@@ -17,7 +17,7 @@ class RecebimentoService {
     apiClient = ApiClient(tokenStorage: this.tokenStorage);
   }
 
-  Future<bool> enviarRecebimento({
+  Future<String?> enviarRecebimento({
     required OsOperacao os,
     required Map<String, ChecklistRecebimento> checklistsPorEquipamento,
     bool usarMock = true,
@@ -33,7 +33,7 @@ class RecebimentoService {
 
       await Future.delayed(const Duration(seconds: 1));
 
-      return true;
+      return null;
     }
 
     try {
@@ -50,10 +50,27 @@ class RecebimentoService {
             ),
           );
 
-      return true;
+      return null;
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String? mensagem;
+
+      if (data is Map<String, dynamic>) {
+        final message = data['message'];
+        if (message is String && message.trim().isNotEmpty) {
+          mensagem = message.trim();
+        } else if (message is List && message.isNotEmpty) {
+          mensagem = message.join('\n');
+        } else if (data['error'] is String) {
+          mensagem = data['error'].toString();
+        }
+      }
+
+      debugPrint('ERRO AO ENVIAR RECEBIMENTO: ${mensagem ?? e.toString()}');
+      return mensagem ?? 'Erro ao enviar recebimento. Tente novamente.';
     } catch (e) {
       debugPrint('ERRO AO ENVIAR RECEBIMENTO: $e');
-      return false;
+      return 'Erro ao enviar recebimento. Tente novamente.';
     }
   }
 
@@ -63,7 +80,7 @@ class RecebimentoService {
   }) {
     final checklistsRecebidos = os.equipamentos
         .map((equipamento) => checklistsPorEquipamento[equipamento.id])
-        .where((checklist) => checklist != null && checklist!.retornouFisicamente)
+        .where((checklist) => checklist != null && checklist.retornouFisicamente)
         .cast<ChecklistRecebimento>()
         .toList();
 
@@ -114,7 +131,7 @@ class RecebimentoService {
 
     final checklistsRecebidos = os.equipamentos
         .map((equipamento) => checklistsPorEquipamento[equipamento.id])
-        .where((checklist) => checklist != null && checklist!.retornouFisicamente)
+        .where((checklist) => checklist != null && checklist.retornouFisicamente)
         .cast<ChecklistRecebimento>()
         .toList();
 

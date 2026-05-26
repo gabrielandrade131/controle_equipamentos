@@ -326,6 +326,40 @@
   word-break: break-word;
 }
 
+.fotos-recebimento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.foto-recebimento-item {
+  margin: 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.foto-recebimento-item img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.foto-recebimento-item figcaption {
+  padding: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.foto-recebimento-item span {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #333;
+}
+
 @media (max-width: 768px) {
   .page-content {
     grid-template-columns: 1fr;

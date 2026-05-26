@@ -12,9 +12,8 @@ class RecebimentoService {
   final TokenStorage tokenStorage;
   late final ApiClient apiClient;
 
-  RecebimentoService({
-    TokenStorage? tokenStorage,
-  }) : tokenStorage = tokenStorage ?? TokenStorage() {
+  RecebimentoService({TokenStorage? tokenStorage})
+    : tokenStorage = tokenStorage ?? TokenStorage() {
     apiClient = ApiClient(tokenStorage: this.tokenStorage);
   }
 
@@ -44,12 +43,10 @@ class RecebimentoService {
       );
 
       await apiClient.axisDio().post(
-            '/recebimentos',
-            data: formData,
-            options: Options(
-              contentType: 'multipart/form-data',
-            ),
-          );
+        '/recebimentos',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
 
       return null;
     } on DioException catch (e) {
@@ -81,7 +78,9 @@ class RecebimentoService {
   }) {
     final checklistsRecebidos = os.equipamentos
         .map((equipamento) => checklistsPorEquipamento[equipamento.id])
-        .where((checklist) => checklist != null && checklist.retornouFisicamente)
+        .where(
+          (checklist) => checklist != null && checklist.retornouFisicamente,
+        )
         .cast<ChecklistRecebimento>()
         .toList();
 
@@ -93,12 +92,25 @@ class RecebimentoService {
       'status': os.status,
       'dataRecebimento': DateTime.now().toIso8601String(),
       'equipamentos': checklistsRecebidos.map((checklist) {
+        final equipamento = os.equipamentos.firstWhere(
+          (item) => item.id == checklist.equipamentoId,
+          orElse: () => throw StateError(
+            'Equipamento ${checklist.equipamentoId} não encontrado na OS ${os.numeroOs}.',
+          ),
+        );
+
         return {
           'equipamentoId': checklist.equipamentoId,
           'equipamentoIdSynchro': checklist.equipamentoId,
           'numeroOs': os.numeroOs,
           'tag': checklist.tag,
           'numeroSerie': checklist.numeroSerie,
+          'tipoEquipamento': checklist.tipoEquipamento.isNotEmpty
+              ? checklist.tipoEquipamento
+              : equipamento.tipoEquipamento,
+          'modelo': checklist.modelo.isNotEmpty
+              ? checklist.modelo
+              : equipamento.modelo,
           'retornouFisicamente': checklist.retornouFisicamente,
           'equipamentoConferido': checklist.equipamentoConferido,
           'possuiAvaria': checklist.possuiAvaria,
@@ -126,13 +138,13 @@ class RecebimentoService {
 
     final formData = FormData();
 
-    formData.fields.add(
-      MapEntry('dados', jsonEncode(payload)),
-    );
+    formData.fields.add(MapEntry('dados', jsonEncode(payload)));
 
     final checklistsRecebidos = os.equipamentos
         .map((equipamento) => checklistsPorEquipamento[equipamento.id])
-        .where((checklist) => checklist != null && checklist.retornouFisicamente)
+        .where(
+          (checklist) => checklist != null && checklist.retornouFisicamente,
+        )
         .cast<ChecklistRecebimento>()
         .toList();
 
@@ -145,17 +157,13 @@ class RecebimentoService {
             'fotos',
             await MultipartFile.fromFile(
               foto.path,
-              filename:
-                  '${checklist.tag}_${foto.tipo}_${i + 1}.jpg',
+              filename: '${checklist.tag}_${foto.tipo}_${i + 1}.jpg',
             ),
           ),
         );
 
         formData.fields.add(
-          MapEntry(
-            'foto_${checklist.tag}_${i + 1}_tipo',
-            foto.tipo,
-          ),
+          MapEntry('foto_${checklist.tag}_${i + 1}_tipo', foto.tipo),
         );
 
         formData.fields.add(
@@ -166,10 +174,7 @@ class RecebimentoService {
         );
 
         formData.fields.add(
-          MapEntry(
-            'foto_${checklist.tag}_${i + 1}_tag',
-            checklist.tag,
-          ),
+          MapEntry('foto_${checklist.tag}_${i + 1}_tag', checklist.tag),
         );
 
         formData.fields.add(
@@ -184,7 +189,9 @@ class RecebimentoService {
     return formData;
   }
 
-  Future<List<EquipamentoRecebido>> listarEquipamentosRecebidos({bool usarMock = true}) async {
+  Future<List<EquipamentoRecebido>> listarEquipamentosRecebidos({
+    bool usarMock = true,
+  }) async {
     if (usarMock) {
       return [];
     }
@@ -198,7 +205,10 @@ class RecebimentoService {
 
       if (data is List) {
         return data
-            .map((item) => EquipamentoRecebido.fromJson(Map<String, dynamic>.from(item)))
+            .map(
+              (item) =>
+                  EquipamentoRecebido.fromJson(Map<String, dynamic>.from(item)),
+            )
             .toList();
       }
 
@@ -219,8 +229,8 @@ class RecebimentoService {
 
     try {
       final response = await apiClient.axisDio().get(
-            '/recebimentos/os/$numeroOs',
-          );
+        '/recebimentos/os/$numeroOs',
+      );
 
       final data = response.data;
 
@@ -246,9 +256,8 @@ class RecebimentoService {
       if (data is List) {
         return data
             .map(
-              (item) => RecebimentoResumo.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
+              (item) =>
+                  RecebimentoResumo.fromJson(Map<String, dynamic>.from(item)),
             )
             .toList();
       }

@@ -19,6 +19,36 @@ export class RecebimentosService {
     private readonly synchroIntegrationService: SynchroIntegrationService,
   ) {}
 
+  private normalizarTexto(value: unknown): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const texto = String(value).trim();
+    return texto.length > 0 ? texto : null;
+  }
+
+  private normalizarEquipamentoPayload(equipamento: any) {
+    return {
+      ...equipamento,
+      equipamentoId:
+        this.normalizarTexto(equipamento?.equipamentoId) ??
+        this.normalizarTexto(equipamento?.equipamentoIdSynchro),
+      tag: this.normalizarTexto(equipamento?.tag),
+      numeroSerie: this.normalizarTexto(equipamento?.numeroSerie),
+      tipoEquipamento:
+        this.normalizarTexto(equipamento?.tipoEquipamento) ??
+        this.normalizarTexto(equipamento?.tipoEquipamentoNome) ??
+        this.normalizarTexto(equipamento?.tipo) ??
+        this.normalizarTexto(equipamento?.nomeTipoEquipamento),
+      modelo:
+        this.normalizarTexto(equipamento?.modelo) ??
+        this.normalizarTexto(equipamento?.modeloEquipamento) ??
+        this.normalizarTexto(equipamento?.descricaoModelo),
+      observacao: this.normalizarTexto(equipamento?.observacao),
+    };
+  }
+
   private validarEquipamentosRecebidos(
     equipamentos: any[],
     arquivos: Express.Multer.File[],
@@ -77,6 +107,18 @@ export class RecebimentosService {
           `O equipamento ${identificador} possui avaria e precisa ter foto da avaria.`,
         );
       }
+
+      if (!equipamento.tipoEquipamento) {
+        throw new BadRequestException(
+          `O equipamento ${identificador} precisa informar o tipo de equipamento.`,
+        );
+      }
+
+      if (!equipamento.modelo) {
+        throw new BadRequestException(
+          `O equipamento ${identificador} precisa informar o modelo.`,
+        );
+      }
     }
   }
 
@@ -104,7 +146,11 @@ export class RecebimentosService {
       );
     }
 
-    this.validarEquipamentosRecebidos(dados.equipamentos, arquivos);
+    const equipamentosNormalizados = dados.equipamentos.map((equipamento: any) =>
+      this.normalizarEquipamentoPayload(equipamento),
+    );
+
+    this.validarEquipamentosRecebidos(equipamentosNormalizados, arquivos);
 
     const recebimentoCriado = await this.prisma.$transaction(async (tx) => {
       const recebimento = await tx.recebimentoOperacional.create({
@@ -122,7 +168,7 @@ export class RecebimentosService {
         },
       });
 
-      for (const equipamento of dados.equipamentos) {
+      for (const equipamento of equipamentosNormalizados) {
         const filtrosRecebimentoEquipamento: Prisma.RecebimentoEquipamentoWhereInput[] = [];
 
         if (equipamento.equipamentoId) {
@@ -191,8 +237,8 @@ export class RecebimentosService {
         const manutencao = await tx.manutencao.create({
           data: {
             origem: OrigemManutencao.APP_RECEBIMENTO,
-            tipoEquipamentoNome: equipamento.tipoEquipamento ?? null,
-            modeloEquipamento: equipamento.modelo ?? null,
+            tipoEquipamentoNome: equipamento.tipoEquipamento,
+            modeloEquipamento: equipamento.modelo,
             tag: equipamento.tag ?? null,
             situacaoEquipamento: 'Retornou para a base',
             dataRetornoBase: dados.dataRecebimento
@@ -210,8 +256,8 @@ export class RecebimentosService {
             equipamentoIdSynchro: equipamento.equipamentoId?.toString() ?? null,
             tag: equipamento.tag ?? null,
             numeroSerie: equipamento.numeroSerie ?? null,
-            tipoEquipamento: equipamento.tipoEquipamento ?? null,
-            modelo: equipamento.modelo ?? null,
+            tipoEquipamento: equipamento.tipoEquipamento,
+            modelo: equipamento.modelo,
             retornouFisicamente: equipamento.retornouFisicamente ?? false,
             equipamentoConferido: equipamento.equipamentoConferido ?? false,
             possuiAvaria: equipamento.possuiAvaria ?? false,
@@ -267,7 +313,7 @@ export class RecebimentosService {
           osId: dados.osId?.toString() ?? null,
           numeroOs: dados.numeroOs,
           dataRecebimento: dados.dataRecebimento ?? new Date().toISOString(),
-          equipamentos: dados.equipamentos.map((equipamento) => ({
+          equipamentos: equipamentosNormalizados.map((equipamento) => ({
             equipamentoId: equipamento.equipamentoId?.toString() ?? null,
             tag: equipamento.tag ?? null,
             numeroSerie: equipamento.numeroSerie ?? null,

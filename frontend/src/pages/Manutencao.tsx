@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoManutencao';
 import { ModalEditarDetalhesManutencao } from '../components/ModalEditarDetalhesManutencao';
 import { AlertModal } from '../components/AlertModal';
 import { FilterPanel } from '../components/FilterPanel';
-import { useManutencao } from '../hooks/useManutencao';
+import { FotoRecebimentoManutencao, useManutencao } from '../hooks/useManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import { useFilters } from '../hooks/useFilters';
-import { InspecaoManutencao, criarInspecaoVazia } from '../types/manutencao';
+import { criarInspecaoVazia } from '../constants/inspecaoManutencao';
+import { InspecaoManutencao } from '../types/manutencao';
 import { buildSelectOptions } from '../utils/filterOptions';
 import './Manutencao.css';
 
@@ -27,7 +28,9 @@ export const Manutencao: React.FC = () => {
   const [selected, setSelected] = useState<SelectedInspecao | null>(null);
   const [modo, setModo] = useState<'lista' | 'editar-formulario' | 'editar-detalhes' | 'editar-inspecao' | 'criar-nova'>('lista');
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
-  const { historico, atualizarInspecao } = useManutencao();
+  const [fotosRecebimento, setFotosRecebimento] = useState<FotoRecebimentoManutencao[]>([]);
+  const [carregandoFotos, setCarregandoFotos] = useState(false);
+  const { historico, atualizarInspecao, buscarFotosRecebimento } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
   const { filters, updateFilters } = useFilters('manutencao-filters', {});
   const tagOptions = useMemo(
@@ -52,6 +55,32 @@ export const Manutencao: React.FC = () => {
       return true;
     });
   }, [historico, filters]);
+
+  useEffect(() => {
+    let ativo = true;
+
+    if (!selected?.id) {
+      setFotosRecebimento([]);
+      setCarregandoFotos(false);
+      return;
+    }
+
+    setCarregandoFotos(true);
+    buscarFotosRecebimento(selected.id)
+      .then((fotos) => {
+        if (ativo) setFotosRecebimento(fotos);
+      })
+      .catch(() => {
+        if (ativo) setFotosRecebimento([]);
+      })
+      .finally(() => {
+        if (ativo) setCarregandoFotos(false);
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [selected?.id, buscarFotosRecebimento]);
 
   const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
     setSelected({
@@ -158,7 +187,7 @@ export const Manutencao: React.FC = () => {
       <div className="page-header">
         <h2>Manutenção</h2>
         <div className="page-toolbar">
-          <button className="btn-primary" onClick={() => setModo('criar-nova')}>Gerar Ordem de Produção</button>
+          <button className="btn-primary" onClick={() => setModo('criar-nova')}>Gerar Ordem de Manutenção</button>
         </div>
       </div>
 
@@ -220,6 +249,10 @@ export const Manutencao: React.FC = () => {
                   <p>{selected.data.tag || '-'}</p>
                 </div>
                 <div className="detail-item">
+                  <label>Tipo de Equipamento:</label>
+                  <p>{selected.data.tipoEquipamento || '-'}</p>
+                </div>
+                <div className="detail-item">
                   <label>Fabricante:</label>
                   <p>{selected.data.fabricante || '-'}</p>
                 </div>
@@ -259,6 +292,26 @@ export const Manutencao: React.FC = () => {
                   <label>Dias em Manutenção:</label>
                   <p>{selected.data.diasManutencao ?? '-'}</p>
                 </div>
+              </div>
+
+              <div className="documents-section">
+                <h3>Fotos do Recebimento (Axis Check)</h3>
+                {carregandoFotos ? (
+                  <p className="sem-observacoes">Carregando fotos...</p>
+                ) : fotosRecebimento.length > 0 ? (
+                  <div className="fotos-recebimento-grid">
+                    {fotosRecebimento.map((foto) => (
+                      <figure key={foto.id} className="foto-recebimento-item">
+                        <img src={foto.url} alt={`${foto.tipoFoto} - ${selected.data.tag || 'equipamento'}`} loading="lazy" />
+                        <figcaption>
+                          <span>{foto.tipoFoto}</span>
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="sem-observacoes">Nenhuma foto de recebimento vinculada.</p>
+                )}
               </div>
 
               <div className="documents-section">

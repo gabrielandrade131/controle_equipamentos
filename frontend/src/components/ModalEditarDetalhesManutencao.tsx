@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axiosInstance from '../services/axiosConfig';
 import { InspecaoManutencao, ObservacaoHistorico } from '../types/manutencao';
+import { TipoEquipamento } from '../types/producao';
 import './ModalEditarDetalhesManutencao.css';
 
 interface ModalEditarDetalhesManutencaoProps {
@@ -19,6 +21,19 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
 }) => {
   const [formData, setFormData] = useState<InspecaoManutencao>(inspecao);
   const [novaObservacao, setNovaObservacao] = useState('');
+  const [tiposEquipamento, setTiposEquipamento] = useState<TipoEquipamento[]>([]);
+
+  useEffect(() => {
+    axiosInstance
+      .get<TipoEquipamento[]>('/tipos-equipamento')
+      .then((response) => {
+        setTiposEquipamento(response.data.filter((tipo) => tipo.ativo));
+      })
+      .catch((error) => {
+        console.error('Erro ao carregar tipos de equipamento:', error);
+        setTiposEquipamento([]);
+      });
+  }, []);
 
   const handleInputChange = (campo: keyof InspecaoManutencao, valor: any) => {
     setFormData((prev) => ({
@@ -84,6 +99,21 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
                 readOnly={!isCreating}
                 placeholder={isCreating ? 'Digite a TAG' : '-'}
               />
+            </div>
+
+            <div className={isCreating ? 'form-group' : 'form-group'}>
+              <label>Tipo de equipamento</label>
+              <select
+                value={formData.tipoEquipamento || ''}
+                onChange={(e) => handleInputChange('tipoEquipamento', e.target.value)}
+              >
+                <option value="">Selecione o tipo</option>
+                {tiposEquipamento.map((tipo) => (
+                  <option key={tipo.id} value={tipo.nome}>
+                    {tipo.nome}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className={isCreating ? 'form-group' : 'form-group read-only'}>

@@ -4,6 +4,8 @@ class ChecklistRecebimento {
   final String equipamentoId;
   final String tag;
   final String numeroSerie;
+  final String tipoEquipamento;
+  final String modelo;
   final bool retornouFisicamente;
   final bool equipamentoConferido;
   final bool possuiAvaria;
@@ -15,6 +17,8 @@ class ChecklistRecebimento {
     required this.equipamentoId,
     required this.tag,
     required this.numeroSerie,
+    required this.tipoEquipamento,
+    required this.modelo,
     required this.retornouFisicamente,
     required this.equipamentoConferido,
     required this.possuiAvaria,

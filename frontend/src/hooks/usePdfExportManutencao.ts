@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { aplicarChecklistManutencao } from '../constants/inspecaoManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
 
 type ItemChecklist = {
@@ -16,6 +17,9 @@ export const usePdfExportManutencao = () => {
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
+      });
+      const inspecaoChecklist = aplicarChecklistManutencao(inspecao, {
+        tipoEquipamento: inspecao.tipoEquipamento,
       });
 
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -204,15 +208,15 @@ export const usePdfExportManutencao = () => {
       sectionHeader('DADOS DA MANUTENÇÃO');
       drawDataGrid();
 
-      drawSection('CERTIFICAÇÕES E DOCUMENTAÇÃO', inspecao.certificacoes);
-      drawSection('ESTRUTURA E INTEGRIDADE MECÂNICA', inspecao.estruturaMecanica);
-      drawSection('SISTEMA HIDRÁULICO', inspecao.sistemaHidraulico);
-      drawSection('SISTEMA PNEUMÁTICO', inspecao.sistemaPneumatico);
-      drawSection('SISTEMA ELÉTRICO', inspecao.sistemaEletrico);
-      drawSection('DISPOSITIVOS DE SEGURANÇA', inspecao.dispositivoSeguranca);
-      drawSection('COMPONENTES OPERACIONAIS', inspecao.componentesOperacionais);
-      drawSection('ACESSÓRIOS E ITENS ESPECÍFICOS', inspecao.acessorios);
-      drawSection('TESTES OPERACIONAIS', inspecao.testesOperacionais);
+      drawSection('CERTIFICAÇÕES E DOCUMENTAÇÃO', inspecaoChecklist.certificacoes);
+      drawSection('ESTRUTURA E INTEGRIDADE MECÂNICA', inspecaoChecklist.estruturaMecanica);
+      drawSection('SISTEMA HIDRÁULICO', inspecaoChecklist.sistemaHidraulico);
+      drawSection('SISTEMA PNEUMÁTICO', inspecaoChecklist.sistemaPneumatico);
+      drawSection('SISTEMA ELÉTRICO', inspecaoChecklist.sistemaEletrico);
+      drawSection('DISPOSITIVOS DE SEGURANÇA', inspecaoChecklist.dispositivoSeguranca);
+      drawSection('COMPONENTES OPERACIONAIS', inspecaoChecklist.componentesOperacionais);
+      drawSection('ACESSÓRIOS E ITENS ESPECÍFICOS', inspecaoChecklist.acessorios);
+      drawSection('TESTES OPERACIONAIS', inspecaoChecklist.testesOperacionais);
 
       sectionHeader('AVALIAÇÃO FINAL');
       ensureSpace(10);

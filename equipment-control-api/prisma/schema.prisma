@@ -140,6 +140,7 @@ model Manutencao {
   dataInicio              DateTime?
   previsaoTermino         DateTime?
   dataTermino             DateTime?
+  
 
   statusManutencao        StatusManutencao    @default(EM_QUARENTENA)
   avaliacaoFinalConforme  Boolean?

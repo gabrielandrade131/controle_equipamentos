@@ -1,14 +1,42 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
-import { InspecaoManutencao, StatusManutencao, criarInspecaoVazia } from '../types/manutencao';
+import { criarInspecaoVazia } from '../constants/inspecaoManutencao';
+import { InspecaoManutencao, StatusManutencao } from '../types/manutencao';
 
 type ApiListResponse<T> = {
   data: T[];
 };
 
+type RecebimentoManutencaoResponse = {
+  fotos?: Array<{
+    id: string;
+    tipoFoto: string;
+    nomeArquivo: string;
+    caminhoArquivo: string;
+  }>;
+};
+
+export type FotoRecebimentoManutencao = {
+  id: string;
+  tipoFoto: string;
+  nomeArquivo: string;
+  url: string;
+};
+
 const toDateInput = (value?: string | null, fallbackToday = true) => {
   if (!value) return fallbackToday ? new Date().toISOString().split('T')[0] : '';
   return value.split('T')[0];
+};
+
+const toAssetUrl = (path: string) => {
+  if (!path) return '';
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith('data:')) return path;
+
+  const baseUrl = String(axiosInstance.defaults.baseURL || '');
+  const apiOrigin = baseUrl.replace(/\/api\/?$/, '');
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${apiOrigin}${normalizedPath}`;
 };
 
 const parseObservacoesDiarias = (diagnostico: any) => {
@@ -48,6 +76,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     dataRetornoBase: toDateInput(manutencao.dataRetornoBase, false),
     previsaoTermino: toDateInput(manutencao.previsaoTermino, false),
     localManutencao: manutencao.origem === 'SYNCHRO' ? 'Retorno Synchro' : '',
+    tipoEquipamento: manutencao.tipoEquipamentoNome ?? '',
     fabricante: manutencao.tipoEquipamentoNome ?? '',
     modelo: manutencao.modeloEquipamento ?? '',
     tag: manutencao.tag ?? '',
@@ -67,7 +96,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 };
 
 const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
-  tipoEquipamentoNome: inspecao.fabricante || undefined,
+  tipoEquipamentoNome: inspecao.tipoEquipamento || inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
   tag: inspecao.tag || undefined,
   situacaoEquipamento: inspecao.destino || 'Manutenção manual',
@@ -109,6 +138,20 @@ export const useManutencao = () => {
     carregarManutencoes();
   }, []);
 
+  const buscarFotosRecebimento = useCallback(async (id: string): Promise<FotoRecebimentoManutencao[]> => {
+    const response = await axiosInstance.get<RecebimentoManutencaoResponse>(
+      `/manutencoes/${id}/recebimento`,
+    );
+    const fotos = Array.isArray(response.data?.fotos) ? response.data.fotos : [];
+
+    return fotos.map((foto) => ({
+      id: foto.id,
+      tipoFoto: foto.tipoFoto,
+      nomeArquivo: foto.nomeArquivo,
+      url: toAssetUrl(foto.caminhoArquivo),
+    }));
+  }, []);
+
   const adicionarInspecao = async (inspecao: InspecaoManutencao) => {
     const response = await axiosInstance.post('/manutencoes', mapInspecaoToApi(inspecao));
     const novaInspecao = mapApiToInspecao(response.data);
@@ -137,5 +180,6 @@ export const useManutencao = () => {
     adicionarInspecao,
     atualizarInspecao,
     removerInspecao,
+    buscarFotosRecebimento,
   };
 };

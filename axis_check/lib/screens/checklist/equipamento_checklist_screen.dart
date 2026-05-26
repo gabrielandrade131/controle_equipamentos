@@ -10,10 +10,7 @@ import '../../widgets/app_header.dart';
 class EquipamentoChecklistScreen extends StatefulWidget {
   final EquipamentoOperacao equipamento;
 
-  const EquipamentoChecklistScreen({
-    super.key,
-    required this.equipamento,
-  });
+  const EquipamentoChecklistScreen({super.key, required this.equipamento});
 
   @override
   State<EquipamentoChecklistScreen> createState() =>
@@ -76,11 +73,9 @@ class _EquipamentoChecklistScreenState
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Foto $tipo adicionada.'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Foto $tipo adicionada.')));
   }
 
   void salvarChecklist() {
@@ -99,6 +94,8 @@ class _EquipamentoChecklistScreenState
       equipamentoId: widget.equipamento.id,
       tag: widget.equipamento.tag,
       numeroSerie: widget.equipamento.numeroSerie,
+      tipoEquipamento: widget.equipamento.tipoEquipamento,
+      modelo: widget.equipamento.modelo,
       retornouFisicamente: retornouFisicamente,
       equipamentoConferido: equipamentoConferido,
       possuiAvaria: possuiAvaria,
@@ -160,83 +157,77 @@ class _EquipamentoChecklistScreenState
 
                 const SizedBox(height: 26),
 
-                _SectionTitle(
-                  title: 'Equipamento',
+                _SectionTitle(title: 'Equipamento'),
+                const SizedBox(height: 10),
+                _InfoLine(label: 'Modelo', value: equipamento.modelo),
+                _InfoLine(label: 'Série', value: equipamento.numeroSerie),
+                _InfoLine(
+                  label: 'Situação',
+                  value: equipamento.situacaoAtual,
+                  showDivider: false,
                 ),
-                    const SizedBox(height: 10),
-                    _InfoLine(label: 'Modelo', value: equipamento.modelo),
-                    _InfoLine(label: 'Série', value: equipamento.numeroSerie),
-                    _InfoLine(
-                      label: 'Situação',
-                      value: equipamento.situacaoAtual,
-                      showDivider: false,
-                    ),
 
-                    const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-                    _SectionTitle(
-                      title: 'Checklist',
-                    ),
-                    const SizedBox(height: 8),
-                    _SwitchLine(
-                      title: 'Retornou fisicamente',
-                      subtitle: 'O equipamento chegou à base.',
-                      value: retornouFisicamente,
-                      onChanged: (value) {
-                        setState(() {
-                          retornouFisicamente = value;
-                        });
-                      },
-                    ),
-                    _SwitchLine(
-                      title: 'Equipamento conferido',
-                      subtitle: 'TAG, série e modelo foram verificados.',
-                      value: equipamentoConferido,
-                      onChanged: (value) {
-                        setState(() {
-                          equipamentoConferido = value;
-                        });
-                      },
-                    ),
-                    _SwitchLine(
-                      title: 'Possui avaria',
-                      subtitle: 'Existe dano, falta ou irregularidade.',
-                      value: possuiAvaria,
-                      onChanged: (value) {
-                        setState(() {
-                          possuiAvaria = value;
-                        });
-                      },
-                      showDivider: false,
-                    ),
+                _SectionTitle(title: 'Checklist'),
+                const SizedBox(height: 8),
+                _SwitchLine(
+                  title: 'Retornou fisicamente',
+                  subtitle: 'O equipamento chegou à base.',
+                  value: retornouFisicamente,
+                  onChanged: (value) {
+                    setState(() {
+                      retornouFisicamente = value;
+                    });
+                  },
+                ),
+                _SwitchLine(
+                  title: 'Equipamento conferido',
+                  subtitle: 'TAG, série e modelo foram verificados.',
+                  value: equipamentoConferido,
+                  onChanged: (value) {
+                    setState(() {
+                      equipamentoConferido = value;
+                    });
+                  },
+                ),
+                _SwitchLine(
+                  title: 'Possui avaria',
+                  subtitle: 'Existe dano, falta ou irregularidade.',
+                  value: possuiAvaria,
+                  onChanged: (value) {
+                    setState(() {
+                      possuiAvaria = value;
+                    });
+                  },
+                  showDivider: false,
+                ),
 
-                    const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-                    _SectionTitle(
-                      title: 'Fotos obrigatórias',
-                    ),
-                    const SizedBox(height: 8),
-                    _PhotoLine(
-                      title: 'Foto geral',
-                      subtitle: 'Obrigatória',
-                      quantidade: fotosGerais,
-                      onTap: () => adicionarFoto('GERAL'),
-                    ),
-                    _PhotoLine(
-                      title: 'Identificação / TAG',
-                      subtitle: 'Obrigatória',
-                      quantidade: fotosIdentificacao,
-                      onTap: () => adicionarFoto('IDENTIFICACAO'),
-                      showDivider: !possuiAvaria,
-                    ),
-                    if (possuiAvaria)
-                      _PhotoLine(
-                        title: 'Foto da avaria',
-                        subtitle: 'Obrigatória quando houver avaria',
-                        quantidade: fotosAvaria,
-                        onTap: () => adicionarFoto('AVARIA'),
-                        showDivider: false,
-                    ),
+                _SectionTitle(title: 'Fotos obrigatórias'),
+                const SizedBox(height: 8),
+                _PhotoLine(
+                  title: 'Foto geral',
+                  subtitle: 'Obrigatória',
+                  quantidade: fotosGerais,
+                  onTap: () => adicionarFoto('GERAL'),
+                ),
+                _PhotoLine(
+                  title: 'Identificação / TAG',
+                  subtitle: 'Obrigatória',
+                  quantidade: fotosIdentificacao,
+                  onTap: () => adicionarFoto('IDENTIFICACAO'),
+                  showDivider: !possuiAvaria,
+                ),
+                if (possuiAvaria)
+                  _PhotoLine(
+                    title: 'Foto da avaria',
+                    subtitle: 'Obrigatória quando houver avaria',
+                    quantidade: fotosAvaria,
+                    onTap: () => adicionarFoto('AVARIA'),
+                    showDivider: false,
+                  ),
 
                 const SizedBox(height: 24),
 
@@ -282,9 +273,7 @@ class _EquipamentoChecklistScreenState
 class _SectionTitle extends StatelessWidget {
   final String title;
 
-  const _SectionTitle({
-    required this.title,
-  });
+  const _SectionTitle({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -343,11 +332,7 @@ class _InfoLine extends StatelessWidget {
             ],
           ),
         ),
-        if (showDivider)
-          const Divider(
-            height: 1,
-            color: AppColors.border,
-          ),
+        if (showDivider) const Divider(height: 1, color: AppColors.border),
       ],
     );
   }
@@ -409,11 +394,7 @@ class _SwitchLine extends StatelessWidget {
             ],
           ),
         ),
-        if (showDivider)
-          const Divider(
-            height: 1,
-            color: AppColors.border,
-          ),
+        if (showDivider) const Divider(height: 1, color: AppColors.border),
       ],
     );
   }
@@ -496,11 +477,7 @@ class _PhotoLine extends StatelessWidget {
             ),
           ),
         ),
-        if (showDivider)
-          const Divider(
-            height: 1,
-            color: AppColors.border,
-          ),
+        if (showDivider) const Divider(height: 1, color: AppColors.border),
       ],
     );
   }

@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { InspecaoManutencao, criarInspecaoVazia, ItemInspecao, RespostaBinaria } from '../types/manutencao';
+import React, { useEffect, useState } from 'react';
+import axiosInstance from '../services/axiosConfig';
+import { ItemInspecao, InspecaoManutencao, RespostaBinaria } from '../types/manutencao';
+import { TipoEquipamento } from '../types/producao';
+import {
+  aplicarChecklistManutencao,
+  criarInspecaoVazia,
+  SECOES_MANUTENCAO,
+  SecaoInspecaoKey,
+} from '../constants/inspecaoManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import './FormularioInspecaoManutencao.css';
 
@@ -9,19 +17,6 @@ interface FormularioInspecaoManutencaoProps {
   inspecaoInicial?: InspecaoManutencao;
   isEditing?: boolean;
 }
-
-type SecaoInspecaoKey = keyof Pick<
-  InspecaoManutencao,
-  | 'certificacoes'
-  | 'estruturaMecanica'
-  | 'sistemaHidraulico'
-  | 'sistemaPneumatico'
-  | 'sistemaEletrico'
-  | 'dispositivoSeguranca'
-  | 'componentesOperacionais'
-  | 'acessorios'
-  | 'testesOperacionais'
->;
 
 type CampoInspecao = keyof Omit<InspecaoManutencao, SecaoInspecaoKey>;
 
@@ -34,14 +29,41 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
   );
+  const [tiposEquipamento, setTiposEquipamento] = useState<TipoEquipamento[]>([]);
   usePdfExportManutencao();
+
+  useEffect(() => {
+    axiosInstance
+      .get<TipoEquipamento[]>('/tipos-equipamento')
+      .then((response) => {
+        setTiposEquipamento(response.data.filter((tipo) => tipo.ativo));
+      })
+      .catch((error) => {
+        console.error('Erro ao carregar tipos de equipamento:', error);
+      });
+  }, []);
+
+  useEffect(() => {
+    setInspecao((prev) =>
+      aplicarChecklistManutencao(prev, {
+        tipoEquipamento: prev.tipoEquipamento,
+      })
+    );
+  }, [inspecao.tipoEquipamento]);
 
   const documentoBloqueado = inspecao.statusManutencao !== 'CONCLUIDA';
 
   const handleInputChange = (campo: CampoInspecao, valor: string) => {
+    let value: any = valor;
+    
+    // Converter para número quando necessário
+    if (campo === 'numeroOrdemManutencao' || campo === 'diasEsperaManutencao' || campo === 'diasManutencao') {
+      value = valor === '' ? null : parseInt(valor, 10);
+    }
+    
     setInspecao((prev) => ({
       ...prev,
-      [campo]: valor,
+      [campo]: value,
     }));
   };
 
@@ -68,6 +90,10 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
     bloqueada = documentoBloqueado
   ) => {
     const itens = inspecao[secao] as ItemInspecao[];
+
+    if (!itens.length) {
+      return null;
+    }
 
     return (
       <div key={secao} className={`secao-inspecao${bloqueada ? ' secao-inspecao-bloqueada' : ''}`}>
@@ -151,18 +177,130 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
       aria-label={isEditing ? 'Editar inspeção de manutenção' : 'Nova inspeção de manutenção'}
       onSubmit={(e) => e.preventDefault()}
     >
-
+      <div className="dados-equipamento">
+        <h2>Dados da Manutenção</h2>
+        <div className="grid-inputs">
+          <div className="form-group">
+            <label>Data de Início da Manutenção</label>
+            <input
+              type="date"
+              value={inspecao.dataInicio}
+              onChange={(e) => handleInputChange('dataInicio', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Local da Manutenção</label>
+            <input
+              type="text"
+              value={inspecao.localManutencao}
+              onChange={(e) => handleInputChange('localManutencao', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Tipo de Equipamento</label>
+            <select
+              value={inspecao.tipoEquipamento || ''}
+              onChange={(e) => handleInputChange('tipoEquipamento', e.target.value)}
+            >
+              <option value="">-- Selecione um tipo --</option>
+              {tiposEquipamento.map((tipo) => (
+                <option key={tipo.id} value={tipo.nome}>
+                  {tipo.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Fabricante</label>
+            <input
+              type="text"
+              value={inspecao.fabricante}
+              onChange={(e) => handleInputChange('fabricante', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Modelo</label>
+            <input
+              type="text"
+              value={inspecao.modelo}
+              onChange={(e) => handleInputChange('modelo', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>TAG</label>
+            <input
+              type="text"
+              value={inspecao.tag}
+              onChange={(e) => handleInputChange('tag', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Número de Ordem de Manutenção</label>
+            <input
+              type="number"
+              value={inspecao.numeroOrdemManutencao || ''}
+              onChange={(e) => handleInputChange('numeroOrdemManutencao', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Destino</label>
+            <input
+              type="text"
+              value={inspecao.destino}
+              onChange={(e) => handleInputChange('destino', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Data de Retorno à Base</label>
+            <input
+              type="date"
+              value={inspecao.dataRetornoBase || ''}
+              onChange={(e) => handleInputChange('dataRetornoBase', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Previsão de Término</label>
+            <input
+              type="date"
+              value={inspecao.previsaoTermino || ''}
+              onChange={(e) => handleInputChange('previsaoTermino', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Responsável *</label>
+            <input
+              type="text"
+              value={inspecao.responsavel}
+              onChange={(e) => handleInputChange('responsavel', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Status da Manutenção</label>
+            <select
+              value={inspecao.statusManutencao}
+              onChange={(e) => handleInputChange('statusManutencao', e.target.value as any)}
+            >
+              <option value="PENDENTE">Pendente</option>
+              <option value="EM_QUARENTENA">Em Quarentena</option>
+              <option value="EM_MANUTENCAO">Em Manutenção</option>
+              <option value="PARALISADA">Paralisada</option>
+              <option value="CONCLUIDA">Concluída</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Data de Término</label>
+            <input
+              type="date"
+              value={inspecao.dataTermino || ''}
+              onChange={(e) => handleInputChange('dataTermino', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
 
       <div className="inspecoes">
-        {renderSecao('certificacoes', 'CERTIFICAÇÕES E DOCUMENTAÇÃO')}
-        {renderSecao('estruturaMecanica', 'ESTRUTURA E INTEGRIDADE MECÂNICA')}
-        {renderSecao('sistemaHidraulico', 'SISTEMA HIDRÁULICO')}
-        {renderSecao('sistemaPneumatico', 'SISTEMA PNEUMÁTICO')}
-        {renderSecao('sistemaEletrico', 'SISTEMA ELÉTRICO')}
-        {renderSecao('dispositivoSeguranca', 'DISPOSITIVOS DE SEGURANÇA')}
-        {renderSecao('componentesOperacionais', 'COMPONENTES OPERACIONAIS')}
-        {renderSecao('acessorios', 'ACESSÓRIOS E ITENS ESPECÍFICOS')}
-        {renderSecao('testesOperacionais', 'TESTES OPERACIONAIS')}
+        {SECOES_MANUTENCAO.map((secao) => renderSecao(secao.key, secao.titulo))}
       </div>
 
       <div className={`avaliacao-final${documentoBloqueado ? ' secao-inspecao-bloqueada' : ''}`}>

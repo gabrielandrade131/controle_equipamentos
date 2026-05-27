@@ -134,10 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
 
                   const Text(
-                    'Ações',
+                    'Iniciar conferência',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
@@ -152,13 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     subtitle: 'Conferir equipamentos retornando da operação',
                     icon: Icons.assignment_turned_in_outlined,
                     onTap: abrirOsEmAndamento,
-                  ),
-                  _HomeActionItem(
-                    title: 'Últimos recebimentos',
-                    subtitle: 'Visualizar conferências realizadas',
-                    icon: Icons.history_outlined,
-                    onTap: abrirUltimosRecebimentos,
-                    showDivider: false,
                   ),
                 ],
               ),

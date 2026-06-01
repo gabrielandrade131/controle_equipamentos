@@ -3,9 +3,11 @@ import { FormularioInspecaoManutencao } from '../components/FormularioInspecaoMa
 import { ModalEditarDetalhesManutencao } from '../components/ModalEditarDetalhesManutencao';
 import { AlertModal } from '../components/AlertModal';
 import { FilterPanel } from '../components/FilterPanel';
+import { Pagination } from '../components/Pagination';
 import { FotoRecebimentoManutencao, useManutencao } from '../hooks/useManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import { useFilters } from '../hooks/useFilters';
+import { usePaginatedSelection } from '../hooks/usePaginatedSelection';
 import { criarInspecaoVazia } from '../constants/inspecaoManutencao';
 import { InspecaoManutencao } from '../types/manutencao';
 import { buildSelectOptions } from '../utils/filterOptions';
@@ -19,18 +21,12 @@ const STATUS_LABELS: Record<string, string> = {
   CONCLUIDA: 'Concluída',
 };
 
-interface SelectedInspecao {
-  id: string;
-  data: InspecaoManutencao;
-}
-
 export const Manutencao: React.FC = () => {
-  const [selected, setSelected] = useState<SelectedInspecao | null>(null);
   const [modo, setModo] = useState<'lista' | 'editar-formulario' | 'editar-detalhes' | 'editar-inspecao' | 'criar-nova'>('lista');
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
   const [fotosRecebimento, setFotosRecebimento] = useState<FotoRecebimentoManutencao[]>([]);
   const [carregandoFotos, setCarregandoFotos] = useState(false);
-  const { historico, atualizarInspecao, buscarFotosRecebimento } = useManutencao();
+  const { historico, adicionarInspecao, atualizarInspecao, buscarFotosRecebimento } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
   const { filters, updateFilters } = useFilters('manutencao-filters', {});
   const tagOptions = useMemo(
@@ -55,18 +51,34 @@ export const Manutencao: React.FC = () => {
       return true;
     });
   }, [historico, filters]);
+  const {
+    currentPage,
+    pageSize,
+    pageSizeOptions,
+    paginatedItems,
+    selectedId,
+    selectedItem,
+    selectItem,
+    setPage,
+    setPageSize,
+    totalItems,
+    totalPages,
+  } = usePaginatedSelection({
+    items: filteredHistorico,
+    getId: (inspecao) => inspecao.id,
+  });
 
   useEffect(() => {
     let ativo = true;
 
-    if (!selected?.id) {
+    if (!selectedItem?.id) {
       setFotosRecebimento([]);
       setCarregandoFotos(false);
       return;
     }
 
     setCarregandoFotos(true);
-    buscarFotosRecebimento(selected.id)
+    buscarFotosRecebimento(selectedItem.id)
       .then((fotos) => {
         if (ativo) setFotosRecebimento(fotos);
       })
@@ -80,14 +92,7 @@ export const Manutencao: React.FC = () => {
     return () => {
       ativo = false;
     };
-  }, [selected?.id, buscarFotosRecebimento]);
-
-  const handleSelectInspecao = (inspecao: InspecaoManutencao) => {
-    setSelected({
-      id: inspecao.id || '',
-      data: inspecao,
-    });
-  };
+  }, [selectedItem?.id, buscarFotosRecebimento]);
 
   const handleExportarPDF = async (inspecao: InspecaoManutencao) => {
     try {
@@ -99,17 +104,16 @@ export const Manutencao: React.FC = () => {
   };
 
   const handleEditarInspecao = (inspecao: InspecaoManutencao) => {
-    if (!selected) return;
+    if (!selectedItem?.id) return;
 
-    if (selected.data.statusManutencao === 'CONCLUIDA') {
+    if (selectedItem.statusManutencao === 'CONCLUIDA') {
       alert('Manutenção concluída não pode ser editada.');
       setModo('lista');
       return;
     }
 
-    atualizarInspecao(selected.id, inspecao)
-      .then((inspecaoAtualizada) => {
-        setSelected({ id: inspecaoAtualizada.id || selected.id, data: inspecaoAtualizada });
+    atualizarInspecao(selectedItem.id, inspecao)
+      .then(() => {
         setModo('lista');
         alert('Manutenção atualizada com sucesso!');
       })
@@ -120,11 +124,10 @@ export const Manutencao: React.FC = () => {
   };
 
   const handleEditarDetalhes = (inspecao: InspecaoManutencao) => {
-    if (!selected) return;
+    if (!selectedItem?.id) return;
 
-    atualizarInspecao(selected.id, inspecao)
-      .then((inspecaoAtualizada) => {
-        setSelected({ id: inspecaoAtualizada.id || selected.id, data: inspecaoAtualizada });
+    atualizarInspecao(selectedItem.id, inspecao)
+      .then(() => {
         setModo('lista');
         alert('Detalhes atualizados com sucesso!');
       })
@@ -135,7 +138,7 @@ export const Manutencao: React.FC = () => {
   };
 
   const handleCriarNova = (inspecao: InspecaoManutencao) => {
-    atualizarInspecao('', inspecao)
+    adicionarInspecao(inspecao)
       .then(() => {
         setModo('lista');
         alert('Manutenção criada com sucesso!');
@@ -146,11 +149,11 @@ export const Manutencao: React.FC = () => {
       });
   };
 
-  if (modo === 'editar-inspecao' && selected) {
+  if (modo === 'editar-inspecao' && selectedItem) {
     return (
       <div className="manutencao-container">
         <FormularioInspecaoManutencao
-          inspecaoInicial={selected.data}
+          inspecaoInicial={selectedItem}
           onSalvar={handleEditarInspecao}
           onCancelar={() => setModo('lista')}
           isEditing
@@ -219,78 +222,89 @@ export const Manutencao: React.FC = () => {
           {filteredHistorico.length === 0 ? (
             <p>Nenhuma manutenção registrada</p>
           ) : (
-            <ul className="page-list">
-              {filteredHistorico.map((inspecao) => (
+            <>
+              <ul className="page-list">
+                {paginatedItems.map((inspecao) => (
                 <li
                   key={inspecao.id}
-                  className={selected?.id === inspecao.id ? 'active' : ''}
-                  onClick={() => handleSelectInspecao(inspecao)}
+                  className={selectedId === inspecao.id ? 'active' : ''}
+                  onClick={() => selectItem(inspecao)}
                 >
                   <strong>{(inspecao.numeroOrdemManutencao ?? inspecao.tag) || 'Sem TAG'}</strong>
                   <small>{inspecao.fabricante || '-'}</small>
                   <small>{inspecao.statusManutencao || '-'}</small>
                 </li>
-              ))}
-            </ul>
+                ))}
+              </ul>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                pageSizeOptions={pageSizeOptions}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
+            </>
           )}
         </div>
 
         <div className="page-detail-section">
-          {selected ? (
+          {selectedItem ? (
             <div className="manutencao-detail">
               <h2>Detalhes</h2>
               <div className="page-detail-grid">
                 <div className="detail-item">
                   <label>Ordem de Manutenção:</label>
-                  <p>{selected.data.numeroOrdemManutencao ?? '-'}</p>
+                  <p>{selectedItem.numeroOrdemManutencao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>TAG:</label>
-                  <p>{selected.data.tag || '-'}</p>
+                  <p>{selectedItem.tag || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Tipo de Equipamento:</label>
-                  <p>{selected.data.tipoEquipamento || '-'}</p>
+                  <p>{selectedItem.tipoEquipamento || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Fabricante:</label>
-                  <p>{selected.data.fabricante || '-'}</p>
+                  <p>{selectedItem.fabricante || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Modelo:</label>
-                  <p>{selected.data.modelo || '-'}</p>
+                  <p>{selectedItem.modelo || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Início:</label>
-                  <p>{selected.data.dataInicio ? new Date(selected.data.dataInicio).toLocaleDateString('pt-BR') : '-'}</p>
+                  <p>{selectedItem.dataInicio ? new Date(selectedItem.dataInicio).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Retorno à Base:</label>
-                  <p>{selected.data.dataRetornoBase ? new Date(selected.data.dataRetornoBase).toLocaleDateString('pt-BR') : '-'}</p>
+                  <p>{selectedItem.dataRetornoBase ? new Date(selectedItem.dataRetornoBase).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Previsão de Término:</label>
-                  <p>{selected.data.previsaoTermino ? new Date(selected.data.previsaoTermino).toLocaleDateString('pt-BR') : '-'}</p>
+                  <p>{selectedItem.previsaoTermino ? new Date(selectedItem.previsaoTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Término:</label>
-                  <p>{selected.data.dataTermino ? new Date(selected.data.dataTermino).toLocaleDateString('pt-BR') : '-'}</p>
+                  <p>{selectedItem.dataTermino ? new Date(selectedItem.dataTermino).toLocaleDateString('pt-BR') : '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Responsável:</label>
-                  <p>{selected.data.responsavel || '-'}</p>
+                  <p>{selectedItem.responsavel || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
-                  <p>{STATUS_LABELS[selected.data.statusManutencao || ''] || selected.data.statusManutencao || '-'}</p>
+                  <p>{STATUS_LABELS[selectedItem.statusManutencao || ''] || selectedItem.statusManutencao || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias em Espera:</label>
-                  <p>{selected.data.diasEsperaManutencao ?? '-'}</p>
+                  <p>{selectedItem.diasEsperaManutencao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias em Manutenção:</label>
-                  <p>{selected.data.diasManutencao ?? '-'}</p>
+                  <p>{selectedItem.diasManutencao ?? '-'}</p>
                 </div>
               </div>
 
@@ -302,7 +316,7 @@ export const Manutencao: React.FC = () => {
                   <div className="fotos-recebimento-grid">
                     {fotosRecebimento.map((foto) => (
                       <figure key={foto.id} className="foto-recebimento-item">
-                        <img src={foto.url} alt={`${foto.tipoFoto} - ${selected.data.tag || 'equipamento'}`} loading="lazy" />
+                        <img src={foto.url} alt={`${foto.tipoFoto} - ${selectedItem.tag || 'equipamento'}`} loading="lazy" />
                         <figcaption>
                           <span>{foto.tipoFoto}</span>
                         </figcaption>
@@ -317,8 +331,8 @@ export const Manutencao: React.FC = () => {
               <div className="documents-section">
                 <h3>Observações</h3>
                 <div className="observacoes-historico-view">
-                  {selected.data.observacoesHistorico && selected.data.observacoesHistorico.length > 0 ? (
-                    selected.data.observacoesHistorico.map((obs, index) => (
+                  {selectedItem.observacoesHistorico && selectedItem.observacoesHistorico.length > 0 ? (
+                    selectedItem.observacoesHistorico.map((obs, index) => (
                       <div key={obs.id || index} className="observacao-item-view">
                         <strong>{new Date(obs.data).toLocaleDateString('pt-BR')}</strong>
                         <p>{obs.texto}</p>
@@ -335,19 +349,19 @@ export const Manutencao: React.FC = () => {
                 <div className="inspecao-content">
                   <div className="avaliacao-item">
                     <label>Avaliação Final:</label>
-                    <span className={`badge badge-${selected.data.avaliacaoFinal === 'CONFORME' ? 'success' : 'danger'}`}>
-                      {selected.data.avaliacaoFinal || '-'}
+                    <span className={`badge badge-${selectedItem.avaliacaoFinal === 'CONFORME' ? 'success' : 'danger'}`}>
+                      {selectedItem.avaliacaoFinal || '-'}
                     </span>
                   </div>
                   <div className="inspecao-actions">
                     <button
-                      onClick={() => selected.data.statusManutencao === 'CONCLUIDA' ? setModo('editar-inspecao') : setAlertModal({ isOpen: true, message: 'Não é possível criar inspeção pois a manutenção ainda não foi concluída.' })}
+                      onClick={() => selectedItem.statusManutencao === 'CONCLUIDA' ? setModo('editar-inspecao') : setAlertModal({ isOpen: true, message: 'Não é possível criar inspeção pois a manutenção ainda não foi concluída.' })}
                       className="btn-primary"
                     >
                       Criar Inspeção
                     </button>
                     <button
-                      onClick={() => handleExportarPDF(selected.data)}
+                      onClick={() => handleExportarPDF(selectedItem)}
                       className="btn-primary"
                     >
                       Exportar PDF
@@ -367,7 +381,7 @@ export const Manutencao: React.FC = () => {
 
               {modo === 'editar-detalhes' && (
                 <ModalEditarDetalhesManutencao
-                  inspecao={selected.data}
+                  inspecao={selectedItem}
                   onSalvar={handleEditarDetalhes}
                   onCancelar={() => setModo('lista')}
                 />

@@ -11,6 +11,7 @@ interface Usuario {
   email: string;
   ativo: boolean;
   precisaTrocarSenha: boolean;
+  cSafety: boolean;
   criadoEm: string;
 }
 
@@ -93,6 +94,7 @@ const ListaUsuarios: React.FC = () => {
         email: usuarioAtualizado.email,
         ativo: usuarioAtualizado.ativo,
         precisaTrocarSenha: usuarioAtualizado.precisaTrocarSenha,
+        cSafety: usuarioAtualizado.cSafety,
       });
 
       showAlert('Usuário atualizado com sucesso!', 'success');
@@ -158,6 +160,7 @@ const ListaUsuarios: React.FC = () => {
                 <th>Nome</th>
                 <th>Email</th>
                 <th>Status</th>
+                <th>C-Safety</th>
                 <th>Data Cadastro</th>
                 <th>Ações</th>
               </tr>
@@ -172,6 +175,7 @@ const ListaUsuarios: React.FC = () => {
                       {usuario.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                   </td>
+                  <td>{usuario.cSafety ? 'Sim' : 'Não'}</td>
                   <td>{formatarData(usuario.criadoEm)}</td>
                   <td>
                     <div className="acoes">

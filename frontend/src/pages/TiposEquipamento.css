@@ -1,0 +1,129 @@
+.tipos-equipamento-page {
+  padding: 24px;
+}
+
+.tipos-equipamento-header {
+  margin-bottom: 24px;
+}
+
+.tipos-equipamento-header h2 {
+  margin: 0 0 8px;
+  color: #17324d;
+}
+
+.tipos-equipamento-header p {
+  margin: 0;
+  color: #52657a;
+}
+
+.tipos-equipamento-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(320px, 1fr);
+  gap: 24px;
+}
+
+.tipos-equipamento-card {
+  background: #fff;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(18, 38, 63, 0.06);
+}
+
+.tipos-equipamento-card h3 {
+  margin: 0 0 16px;
+  color: #17324d;
+}
+
+.tipos-equipamento-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tipos-equipamento-form label {
+  font-weight: 600;
+  color: #17324d;
+}
+
+.tipos-equipamento-form input {
+  border: 1px solid #bfd0de;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+}
+
+.tipos-equipamento-form input:focus {
+  outline: none;
+  border-color: #b2cc21;
+  box-shadow: 0 0 0 3px rgba(178, 204, 33, 0.18);
+}
+
+.tipos-equipamento-primary,
+.tipos-equipamento-secondary {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tipos-equipamento-primary {
+  background: #b2cc21;
+  color: #17324d;
+}
+
+.tipos-equipamento-primary:disabled,
+.tipos-equipamento-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.tipos-equipamento-secondary {
+  background: #edf2f7;
+  color: #17324d;
+}
+
+.tipos-equipamento-feedback {
+  margin: 16px 0 0;
+  font-size: 14px;
+}
+
+.tipos-equipamento-feedback.error {
+  color: #c62828;
+}
+
+.tipos-equipamento-feedback.success {
+  color: #2e7d32;
+}
+
+.tipos-equipamento-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tipos-equipamento-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.tipos-equipamento-list li {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #17324d;
+  background: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .tipos-equipamento-layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axiosInstance from '../services/axiosConfig';
 import {
   CreateProducaoDto,
   HistoricoProducaoItem,
   Producao,
   StatusProducao,
-  TipoEquipamento,
 } from '../types/producao';
+import { useTiposEquipamento } from '../hooks/useTiposEquipamento';
 import './FormularioOrdem.css';
 
 interface FormularioOrdemProps {
@@ -108,7 +107,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   const [formData, setFormData] = useState<CreateProducaoDto | Producao>(
     producao || createEmptyProducao(),
   );
-  const [tiposEquipamento, setTiposEquipamento] = useState<TipoEquipamento[]>([]);
+  const { tiposEquipamento } = useTiposEquipamento();
   const [novoItem, setNovoItem] = useState({
     descricao: '',
     numeroSerie: '',
@@ -129,17 +128,6 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     () => tiposEquipamento.find((tipo) => tipo.id === formData.tipoEquipamentoId),
     [formData.tipoEquipamentoId, tiposEquipamento],
   );
-
-  useEffect(() => {
-    axiosInstance
-      .get<TipoEquipamento[]>('/tipos-equipamento')
-      .then((response) => {
-        setTiposEquipamento(response.data.filter((tipo) => tipo.ativo));
-      })
-      .catch((error) => {
-        console.error('Erro ao carregar tipos de equipamento:', error);
-      });
-  }, []);
 
   useEffect(() => {
     if (!producao) return;

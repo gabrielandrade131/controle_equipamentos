@@ -76,8 +76,9 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     dataRetornoBase: toDateInput(manutencao.dataRetornoBase, false),
     previsaoTermino: toDateInput(manutencao.previsaoTermino, false),
     localManutencao: manutencao.origem === 'SYNCHRO' ? 'Retorno Synchro' : '',
-    tipoEquipamento: manutencao.tipoEquipamentoNome ?? '',
-    fabricante: manutencao.tipoEquipamentoNome ?? '',
+    tipoEquipamentoId: manutencao.tipoEquipamentoId ?? manutencao.tipoEquipamento?.id ?? '',
+    tipoEquipamento: manutencao.tipoEquipamento?.nome ?? manutencao.tipoEquipamentoNome ?? '',
+    fabricante: manutencao.tipoEquipamento?.nome ?? manutencao.tipoEquipamentoNome ?? '',
     modelo: manutencao.modeloEquipamento ?? '',
     tag: manutencao.tag ?? '',
     numeroOrdemManutencao: manutencao.numeroOrdemManutencao ?? null,
@@ -96,6 +97,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 };
 
 const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
+  tipoEquipamentoId: inspecao.tipoEquipamentoId || undefined,
   tipoEquipamentoNome: inspecao.tipoEquipamento || inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
   tag: inspecao.tag || undefined,

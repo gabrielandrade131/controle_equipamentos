@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axiosInstance from '../services/axiosConfig';
 import { ItemInspecao, InspecaoManutencao, RespostaBinaria } from '../types/manutencao';
-import { TipoEquipamento } from '../types/producao';
 import {
   aplicarChecklistManutencao,
   criarInspecaoVazia,
@@ -9,6 +7,7 @@ import {
   SecaoInspecaoKey,
 } from '../constants/inspecaoManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
+import { useTiposEquipamento } from '../hooks/useTiposEquipamento';
 import './FormularioInspecaoManutencao.css';
 
 interface FormularioInspecaoManutencaoProps {
@@ -29,19 +28,8 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
   );
-  const [tiposEquipamento, setTiposEquipamento] = useState<TipoEquipamento[]>([]);
+  const { tiposEquipamento } = useTiposEquipamento();
   usePdfExportManutencao();
-
-  useEffect(() => {
-    axiosInstance
-      .get<TipoEquipamento[]>('/tipos-equipamento')
-      .then((response) => {
-        setTiposEquipamento(response.data.filter((tipo) => tipo.ativo));
-      })
-      .catch((error) => {
-        console.error('Erro ao carregar tipos de equipamento:', error);
-      });
-  }, []);
 
   useEffect(() => {
     setInspecao((prev) =>
@@ -199,8 +187,15 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
           <div className="form-group">
             <label>Tipo de Equipamento</label>
             <select
-              value={inspecao.tipoEquipamento || ''}
-              onChange={(e) => handleInputChange('tipoEquipamento', e.target.value)}
+              value={inspecao.tipoEquipamentoId || ''}
+              onChange={(e) => {
+                const tipoSelecionado = tiposEquipamento.find((tipo) => tipo.id === e.target.value);
+                setInspecao((prev) => ({
+                  ...prev,
+                  tipoEquipamentoId: e.target.value,
+                  tipoEquipamento: tipoSelecionado?.nome || '',
+                }));
+              }}
             >
               <option value="">-- Selecione um tipo --</option>
               {tiposEquipamento.map((tipo) => (

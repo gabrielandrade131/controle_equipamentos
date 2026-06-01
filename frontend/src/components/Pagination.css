@@ -1,0 +1,109 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #efefef;
+  flex-wrap: wrap;
+}
+
+.pagination-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pagination-summary {
+  color: #4f4f4f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pagination-page {
+  color: #757575;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  padding: 6px;
+  border: 1px solid #efefef;
+  border-radius: 14px;
+  background: #fcfcfc;
+}
+
+.pagination-size {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
+.pagination-select {
+  min-width: 110px;
+  border: 1px solid #e2e2e2;
+  background: #fff;
+  color: #333;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pagination-select:focus {
+  outline: none;
+  border-color: #b2cc21;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(178, 204, 33, 0.14);
+}
+
+.pagination-button {
+  border: 1px solid #e3e3e3;
+  background: #fff;
+  color: #333;
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-width: 92px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  border-color: #bfcf67;
+  background: #fff;
+  color: #6d7f10;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .pagination {
+    align-items: flex-start;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .pagination-page {
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -1,22 +1,18 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FormularioHistorico } from '../components/FormularioHistorico';
 import { FilterPanel } from '../components/FilterPanel';
 import { useFilters } from '../hooks/useFilters';
 import { PdfExporterHistorico } from '../components/PdfExporterHistorico';
+import { Pagination } from '../components/Pagination';
+import { usePaginatedSelection } from '../hooks/usePaginatedSelection';
 import { useHistorico } from '../hooks/useHistorico';
 import { HistoricoEquipamentoData } from '../types/historico';
 import { FilterType } from '../types/filters';
 import { buildSelectOptions } from '../utils/filterOptions';
 import '../pages/Producao.css';
 
-interface SelectedHistorico {
-  id: string;
-  data: HistoricoEquipamentoData;
-}
-
 const HistoricoEquipamento: React.FC = () => {
   const { historicos, loading, salvarHistoricoEquipamento } = useHistorico();
-  const [selected, setSelected] = useState<SelectedHistorico | null>(null);
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const { filters, updateFilters } = useFilters('historico-filters', {});
@@ -50,25 +46,29 @@ const HistoricoEquipamento: React.FC = () => {
       return true;
     });
   }, [historicos, filters]);
-
-  const handleSelectHistorico = (historico: HistoricoEquipamentoData) => {
-    setSelected({
-      id: historico.id || '',
-      data: historico,
-    });
-    setEditando(false);
-  };
+  const {
+    currentPage,
+    pageSize,
+    pageSizeOptions,
+    paginatedItems,
+    selectedId,
+    selectedItem,
+    selectItem,
+    setPage,
+    setPageSize,
+    totalItems,
+    totalPages,
+  } = usePaginatedSelection({
+    items: filteredHistoricos,
+    getId: (historico) => historico.id,
+  });
 
   const handleSalvarHistorico = async (historicoAtualizado: HistoricoEquipamentoData) => {
-    if (!selected?.id) return;
+    if (!selectedItem?.id) return;
 
     try {
       setSalvando(true);
-      await salvarHistoricoEquipamento(selected.id, historicoAtualizado);
-      setSelected({
-        id: selected.id,
-        data: historicoAtualizado,
-      });
+      await salvarHistoricoEquipamento(selectedItem.id, historicoAtualizado);
       setEditando(false);
       alert('Histórico do equipamento salvo com sucesso!');
     } catch (error: any) {
@@ -86,12 +86,12 @@ const HistoricoEquipamento: React.FC = () => {
     );
   }
 
-  if (editando && selected) {
+  if (editando && selectedItem) {
     return (
       <div className="container">
         <FormularioHistorico
-          key={selected.id}
-          historico={selected.data}
+          key={selectedItem.id}
+          historico={selectedItem}
           onSalvar={handleSalvarHistorico}
           onCancelar={() => setEditando(false)}
           isEditing
@@ -121,43 +121,57 @@ const HistoricoEquipamento: React.FC = () => {
           {filteredHistoricos.length === 0 ? (
             <p>Nenhuma produção encontrada</p>
           ) : (
-            <ul className="page-list">
-              {filteredHistoricos.map((historico) => (
+            <>
+              <ul className="page-list">
+                {paginatedItems.map((historico) => (
                 <li
                   key={historico.id}
-                  className={selected?.id === historico.id ? 'active' : ''}
-                  onClick={() => handleSelectHistorico(historico)}
+                  className={selectedId === historico.id ? 'active' : ''}
+                  onClick={() => {
+                    selectItem(historico);
+                    setEditando(false);
+                  }}
                 >
                   <strong>{historico.numeroSerie || 'Sem série'}</strong>
                   <small>{historico.modelo || 'Sem modelo'}</small>
                 </li>
-              ))}
-            </ul>
+                ))}
+              </ul>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                pageSizeOptions={pageSizeOptions}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
+            </>
           )}
         </div>
 
         <div className="page-detail-section">
-          {selected ? (
+          {selectedItem ? (
             <div className="historico-detail">
               <h3>Histórico vinculado à produção</h3>
               <div className="page-detail-grid">
                 <div className="detail-item">
                   <label>Número de série:</label>
-                  <p>{selected.data.numeroSerie || '-'}</p>
+                  <p>{selectedItem.numeroSerie || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Modelo:</label>
-                  <p>{selected.data.modelo || '-'}</p>
+                  <p>{selectedItem.modelo || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Registros manuais:</label>
-                  <p>{selected.data.registros.length}</p>
+                  <p>{selectedItem.registros.length}</p>
                 </div>
               </div>
 
               <div className="section-registros">
                 <h3>Registros</h3>
-                {selected.data.registros.length === 0 ? (
+                {selectedItem.registros.length === 0 ? (
                   <p>Nenhum registro manual cadastrado.</p>
                 ) : (
                   <div className="registros-table">
@@ -170,7 +184,7 @@ const HistoricoEquipamento: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {selected.data.registros.map((registro) => (
+                        {selectedItem.registros.map((registro) => (
                           <tr key={registro.id}>
                             <td>{new Date(registro.data).toLocaleDateString('pt-BR')}</td>
                             <td>{registro.historico}</td>
@@ -191,7 +205,7 @@ const HistoricoEquipamento: React.FC = () => {
                 >
                   Adicionar registro
                 </button>
-                <PdfExporterHistorico historico={selected.data} logoPath="/logo.png" />
+                <PdfExporterHistorico historico={selectedItem} logoPath="/logo.png" />
               </div>
             </div>
           ) : (

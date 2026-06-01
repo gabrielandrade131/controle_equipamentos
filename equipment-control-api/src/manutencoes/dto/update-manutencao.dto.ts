@@ -9,6 +9,11 @@ import {
 import { StatusManutencao } from '@prisma/client';
 
 export class UpdateManutencaoDto {
+  @ApiPropertyOptional({ example: 'uuid-do-tipo-equipamento' })
+  @IsOptional()
+  @IsString()
+  tipoEquipamentoId?: string;
+
   @ApiPropertyOptional({ example: 'Exaustor' })
   @IsOptional()
   @IsString()

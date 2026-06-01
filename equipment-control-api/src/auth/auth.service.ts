@@ -31,6 +31,7 @@ export class AuthService {
       senha: senhaHash,
       ativo: true,
       precisaTrocarSenha: true,
+      cSafety: data.cSafety ?? false,
     });
 
     return {
@@ -39,6 +40,7 @@ export class AuthService {
       email: usuario.email,
       ativo: usuario.ativo,
       precisaTrocarSenha: usuario.precisaTrocarSenha,
+      cSafety: usuario.cSafety,
       criadoEm: usuario.criadoEm,
     };
   }
@@ -75,6 +77,7 @@ export class AuthService {
         email: usuario.email,
         ativo: usuario.ativo,
         precisaTrocarSenha: usuario.precisaTrocarSenha,
+        cSafety: usuario.cSafety,
       },
     };
   }

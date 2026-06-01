@@ -13,31 +13,27 @@ import { ManutencoesModule } from './manutencoes/manutencoes.module';
 import { LotesProducaoModule } from './lotes-producao/lotes-producao.module';
 import { RecebimentosModule } from './recebimentos/recebimentos.module';
 
-
-const serveStaticModules =
-  process.env.SERVE_FRONTEND === 'true'
-    ? [
-        ServeStaticModule.forRoot({
-          rootPath: join(__dirname, '..', '..', '..', 'frontend', 'build'),
-          renderPath: '/{*splat}',
-          exclude: ['/api/{*splat}'],
-          serveStaticOptions: {
-            setHeaders(res: Response, filePath: string) {
-              if (
-                filePath.endsWith('.html') ||
-                filePath.endsWith('.js') ||
-                filePath.endsWith('.css')
-              ) {
-                res.setHeader(
-                  'Cache-Control',
-                  'no-store, no-cache, must-revalidate, proxy-revalidate',
-                );
-              }
-            },
-          },
-        }),
-      ]
-    : [];
+const serveStaticModules = [
+  ServeStaticModule.forRoot({
+    rootPath: join(__dirname, '..', '..', '..', 'frontend', 'build'),
+    renderPath: '/{*splat}',
+    exclude: ['/api/{*splat}', '/uploads/{*splat}'],
+    serveStaticOptions: {
+      setHeaders(res: Response, filePath: string) {
+        if (
+          filePath.endsWith('.html') ||
+          filePath.endsWith('.js') ||
+          filePath.endsWith('.css')
+        ) {
+          res.setHeader(
+            'Cache-Control',
+            'no-store, no-cache, must-revalidate, proxy-revalidate',
+          );
+        }
+      },
+    },
+  }),
+];
 
 @Module({
   imports: [

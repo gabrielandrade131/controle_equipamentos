@@ -35,7 +35,7 @@ describe('ManutencoesController', () => {
     const dto = { synchroId: 'syn-1' };
     serviceMock.createFromSynchro.mockResolvedValue({ id: 'man-1' });
 
-    await controller.createFromSynchro(dto as any);
+    await controller.createFromSynchro(dto);
 
     expect(serviceMock.createFromSynchro).toHaveBeenCalledWith(dto);
   });
@@ -44,7 +44,7 @@ describe('ManutencoesController', () => {
     const dto = { items: [{ synchroId: 'syn-1' }] };
     serviceMock.createBulkFromSynchro.mockResolvedValue({ total: 1 });
 
-    await controller.createBulkFromSynchro(dto as any);
+    await controller.createBulkFromSynchro(dto);
 
     expect(serviceMock.createBulkFromSynchro).toHaveBeenCalledWith(dto.items);
   });
@@ -53,7 +53,7 @@ describe('ManutencoesController', () => {
     const dto = { tag: 'TAG-1' };
     serviceMock.create.mockResolvedValue({ id: 'man-1' });
 
-    await controller.create(dto as any);
+    await controller.create(dto);
 
     expect(serviceMock.create).toHaveBeenCalledWith(dto);
   });
@@ -62,7 +62,7 @@ describe('ManutencoesController', () => {
     const filters = { page: 1 };
     serviceMock.findAll.mockResolvedValue([]);
 
-    await controller.findAll(filters as any);
+    await controller.findAll(filters);
 
     expect(serviceMock.findAll).toHaveBeenCalledWith(filters);
   });
@@ -75,7 +75,7 @@ describe('ManutencoesController', () => {
       send: jest.fn(),
     };
 
-    await controller.exportExcel({} as any, res as any);
+    await controller.exportExcel({}, res as any);
 
     expect(serviceMock.exportExcel).toHaveBeenCalledWith({});
     expect(res.setHeader).toHaveBeenCalledWith(
@@ -105,7 +105,7 @@ describe('ManutencoesController', () => {
     const dto = { tag: 'TAG-2' };
     serviceMock.update.mockResolvedValue({ id: 'man-1' });
 
-    await controller.update('man-1', dto as any, { user: { nome: 'Gab' } });
+    await controller.update('man-1', dto, { user: { nome: 'Gab' } });
 
     expect(serviceMock.update).toHaveBeenCalledWith('man-1', dto, {
       nome: 'Gab',

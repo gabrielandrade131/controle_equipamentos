@@ -33,6 +33,7 @@ export interface InspecaoManutencao {
   id?: string;
   dataInicio: string;
   localManutencao: string;
+  tipoEquipamentoId?: string;
   tipoEquipamento?: string;
   fabricante: string;
   modelo: string;

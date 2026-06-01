@@ -1,18 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useProducoes } from '../hooks/useProducoes';
 import { FilterPanel } from '../components/FilterPanel';
+import { Pagination } from '../components/Pagination';
 import { useFilters } from '../hooks/useFilters';
+import { usePaginatedSelection } from '../hooks/usePaginatedSelection';
 import { CreateProducaoDto, Producao } from '../types/producao';
 import { PdfExporter } from '../components/PdfExporter';
 import { FormularioOrdem } from '../components/FormularioOrdem';
 import { buildSelectOptions } from '../utils/filterOptions';
+import { isCSafetyUser } from '../utils/auth';
 import '../pages/Producao.css';
-
-interface SelectedProducao {
-
-  id: string;
-  data: Producao;
-}
 
 const calcularDiasProducao = (dataInicio: string, dataTermino?: string): number | null => {
   if (!dataTermino) return null;
@@ -33,9 +30,9 @@ const formatarRotulo = (valor?: string | null) => {
 
 const OrdemProducao: React.FC = () => {
   const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoes();
-  const [selected, setSelected] = useState<SelectedProducao | null>(null);
   const [modo, setModo] = useState<'lista' | 'criar' | 'editar'>('lista');
   const { filters, updateFilters } = useFilters('ordem-filters', {});
+  const isCSafety = isCSafetyUser();
   const loteOptions = useMemo(
     () => buildSelectOptions(producoes.map((producao) => producao.numeroLote)),
     [producoes],
@@ -61,13 +58,22 @@ const OrdemProducao: React.FC = () => {
       return true;
     });
   }, [producoes, filters]);
-
-  const handleSelectProducao = (producao: Producao) => {
-    setSelected({
-      id: producao.id || '',
-      data: producao,
-    });
-  };
+  const {
+    currentPage,
+    pageSize,
+    pageSizeOptions,
+    paginatedItems,
+    selectedId,
+    selectedItem,
+    selectItem,
+    setPage,
+    setPageSize,
+    totalItems,
+    totalPages,
+  } = usePaginatedSelection({
+    items: filteredProducoes,
+    getId: (producao) => producao.id,
+  });
 
   const handleCriarOrdem = (novaProducao: CreateProducaoDto) => {
     criarProducao(novaProducao)
@@ -82,11 +88,10 @@ const OrdemProducao: React.FC = () => {
   };
 
   const handleEditarOrdem = (producaoAtualizada: Producao | CreateProducaoDto) => {
-    if (!selected) return;
+    if (!selectedItem) return;
 
-    atualizarProducao(selected.id, producaoAtualizada as Producao)
-      .then((producao) => {
-        setSelected({ id: producao.id, data: producao });
+    atualizarProducao(selectedItem.id, producaoAtualizada as Producao)
+      .then(() => {
         setModo('lista');
         alert('Ordem de produção atualizada com sucesso!');
       })
@@ -110,15 +115,14 @@ const OrdemProducao: React.FC = () => {
     );
   }
 
-  if (modo === 'editar' && selected) {
+  if (modo === 'editar' && selectedItem && !isCSafety) {
     return (
       <div className="container">
         <FormularioOrdem
-          producao={selected.data}
+          producao={selectedItem}
           onSalvar={handleEditarOrdem}
           onCancelar={() => {
             setModo('lista');
-            setSelected(null);
           }}
           isEditing
         />
@@ -166,109 +170,120 @@ const OrdemProducao: React.FC = () => {
           {filteredProducoes.length === 0 ? (
             <p>Nenhuma produção encontrada</p>
           ) : (
-            <ul className="page-list">
-              {filteredProducoes.map((producao: Producao) => (
+            <>
+              <ul className="page-list">
+                {paginatedItems.map((producao: Producao) => (
                 <li
                   key={producao.id}
-                  className={selected?.id === producao.id ? 'active' : ''}
-                  onClick={() => handleSelectProducao(producao)}
+                  className={selectedId === producao.id ? 'active' : ''}
+                  onClick={() => selectItem(producao)}
                 >
                   <strong>{producao.numeroOrdem}</strong>
                   <small>{producao.modelo}</small>
                   <small>{producao.statusProducao}</small>
                 </li>
-              ))}
-            </ul>
+                ))}
+              </ul>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                pageSizeOptions={pageSizeOptions}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
+            </>
           )}
         </div>
 
         <div className="page-detail-section">
-          {selected ? (
+          {selectedItem ? (
             <div className="producao-detail">
               <h2>Detalhes da Ordem</h2>
               <div className="page-detail-grid">
                 <div className="detail-item">
                   <label>Número da Ordem:</label>
-                  <p>{selected.data.numeroOrdem}</p>
+                  <p>{selectedItem.numeroOrdem}</p>
                 </div>
                 <div className="detail-item">
                   <label>Número do Lote:</label>
-                  <p>{selected.data.numeroLote ?? '-'}</p>
+                  <p>{selectedItem.numeroLote ?? '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Série:</label>
-                  <p>{selected.data.numeroSerie || '-'}</p>
+                  <p>{selectedItem.numeroSerie || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
-                  <p>{selected.data.statusProducao || '-'}</p>
+                  <p>{selectedItem.statusProducao || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>TAG:</label>
-                  <p>{selected.data.tag || '-'}</p>
+                  <p>{selectedItem.tag || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Tipo de Equipamento:</label>
-                  <p>{selected.data.tipoEquipamentoNome || '-'}</p>
+                  <p>{selectedItem.tipoEquipamentoNome || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Modelo:</label>
-                  <p>{selected.data.modelo}</p>
+                  <p>{selectedItem.modelo}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data Solicitação:</label>
-                  <p>{selected.data.dataSolicitacao}</p>
+                  <p>{selectedItem.dataSolicitacao}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Necessidade:</label>
-                  <p>{selected.data.dataNecessidade || '-'}</p>
+                  <p>{selectedItem.dataNecessidade || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Início:</label>
-                  <p>{selected.data.dataInicio || '-'}</p>
+                  <p>{selectedItem.dataInicio || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Previsão:</label>
-                  <p>{selected.data.dataPrevisao || '-'}</p>
+                  <p>{selectedItem.dataPrevisao || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Término:</label>
-                  <p>{selected.data.dataTermino || '-'}</p>
+                  <p>{selectedItem.dataTermino || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias Solicitação:</label>
-                  <p>{selected.data.diasSolicitacao ?? '-'}</p>
+                  <p>{selectedItem.diasSolicitacao ?? '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias Produção:</label>
                   <p>
-                    {selected.data.diasProducao ??
+                    {selectedItem.diasProducao ??
                       calcularDiasProducao(
-                        selected.data.dataInicio || selected.data.dataSolicitacao,
-                        selected.data.dataTermino,
+                        selectedItem.dataInicio || selectedItem.dataSolicitacao,
+                        selectedItem.dataTermino,
                       ) ??
                       '-'}
                   </p>
                 </div>
                 <div className="detail-item">
                   <label>Situação do Prazo:</label>
-                  <p>{formatarRotulo(selected.data.situacaoPrazo)}</p>
+                  <p>{formatarRotulo(selectedItem.situacaoPrazo)}</p>
                 </div>
                 <div className="detail-item">
                   <label>Resultado do Prazo:</label>
-                  <p>{formatarRotulo(selected.data.resultadoPrazo)}</p>
+                  <p>{formatarRotulo(selectedItem.resultadoPrazo)}</p>
                 </div>
               </div>
 
               <div className="detail-item full">
                 <label>Descrição:</label>
-                <p>{selected.data.descricao}</p>
+                <p>{selectedItem.descricao}</p>
               </div>
 
-              {selected.data.itensSeriados && selected.data.itensSeriados.length > 0 && (
+              {selectedItem.itensSeriados && selectedItem.itensSeriados.length > 0 && (
                 <div className="documents-section">
                   <h3>Itens Serializados</h3>
-                  {selected.data.itensSeriados.map((item) => (
+                  {selectedItem.itensSeriados.map((item) => (
                     <div key={item.id} className="doc-item">
                       <strong>Item {item.numero}</strong>
                       <p>{item.descricao}</p>
@@ -278,10 +293,10 @@ const OrdemProducao: React.FC = () => {
                 </div>
               )}
 
-              {selected.data.documentos && selected.data.documentos.length > 0 && (
+              {selectedItem.documentos && selectedItem.documentos.length > 0 && (
                 <div className="documents-section">
                   <h3>Documentos Relacionados</h3>
-                  {selected.data.documentos.map((doc) => (
+                  {selectedItem.documentos.map((doc) => (
                     <div key={doc.id} className="doc-item">
                       <strong>{doc.nome}:</strong> {doc.codigo}
                     </div>
@@ -289,11 +304,11 @@ const OrdemProducao: React.FC = () => {
                 </div>
               )}
 
-              {selected.data.historicoProducao && selected.data.historicoProducao.length > 0 ? (
+              {selectedItem.historicoProducao && selectedItem.historicoProducao.length > 0 ? (
                 <div className="documents-section">
                   <h3>Histórico de Produção</h3>
                   <div className="historico-producao-view">
-                    {selected.data.historicoProducao.map((registro) => (
+                    {selectedItem.historicoProducao.map((registro) => (
                       <div key={registro.id} className="historico-producao-item-view">
                         <strong>
                           {registro.criadoEm
@@ -306,21 +321,23 @@ const OrdemProducao: React.FC = () => {
                     ))}
                   </div>
                 </div>
-              ) : selected.data.observacoes ? (
+              ) : selectedItem.observacoes ? (
                 <div className="documents-section">
                   <h3>Histórico de Produção</h3>
-                  <p>{selected.data.observacoes}</p>
+                  <p>{selectedItem.observacoes}</p>
                 </div>
               ) : null}
 
               <div className="action-buttons">
-                <button
-                  onClick={() => setModo('editar')}
-                  className="btn-primary"
-                >
-                  Editar
-                </button>
-                <PdfExporter producao={selected.data} />
+                {!isCSafety && (
+                  <button
+                    onClick={() => setModo('editar')}
+                    className="btn-primary"
+                  >
+                    Editar
+                  </button>
+                )}
+                <PdfExporter producao={selectedItem} />
               </div>
             </div>
           ) : (

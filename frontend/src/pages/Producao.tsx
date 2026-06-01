@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Producao.css';
+import { isCSafetyUser } from '../utils/auth';
 
 interface ProdutoItem {
   id: string;
@@ -11,12 +12,15 @@ interface ProdutoItem {
 const Producao: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isCSafety = isCSafetyUser();
 
   const subitems: ProdutoItem[] = [
     { id: 'ordem', label: 'Ordem de Produção', route: '/producao/ordem' },
     { id: 'inspecao', label: 'Inspeção de Montagem', route: '/producao/inspecao' },
     { id: 'historico', label: 'Histórico do Equipamento', route: '/producao/historico' }
   ];
+
+  const visibleItems = isCSafety ? subitems.filter((item) => item.id === 'ordem') : subitems;
 
   const getCurrentSubpage = () => {
     const path = location.pathname;
@@ -37,7 +41,7 @@ const Producao: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="producao-header">
         <h1>Produção</h1>
         <div className="producao-tabs">
-          {subitems.map((item) => (
+          {visibleItems.map((item) => (
             <button
               key={item.id}
               className={`tab-button ${currentSubpage === item.id ? 'active' : ''}`}

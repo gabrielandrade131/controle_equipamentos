@@ -66,7 +66,7 @@ describe('ManutencoesService', () => {
       modeloEquipamento: 'MX',
       tag: 'TAG-1',
       dataRetornoBase: '2024-01-10',
-    } as any);
+    });
 
     expect(prisma.manutencao.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -133,11 +133,7 @@ describe('ManutencoesService', () => {
     prisma.manutencao.update.mockResolvedValue({ id: 'man-1' });
     prisma.historicoManutencao.createMany.mockResolvedValue({ count: 1 });
 
-    await service.update(
-      'man-1',
-      { tag: 'TAG-2' } as any,
-      { nome: 'Gabriel' },
-    );
+    await service.update('man-1', { tag: 'TAG-2' }, { nome: 'Gabriel' });
 
     expect(prisma.historicoManutencao.createMany).toHaveBeenCalledWith({
       data: [
@@ -178,9 +174,7 @@ describe('ManutencoesService', () => {
       id: 'man-1',
       historicoAlteracoes: [],
     });
-    prisma.historicoManutencao.findMany.mockResolvedValue([
-      { id: 'hist-1' },
-    ]);
+    prisma.historicoManutencao.findMany.mockResolvedValue([{ id: 'hist-1' }]);
 
     const result = await service.listHistorico('man-1');
 

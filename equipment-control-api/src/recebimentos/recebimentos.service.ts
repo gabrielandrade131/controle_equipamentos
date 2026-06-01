@@ -146,8 +146,8 @@ export class RecebimentosService {
       );
     }
 
-    const equipamentosNormalizados = dados.equipamentos.map((equipamento: any) =>
-      this.normalizarEquipamentoPayload(equipamento),
+    const equipamentosNormalizados = dados.equipamentos.map(
+      (equipamento: any) => this.normalizarEquipamentoPayload(equipamento),
     );
 
     this.validarEquipamentosRecebidos(equipamentosNormalizados, arquivos);
@@ -169,7 +169,8 @@ export class RecebimentosService {
       });
 
       for (const equipamento of equipamentosNormalizados) {
-        const filtrosRecebimentoEquipamento: Prisma.RecebimentoEquipamentoWhereInput[] = [];
+        const filtrosRecebimentoEquipamento: Prisma.RecebimentoEquipamentoWhereInput[] =
+          [];
 
         if (equipamento.equipamentoId) {
           filtrosRecebimentoEquipamento.push({

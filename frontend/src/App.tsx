@@ -13,6 +13,8 @@ import { NovaManutencao } from './pages/NovaManutencao';
 import Login from './pages/login';
 import CadastroUsuarios from './pages/CadastroUsuarios';
 import ListaUsuarios from './pages/ListaUsuarios';
+import TiposEquipamentoPage from './pages/TiposEquipamento';
+import { isCSafetyUser } from './utils/auth';
 
 function AppContent() {
   const location = useLocation();
@@ -20,11 +22,20 @@ function AppContent() {
   const isAuthenticated = () => {
   return !!localStorage.getItem("token");
   };
-  const ProtectedRoute = ({ children }: { children: React.ReactElement}) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
+  const GuardedRoute = ({
+    children,
+    allowCSafety = true,
+  }: {
+    children: React.ReactElement;
+    allowCSafety?: boolean;
+  }) => {
+    if (!isAuthenticated()) {
+      return <Navigate to="/login" replace />;
+    }
+    if (!allowCSafety && isCSafetyUser()) {
+      return <Navigate to="/producao/ordem" replace />;
+    }
+    return children;
   };
   
   return (
@@ -44,16 +55,30 @@ function AppContent() {
         <Route
           path="/producao"
           element={
-            <ProtectedRoute>
+            <GuardedRoute>
               <Producao>
                 <Outlet />
               </Producao>
-            </ProtectedRoute>
+            </GuardedRoute>
           }
         >
           <Route path="ordem" element={<OrdemProducao />} />
-          <Route path="inspecao" element={<InspecaoMontagem />} />
-          <Route path="historico" element={<HistoricoEquipamento />} />
+          <Route
+            path="inspecao"
+            element={
+              <GuardedRoute allowCSafety={false}>
+                <InspecaoMontagem />
+              </GuardedRoute>
+            }
+          />
+          <Route
+            path="historico"
+            element={
+              <GuardedRoute allowCSafety={false}>
+                <HistoricoEquipamento />
+              </GuardedRoute>
+            }
+          />
 
           <Route index element={<Navigate to="/producao/ordem" replace />} />
         </Route>
@@ -62,11 +87,11 @@ function AppContent() {
         <Route
           path="/"
           element={
-            <ProtectedRoute>
+            <GuardedRoute>
               <Producao>
                 <Outlet />
               </Producao>
-            </ProtectedRoute>
+            </GuardedRoute>
           }
         >
           <Route index element={<Navigate to="/producao/ordem" replace />} />
@@ -76,18 +101,18 @@ function AppContent() {
         <Route
           path="/manutencao"
           element={
-            <ProtectedRoute>
+            <GuardedRoute allowCSafety={false}>
               <Manutencao />
-            </ProtectedRoute>
+            </GuardedRoute>
           }
         />
 
         <Route
           path="/manutencao/criar"
           element={
-            <ProtectedRoute>
+            <GuardedRoute allowCSafety={false}>
               <NovaManutencao />
-            </ProtectedRoute>
+            </GuardedRoute>
           }
         />
 
@@ -95,9 +120,9 @@ function AppContent() {
         <Route
           path="/usuarios/cadastro"
           element={
-            <ProtectedRoute>
+            <GuardedRoute allowCSafety={false}>
               <CadastroUsuarios />
-            </ProtectedRoute>
+            </GuardedRoute>
           }
         />
 
@@ -105,9 +130,18 @@ function AppContent() {
         <Route
           path="/usuarios"
           element={
-            <ProtectedRoute>
+            <GuardedRoute allowCSafety={false}>
               <ListaUsuarios />
-            </ProtectedRoute>
+            </GuardedRoute>
+          }
+        />
+
+        <Route
+          path="/tipos-equipamento"
+          element={
+            <GuardedRoute allowCSafety={false}>
+              <TiposEquipamentoPage />
+            </GuardedRoute>
           }
         />
 
@@ -125,4 +159,3 @@ function App() {
 }
 
 export default App;
-

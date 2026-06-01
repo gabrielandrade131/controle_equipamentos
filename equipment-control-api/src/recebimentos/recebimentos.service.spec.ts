@@ -1,9 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  StatusManutencao,
-  StatusRecebimentoOperacional,
-} from '@prisma/client';
+import { StatusManutencao, StatusRecebimentoOperacional } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SynchroIntegrationService } from '../integracoes/synchro/synchro-integration.service';
 import { RecebimentosService } from './recebimentos.service';
@@ -71,7 +68,9 @@ describe('RecebimentosService', () => {
       },
     };
 
-    prismaMock.$transaction.mockImplementation(async (callback) => callback(tx));
+    prismaMock.$transaction.mockImplementation(async (callback) =>
+      callback(tx),
+    );
     prismaMock.recebimentoOperacional.update.mockResolvedValue({
       id: 'rec-1',
       statusRecebimento: StatusRecebimentoOperacional.SINCRONIZADO_SYNCHRO,

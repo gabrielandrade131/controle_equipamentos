@@ -24,9 +24,7 @@ describe('TiposEquipamentoService', () => {
       },
     };
 
-    service = new TiposEquipamentoService(
-      prisma as unknown as PrismaService,
-    );
+    service = new TiposEquipamentoService(prisma as unknown as PrismaService);
   });
 
   it('creates a tipo de equipamento', async () => {

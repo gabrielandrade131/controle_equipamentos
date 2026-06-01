@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, StatusProducao } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLoteProducaoDto } from './dto/create-lote-producao.dto';
@@ -8,7 +12,16 @@ import { UpdateLoteProducaoDto } from './dto/update-lote-producao.dto';
 export class LotesProducaoService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private montarNumeroSerie(modelo?: string | null, numeroOrdem?: number | null) {
+  private normalizarInicioDoDiaUTC(data: Date): Date {
+    return new Date(
+      Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate()),
+    );
+  }
+
+  private montarNumeroSerie(
+    modelo?: string | null,
+    numeroOrdem?: number | null,
+  ) {
     if (!modelo || !numeroOrdem) {
       return null;
     }
@@ -26,11 +39,8 @@ export class LotesProducaoService {
 
     const dataFinal = dataTermino ?? new Date();
 
-    const inicio = new Date(dataInicio);
-    const fim = new Date(dataFinal);
-
-    inicio.setHours(0, 0, 0, 0);
-    fim.setHours(0, 0, 0, 0);
+    const inicio = this.normalizarInicioDoDiaUTC(new Date(dataInicio));
+    const fim = this.normalizarInicioDoDiaUTC(new Date(dataFinal));
 
     const diffMs = fim.getTime() - inicio.getTime();
     const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
@@ -40,18 +50,20 @@ export class LotesProducaoService {
 
   private calcularPrazoProducao(
     statusProducao?: string | null,
+    dataNecessidade?: Date | null,
     previsaoTermino?: Date | null,
     dataTermino?: Date | null,
   ) {
-    if (!previsaoTermino) {
+    const dataBasePrazo = dataNecessidade ?? previsaoTermino;
+
+    if (!dataBasePrazo) {
       return {
         situacaoPrazo: null,
         resultadoPrazo: null,
       };
     }
 
-    const previsao = new Date(previsaoTermino);
-    previsao.setHours(0, 0, 0, 0);
+    const prazo = this.normalizarInicioDoDiaUTC(new Date(dataBasePrazo));
 
     if (statusProducao === 'CONCLUIDA') {
       if (!dataTermino) {
@@ -61,29 +73,27 @@ export class LotesProducaoService {
         };
       }
 
-      const termino = new Date(dataTermino);
-      termino.setHours(0, 0, 0, 0);
+      const termino = this.normalizarInicioDoDiaUTC(new Date(dataTermino));
 
       return {
         situacaoPrazo: 'CONCLUIDA',
         resultadoPrazo:
-          termino.getTime() <= previsao.getTime()
+          termino.getTime() <= prazo.getTime()
             ? 'CONCLUIDA_NO_PRAZO'
             : 'CONCLUIDA_COM_ATRASO',
       };
     }
 
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    const hoje = this.normalizarInicioDoDiaUTC(new Date());
 
-    if (hoje.getTime() < previsao.getTime()) {
+    if (hoje.getTime() < prazo.getTime()) {
       return {
         situacaoPrazo: 'NO_PRAZO',
         resultadoPrazo: null,
       };
     }
 
-    if (hoje.getTime() === previsao.getTime()) {
+    if (hoje.getTime() === prazo.getTime()) {
       return {
         situacaoPrazo: 'ATENCAO',
         resultadoPrazo: null,
@@ -97,10 +107,12 @@ export class LotesProducaoService {
   }
 
   private adicionarCamposCalculados(lote: any) {
-    const deveCalcularProducao = lote.statusProducao === StatusProducao.EM_ANDAMENTO;
+    const deveCalcularProducao =
+      lote.statusProducao === StatusProducao.EM_ANDAMENTO;
 
     const prazo = this.calcularPrazoProducao(
       lote.statusProducao,
+      lote.dataNecessidade,
       lote.previsaoTermino,
       lote.dataTermino,
     );
@@ -182,8 +194,8 @@ export class LotesProducaoService {
 
         const identificadorEquipamento = this.montarNumeroSerie(
           lote.modelo,
-          equipamento.numeroOrdem
-        )
+          equipamento.numeroOrdem,
+        );
 
         await tx.equipment.update({
           where: {
@@ -297,7 +309,9 @@ export class LotesProducaoService {
           previsaoTermino: data.previsaoTermino
             ? new Date(data.previsaoTermino)
             : undefined,
-          dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
+          dataTermino: data.dataTermino
+            ? new Date(data.dataTermino)
+            : undefined,
           statusProducao: data.statusProducao,
         },
         include: {

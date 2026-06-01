@@ -23,7 +23,7 @@ async function upsertTipoEquipamento(nome) {
   });
 }
 
-async function upsertUser({ nome, email, senha }) {
+async function upsertUser({ nome, email, senha, cSafety = false }) {
   const senhaHash = await bcrypt.hash(senha, 10);
 
   return prisma.user.upsert({
@@ -33,6 +33,7 @@ async function upsertUser({ nome, email, senha }) {
       senha: senhaHash,
       ativo: true,
       precisaTrocarSenha: true,
+      cSafety,
     },
     create: {
       nome,
@@ -40,6 +41,7 @@ async function upsertUser({ nome, email, senha }) {
       senha: senhaHash,
       ativo: true,
       precisaTrocarSenha: true,
+      cSafety,
     },
   });
 }

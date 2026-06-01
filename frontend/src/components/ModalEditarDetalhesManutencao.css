@@ -1,4 +1,4 @@
-.modal-overlay {
+.manutencao-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -11,19 +11,17 @@
   z-index: 1000;
 }
 
-.modal-content {
+.manutencao-modal-content {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
+  width: min(90vw, 1120px);
+  max-height: 94vh;
   display: flex;
   flex-direction: column;
 }
 
-.modal-header {
+.manutencao-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,13 +29,13 @@
   border-bottom: 1px solid #eee;
 }
 
-.modal-header h2 {
+.manutencao-modal-header h2 {
   margin: 0;
   font-size: 18px;
   color: #333;
 }
 
-.modal-close {
+.manutencao-modal-close {
   background: none;
   border: none;
   font-size: 24px;
@@ -51,69 +49,112 @@
   justify-content: center;
 }
 
-.modal-close:hover {
+.manutencao-modal-close:hover {
   color: #333;
 }
 
-.modal-body {
+.manutencao-modal-body {
   padding: 20px;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.form-grid {
+.manutencao-modal-content .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 20px;
+  align-items: start;
 }
 
-.form-group {
+@media (min-width: 1500px) {
+  .manutencao-modal-content .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .manutencao-modal-content .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manutencao-modal-content {
+    width: calc(100vw - 12px);
+    max-height: 94vh;
+  }
+}
+
+.manutencao-modal-content .form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.form-group.full {
+.manutencao-modal-content .form-group.full {
   grid-column: 1 / -1;
 }
 
-.form-group label {
+.manutencao-modal-content .form-group label {
   font-weight: 600;
   color: #333;
   font-size: 14px;
+  line-height: 1.25;
+  min-height: 2.5em;
+  display: flex;
+  align-items: flex-end;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.manutencao-modal-content .form-group input,
+.manutencao-modal-content .form-group select,
+.manutencao-modal-content .form-group textarea {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 42px;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.manutencao-modal-content .form-group input:focus,
+.manutencao-modal-content .form-group select:focus,
+.manutencao-modal-content .form-group textarea:focus {
   outline: none;
   border-color: #b2cc21;
   box-shadow: 0 0 0 3px rgba(178, 204, 33, 0.1);
 }
 
-.form-group.read-only input {
+.manutencao-modal-content .form-group select {
+  position: relative;
+  z-index: 1001;
+  text-align: left;
+  text-align-last: left;
+  line-height: 1.25;
+  padding-right: 32px;
+  background-color: #fff;
+  min-width: 0;
+}
+
+.manutencao-modal-content .form-group select option {
+  font-size: 14px;
+  line-height: 1.35;
+  color: #111;
+}
+
+.manutencao-modal-content .form-group.read-only input {
   background-color: #f5f5f5;
   color: #666;
   cursor: not-allowed;
 }
 
-.form-group.read-only input:focus {
+.manutencao-modal-content .form-group.read-only input:focus {
   border-color: #ddd;
   box-shadow: none;
 }
 
-.observacoes-historico {
+.manutencao-modal-content .observacoes-historico {
   background: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -123,13 +164,13 @@
   overflow-y: auto;
 }
 
-.observacoes-lista {
+.manutencao-modal-content .observacoes-lista {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.observacao-item {
+.manutencao-modal-content .observacao-item {
   background: white;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
@@ -137,19 +178,19 @@
   border-left: 3px solid #b2cc21;
 }
 
-.observacao-header {
+.manutencao-modal-content .observacao-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
 
-.observacao-header strong {
+.manutencao-modal-content .observacao-header strong {
   color: #b2cc21;
   font-size: 12px;
 }
 
-.observacao-texto {
+.manutencao-modal-content .observacao-texto {
   color: #333;
   margin: 0;
   font-size: 14px;
@@ -157,20 +198,20 @@
   word-break: break-word;
 }
 
-.sem-observacoes {
+.manutencao-modal-content .sem-observacoes {
   color: #999;
   font-size: 13px;
   margin: 0;
   font-style: italic;
 }
 
-.adicionar-observacao {
+.manutencao-modal-content .adicionar-observacao {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.adicionar-observacao textarea {
+.manutencao-modal-content .adicionar-observacao textarea {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -179,13 +220,13 @@
   resize: vertical;
 }
 
-.adicionar-observacao textarea:focus {
+.manutencao-modal-content .adicionar-observacao textarea:focus {
   outline: none;
   border-color: #b2cc21;
   box-shadow: 0 0 0 3px rgba(178, 204, 33, 0.1);
 }
 
-.btn-adicionar-obs {
+.manutencao-modal-content .btn-adicionar-obs {
   padding: 8px 16px;
   background-color: #b2cc21;
   color: white;
@@ -197,18 +238,18 @@
   transition: all 0.2s ease;
 }
 
-.btn-adicionar-obs:hover {
+.manutencao-modal-content .btn-adicionar-obs:hover {
   background-color: #9ab31b;
 }
 
-.btn-adicionar-obs:active {
+.manutencao-modal-content .btn-adicionar-obs:active {
   transform: translateY(1px);
 }
-.form-group textarea {
+.manutencao-modal-content .form-group textarea {
   resize: vertical;
 }
 
-.modal-footer {
+.manutencao-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;

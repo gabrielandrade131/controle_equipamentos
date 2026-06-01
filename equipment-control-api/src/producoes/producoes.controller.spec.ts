@@ -41,7 +41,7 @@ describe('ProducoesController', () => {
     const dto = { descricao: 'Obs', responsavel: 'Gabriel' };
     serviceMock.addObservacao.mockResolvedValue({ id: 'obs-1' });
 
-    await controller.addObservacao('prod-1', dto as any);
+    await controller.addObservacao('prod-1', dto);
 
     expect(serviceMock.addObservacao).toHaveBeenCalledWith('prod-1', dto);
   });
@@ -50,7 +50,7 @@ describe('ProducoesController', () => {
     const filters = { page: 1 };
     serviceMock.findAll.mockResolvedValue([]);
 
-    await controller.findAll(filters as any);
+    await controller.findAll(filters);
 
     expect(serviceMock.findAll).toHaveBeenCalledWith(filters);
   });
@@ -79,7 +79,7 @@ describe('ProducoesController', () => {
       send: jest.fn(),
     };
 
-    await controller.exportExcel({} as any, res as any);
+    await controller.exportExcel({}, res as any);
 
     expect(serviceMock.exportExcel).toHaveBeenCalledWith({});
     expect(res.setHeader).toHaveBeenCalledWith(
@@ -143,19 +143,17 @@ describe('ProducoesController', () => {
     const dto = { modelo: 'MX' };
     serviceMock.update.mockResolvedValue({ id: 'prod-1' });
 
-    await controller.update('prod-1', dto as any, { user: { nome: 'Gab' } });
+    await controller.update('prod-1', dto, { user: { nome: 'Gab' } });
 
-    expect(serviceMock.update).toHaveBeenCalledWith(
-      'prod-1',
-      dto,
-      { nome: 'Gab' },
-    );
+    expect(serviceMock.update).toHaveBeenCalledWith('prod-1', dto, {
+      nome: 'Gab',
+    });
   });
 
   it('updates tag', async () => {
     serviceMock.updateTag.mockResolvedValue({ id: 'prod-1' });
 
-    await controller.updateTag('prod-1', { tag: 'TAG-1' } as any);
+    await controller.updateTag('prod-1', { tag: 'TAG-1' });
 
     expect(serviceMock.updateTag).toHaveBeenCalledWith('prod-1', {
       tag: 'TAG-1',
@@ -168,7 +166,7 @@ describe('ProducoesController', () => {
       id: 'reg-1',
     });
 
-    await controller.updateRegistroInspecaoMontagem('prod-1', 1, dto as any);
+    await controller.updateRegistroInspecaoMontagem('prod-1', 1, dto);
 
     expect(serviceMock.updateRegistroInspecaoMontagem).toHaveBeenCalledWith(
       'prod-1',

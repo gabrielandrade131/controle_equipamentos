@@ -35,6 +35,9 @@ export class TiposEquipamentoService {
 
   async findAll() {
     return this.prisma.tipoEquipamento.findMany({
+      where: {
+        ativo: true,
+      },
       orderBy: {
         nome: 'asc',
       },

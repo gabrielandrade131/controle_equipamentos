@@ -1,7 +1,4 @@
-import {
-  ConflictException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
@@ -54,6 +51,7 @@ describe('AuthService', () => {
       email: 'gabriel@teste.com',
       ativo: true,
       precisaTrocarSenha: true,
+      cSafety: false,
       criadoEm: createdAt,
     });
 
@@ -69,6 +67,7 @@ describe('AuthService', () => {
       senha: 'hashed',
       ativo: true,
       precisaTrocarSenha: true,
+      cSafety: false,
     });
     expect(result).toEqual({
       id: 'user-1',
@@ -76,6 +75,7 @@ describe('AuthService', () => {
       email: 'gabriel@teste.com',
       ativo: true,
       precisaTrocarSenha: true,
+      cSafety: false,
       criadoEm: createdAt,
     });
   });
@@ -123,6 +123,7 @@ describe('AuthService', () => {
       senha: 'hash',
       ativo: true,
       precisaTrocarSenha: false,
+      cSafety: true,
     });
     bcryptMock.compare.mockResolvedValue(true);
     jwtService.signAsync.mockResolvedValue('jwt-token');
@@ -144,6 +145,7 @@ describe('AuthService', () => {
         email: 'gabriel@teste.com',
         ativo: true,
         precisaTrocarSenha: false,
+        cSafety: true,
       },
     });
   });

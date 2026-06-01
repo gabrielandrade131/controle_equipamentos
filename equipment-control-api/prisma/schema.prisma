@@ -97,6 +97,7 @@ model User {
   senha                   String        
   ativo                   Boolean                           @default(true)
   precisaTrocarSenha      Boolean                           @default(true)
+  cSafety                 Boolean                           @default(false)
   criadoEm                DateTime                          @default(now())   
 }
 
@@ -108,6 +109,7 @@ model TipoEquipamento {
   atualizadoEm      DateTime        @updatedAt
 
   lotesProducao     LoteProducao[]
+  manutencoes       Manutencao[]
 }
 
 model RegistroInspecaoMontagem {
@@ -130,11 +132,15 @@ model Manutencao {
   numeroOrdemManutencao   Int           @unique @default(autoincrement())
   synchroId               String?       @unique
   origem                  OrigemManutencao      @default(SYNCHRO)
+  
+  tipoEquipamentoId       String?
+  tipoEquipamento         TipoEquipamento?      @relation(fields: [tipoEquipamentoId], references: [id])
 
   tipoEquipamentoNome     String?
   modeloEquipamento       String?
   tag                     String?
   situacaoEquipamento     String?
+  
 
   dataRetornoBase         DateTime?
   dataInicio              DateTime?

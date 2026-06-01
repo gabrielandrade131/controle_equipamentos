@@ -62,10 +62,7 @@ export class RecebimentosController {
     @Body('dados') dados: string,
     @UploadedFiles() arquivos: Express.Multer.File[],
   ) {
-    return this.recebimentosService.criarRecebimento(
-      dados,
-      arquivos ?? [],
-    );
+    return this.recebimentosService.criarRecebimento(dados, arquivos ?? []);
   }
 
   @Get()

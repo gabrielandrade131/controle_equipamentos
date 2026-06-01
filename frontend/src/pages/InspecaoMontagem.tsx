@@ -1,17 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FormularioInspecaoNovo } from '../components/FormularioInspecaoNovo';
 import { FilterPanel } from '../components/FilterPanel';
 import { useFilters } from '../hooks/useFilters';
 import { PdfExporterInspecao } from '../components/PdfExporterInspecao';
+import { Pagination } from '../components/Pagination';
+import { usePaginatedSelection } from '../hooks/usePaginatedSelection';
 import { useInspecoes } from '../hooks/useInspecoes';
 import { InspecaoMontagem } from '../types/inspecao';
 import { buildSelectOptions } from '../utils/filterOptions';
 import '../pages/Producao.css';
-
-interface SelectedInspecao {
-  id: string;
-  data: InspecaoMontagem;
-}
 
 const getResultadoColor = (resultado?: string) => {
   if (resultado === 'APROVADO') return '#4caf50';
@@ -21,7 +18,6 @@ const getResultadoColor = (resultado?: string) => {
 
 const InspecaoMontagemPage: React.FC = () => {
   const { inspecoes, loading, atualizarInspecao } = useInspecoes();
-  const [selected, setSelected] = useState<SelectedInspecao | null>(null);
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const { filters, updateFilters } = useFilters('inspecao-filters', {});
@@ -42,28 +38,29 @@ const InspecaoMontagemPage: React.FC = () => {
       return true;
     });
   }, [inspecoes, filters]);
-
-  const handleSelectInspecao = (inspecao: InspecaoMontagem) => {
-    setSelected({
-      id: inspecao.id || '',
-      data: inspecao,
-    });
-    setEditando(false);
-  };
+  const {
+    currentPage,
+    pageSize,
+    pageSizeOptions,
+    paginatedItems,
+    selectedId,
+    selectedItem,
+    selectItem,
+    setPage,
+    setPageSize,
+    totalItems,
+    totalPages,
+  } = usePaginatedSelection({
+    items: filteredInspecoes,
+    getId: (inspecao) => inspecao.id,
+  });
 
   const handleSalvarInspecao = async (inspecaoAtualizada: InspecaoMontagem) => {
-    if (!selected?.id) return;
+    if (!selectedItem?.id) return;
 
     try {
       setSalvando(true);
-      await atualizarInspecao(selected.id, inspecaoAtualizada);
-      setSelected({
-        id: selected.id,
-        data: {
-          ...inspecaoAtualizada,
-          id: selected.id,
-        },
-      });
+      await atualizarInspecao(selectedItem.id, inspecaoAtualizada);
       setEditando(false);
       alert('Inspeção de montagem salva com sucesso!');
     } catch (error: any) {
@@ -81,13 +78,13 @@ const InspecaoMontagemPage: React.FC = () => {
     );
   }
 
-  if (editando && selected) {
+  if (editando && selectedItem) {
     return (
       <div className="container">
         <FormularioInspecaoNovo
-          key={selected.id}
-          inspecaoInicial={selected.data}
-          titulo={`Inspeção de montagem - ${selected.data.numeroSerie || selected.data.modelo}`}
+          key={selectedItem.id}
+          inspecaoInicial={selectedItem}
+          titulo={`Inspeção de montagem - ${selectedItem.numeroSerie || selectedItem.modelo}`}
           onSubmit={handleSalvarInspecao}
           onCancel={() => setEditando(false)}
         />
@@ -124,43 +121,57 @@ const InspecaoMontagemPage: React.FC = () => {
           {filteredInspecoes.length === 0 ? (
             <p>Nenhuma produção encontrada</p>
           ) : (
-            <ul className="page-list">
-              {filteredInspecoes.map((inspecao) => (
+            <>
+              <ul className="page-list">
+                {paginatedItems.map((inspecao) => (
                 <li
                   key={inspecao.id}
-                  className={selected?.id === inspecao.id ? 'active' : ''}
-                  onClick={() => handleSelectInspecao(inspecao)}
+                  className={selectedId === inspecao.id ? 'active' : ''}
+                  onClick={() => {
+                    selectItem(inspecao);
+                    setEditando(false);
+                  }}
                 >
                   <strong>{inspecao.numeroSerie || 'Sem série'}</strong>
                   <small>{inspecao.modelo || 'Sem modelo'}</small>
                 </li>
-              ))}
-            </ul>
+                ))}
+              </ul>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                pageSizeOptions={pageSizeOptions}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
+            </>
           )}
         </div>
 
         <div className="page-detail-section">
-          {selected ? (
+          {selectedItem ? (
             <div className="inspecao-detail">
               <h3>Inspeção vinculada à produção</h3>
               <div className="page-detail-grid">
                 <div className="detail-item">
                   <label>Número de série:</label>
-                  <p>{selected.data.numeroSerie || '-'}</p>
+                  <p>{selectedItem.numeroSerie || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Modelo:</label>
-                  <p>{selected.data.modelo || '-'}</p>
+                  <p>{selectedItem.modelo || '-'}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data da inspeção:</label>
-                  <p>{selected.data.data}</p>
+                  <p>{selectedItem.data}</p>
                 </div>
                 <div className="detail-item">
                   <label>Resultado:</label>
                   <p>
-                    <strong style={{ color: getResultadoColor(selected.data.resultadoFinal) }}>
-                      {selected.data.resultadoFinal || 'Não preenchida'}
+                    <strong style={{ color: getResultadoColor(selectedItem.resultadoFinal) }}>
+                      {selectedItem.resultadoFinal || 'Não preenchida'}
                     </strong>
                   </p>
                 </div>
@@ -174,7 +185,7 @@ const InspecaoMontagemPage: React.FC = () => {
                 >
                   Preencher inspeção
                 </button>
-                <PdfExporterInspecao inspecao={selected.data} />
+                <PdfExporterInspecao inspecao={selectedItem} />
               </div>
             </div>
           ) : (

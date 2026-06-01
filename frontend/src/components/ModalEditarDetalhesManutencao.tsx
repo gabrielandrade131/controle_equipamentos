@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import axiosInstance from '../services/axiosConfig';
+import React, { useState } from 'react';
 import { InspecaoManutencao, ObservacaoHistorico } from '../types/manutencao';
-import { TipoEquipamento } from '../types/producao';
+import { useTiposEquipamento } from '../hooks/useTiposEquipamento';
 import './ModalEditarDetalhesManutencao.css';
 
 interface ModalEditarDetalhesManutencaoProps {
@@ -21,19 +20,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
 }) => {
   const [formData, setFormData] = useState<InspecaoManutencao>(inspecao);
   const [novaObservacao, setNovaObservacao] = useState('');
-  const [tiposEquipamento, setTiposEquipamento] = useState<TipoEquipamento[]>([]);
-
-  useEffect(() => {
-    axiosInstance
-      .get<TipoEquipamento[]>('/tipos-equipamento')
-      .then((response) => {
-        setTiposEquipamento(response.data.filter((tipo) => tipo.ativo));
-      })
-      .catch((error) => {
-        console.error('Erro ao carregar tipos de equipamento:', error);
-        setTiposEquipamento([]);
-      });
-  }, []);
+  const { tiposEquipamento } = useTiposEquipamento();
 
   const handleInputChange = (campo: keyof InspecaoManutencao, valor: any) => {
     setFormData((prev) => ({
@@ -67,19 +54,19 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
+    <div className="manutencao-modal-overlay">
+      <div className="manutencao-modal-content">
+        <div className="manutencao-modal-header">
           <h2>{titulo || 'Editar Detalhes da Manutenção'}</h2>
           <button
             onClick={onCancelar}
-            className="modal-close"
+            className="manutencao-modal-close"
           >
             ✕
           </button>
         </div>
 
-        <div className="modal-body">
+        <div className="manutencao-modal-body">
           <div className="form-grid">
             <div className={isCreating ? 'form-group' : 'form-group read-only'}>
               <label>Ordem de Manutenção</label>
@@ -104,12 +91,19 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
             <div className={isCreating ? 'form-group' : 'form-group'}>
               <label>Tipo de equipamento</label>
               <select
-                value={formData.tipoEquipamento || ''}
-                onChange={(e) => handleInputChange('tipoEquipamento', e.target.value)}
+                value={formData.tipoEquipamentoId || ''}
+                onChange={(e) => {
+                  const tipoSelecionado = tiposEquipamento.find((tipo) => tipo.id === e.target.value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    tipoEquipamentoId: e.target.value,
+                    tipoEquipamento: tipoSelecionado?.nome || '',
+                  }));
+                }}
               >
                 <option value="">Selecione o tipo</option>
                 {tiposEquipamento.map((tipo) => (
-                  <option key={tipo.id} value={tipo.nome}>
+                  <option key={tipo.id} value={tipo.id}>
                     {tipo.nome}
                   </option>
                 ))}
@@ -255,7 +249,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
           </div>
         </div>
 
-        <div className="modal-footer">
+        <div className="manutencao-modal-footer">
           <button
             onClick={onCancelar}
             className="btn-primary"

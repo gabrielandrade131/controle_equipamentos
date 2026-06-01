@@ -7,16 +7,19 @@ function withApiPrefix(baseUrl: string): string {
     : `${normalizedBaseUrl}/api`;
 }
 
-// Build the API base from environment. In development, default to the backend
-// host instead of the frontend origin to avoid hitting the React dev server.
-const API_URL = withApiPrefix(
-  process.env.REACT_APP_API_URL ||
-    (process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000'
-      : typeof window !== 'undefined'
-        ? window.location.origin
-        : ''),
-);
+function resolveApiUrl(): string {
+  if (process.env.NODE_ENV === 'development') {
+    return withApiPrefix(process.env.REACT_APP_API_URL || 'http://localhost:3000');
+  }
+
+  if (typeof window !== 'undefined') {
+    return withApiPrefix(window.location.origin);
+  }
+
+  return withApiPrefix(process.env.REACT_APP_API_URL || '');
+}
+
+const API_URL = resolveApiUrl();
 const TIMEOUT = parseInt(process.env.REACT_APP_TIMEOUT || '5000', 10);
 
 export const axiosInstance: AxiosInstance = axios.create({

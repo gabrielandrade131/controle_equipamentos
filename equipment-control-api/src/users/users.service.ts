@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { timeStamp } from 'console';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +22,7 @@ export class UsersService {
     senha: string;
     ativo?: boolean;
     precisaTrocarSenha?: boolean;
+    cSafety?: boolean;
   }) {
     return this.prisma.user.create({
       data: {
@@ -26,6 +31,7 @@ export class UsersService {
         senha: data.senha,
         ativo: data.ativo ?? true,
         precisaTrocarSenha: data.precisaTrocarSenha ?? true,
+        cSafety: data.cSafety ?? false,
       },
     });
   }
@@ -36,6 +42,16 @@ export class UsersService {
     });
   }
 
+  async findOne(id: string) {
+    const usuario = await this.findById(id);
+
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return usuario;
+  }
+
   async findAll() {
     return this.prisma.user.findMany({
       select: {
@@ -44,6 +60,7 @@ export class UsersService {
         email: true,
         ativo: true,
         precisaTrocarSenha: true,
+        cSafety: true,
         criadoEm: true,
       },
       orderBy: {
@@ -59,12 +76,30 @@ export class UsersService {
       email?: string;
       ativo?: boolean;
       precisaTrocarSenha?: boolean;
-    }
+      cSafety?: boolean;
+    },
   ) {
-    return this.prisma.user.update({
-      where: { id },
-      data,
-    });
+    await this.findOne(id);
+
+    const dataAtualizada = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+
+    try {
+      return await this.prisma.user.update({
+        where: { id },
+        data: dataAtualizada,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Já existe um usuário com este e-mail.');
+      }
+
+      throw error;
+    }
   }
 
   async delete(id: string) {

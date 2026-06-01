@@ -11,6 +11,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "import:synchro:manutencoes": "node scripts/import-synchro-manutencoes.js",
+    "seed:tipos-equipamento": "node prisma/seed-tipos-equipamento.js",
     "start": "nest start",
     "prestart:dev": "npm run prisma:generate",
     "start:dev": "nest start --watch",

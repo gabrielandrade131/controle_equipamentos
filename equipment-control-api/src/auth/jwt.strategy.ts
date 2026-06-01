@@ -26,6 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: usuario.email,
       ativo: usuario.ativo,
       precisaTrocarSenha: usuario.precisaTrocarSenha,
+      cSafety: usuario.cSafety,
     };
   }
 }

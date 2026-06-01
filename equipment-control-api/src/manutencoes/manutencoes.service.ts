@@ -13,7 +13,6 @@ import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
 import * as ExcelJS from 'exceljs';
 
-
 type UsuarioHistorico = {
   nome?: string | null;
   email?: string | null;
@@ -23,6 +22,15 @@ type UsuarioHistorico = {
 @Injectable()
 export class ManutencoesService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private readonly manutencaoInclude = {
+    tipoEquipamento: true,
+    historicoAlteracoes: {
+      orderBy: {
+        criadoEm: 'desc' as const,
+      },
+    },
+  };
 
   private normalizarTexto(value?: string | null): string | null {
     const texto = String(value ?? '').trim();
@@ -155,6 +163,34 @@ export class ManutencoesService {
     }
 
     return where;
+  }
+
+  private async resolverTipoEquipamento(
+    tipoEquipamentoId?: string | null,
+    tipoEquipamentoNome?: string | null,
+  ) {
+    if (!tipoEquipamentoId) {
+      return {
+        tipoEquipamentoId: null,
+        tipoEquipamentoNome: this.normalizarTexto(tipoEquipamentoNome),
+      };
+    }
+
+    const tipoEquipamento = await this.prisma.tipoEquipamento.findFirst({
+      where: {
+        id: tipoEquipamentoId,
+        ativo: true,
+      },
+    });
+
+    if (!tipoEquipamento) {
+      throw new NotFoundException('Tipo de equipamento não encontrado.');
+    }
+
+    return {
+      tipoEquipamentoId: tipoEquipamento.id,
+      tipoEquipamentoNome: tipoEquipamento.nome,
+    };
   }
 
   private async importarUmaManutencaoSynchro(data: CreateManutencaoSynchroDto) {
@@ -341,10 +377,16 @@ export class ManutencoesService {
   }
 
   async create(data: CreateManutencaoDto) {
+    const tipoEquipamento = await this.resolverTipoEquipamento(
+      data.tipoEquipamentoId,
+      data.tipoEquipamentoNome,
+    );
+
     const manutencao = await this.prisma.manutencao.create({
       data: {
         origem: OrigemManutencao.MANUAL,
-        tipoEquipamentoNome: data.tipoEquipamentoNome,
+        tipoEquipamentoId: tipoEquipamento.tipoEquipamentoId,
+        tipoEquipamentoNome: tipoEquipamento.tipoEquipamentoNome,
         modeloEquipamento: data.modeloEquipamento,
         tag: data.tag,
         situacaoEquipamento: data.situacaoEquipamento,
@@ -360,6 +402,9 @@ export class ManutencoesService {
         statusManutencao:
           data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
         avaliacaoFinalConforme: data.avaliacaoFinalConforme,
+      },
+      include: {
+        tipoEquipamento: true,
       },
     });
 
@@ -377,6 +422,9 @@ export class ManutencoesService {
     const [data, total] = await Promise.all([
       this.prisma.manutencao.findMany({
         where,
+        include: {
+          tipoEquipamento: true,
+        },
         orderBy: {
           [sortBy]: sortOrder,
         },
@@ -401,13 +449,7 @@ export class ManutencoesService {
         id,
         ativo: true,
       },
-      include: {
-        historicoAlteracoes: {
-          orderBy: {
-            criadoEm: 'desc',
-          },
-        },
-      },
+      include: this.manutencaoInclude,
     });
 
     if (!manutencao) {
@@ -432,8 +474,21 @@ export class ManutencoesService {
       );
     }
 
+    const tipoEquipamento = await this.resolverTipoEquipamento(
+      data.tipoEquipamentoId ?? manutencaoAtual.tipoEquipamentoId,
+      data.tipoEquipamentoNome ?? manutencaoAtual.tipoEquipamentoNome,
+    );
+
     const novosDados = {
-      tipoEquipamentoNome: data.tipoEquipamentoNome,
+      tipoEquipamentoId:
+        data.tipoEquipamentoId !== undefined
+          ? tipoEquipamento.tipoEquipamentoId
+          : undefined,
+      tipoEquipamentoNome:
+        data.tipoEquipamentoId !== undefined ||
+        data.tipoEquipamentoNome !== undefined
+          ? tipoEquipamento.tipoEquipamentoNome
+          : undefined,
       modeloEquipamento: data.modeloEquipamento,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
@@ -460,6 +515,7 @@ export class ManutencoesService {
     }[] = [];
 
     const camposMonitorados: Array<keyof typeof novosDados> = [
+      'tipoEquipamentoId',
       'tipoEquipamentoNome',
       'modeloEquipamento',
       'tag',
@@ -497,6 +553,9 @@ export class ManutencoesService {
     const manutencaoAtualizada = await this.prisma.manutencao.update({
       where: { id },
       data: novosDados,
+      include: {
+        tipoEquipamento: true,
+      },
     });
 
     if (historicoParaCriar.length > 0) {

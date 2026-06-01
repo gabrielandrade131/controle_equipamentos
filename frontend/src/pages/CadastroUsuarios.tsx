@@ -7,6 +7,7 @@ interface CreateUserDto {
   nome: string;
   email: string;
   senha: string;
+  cSafety: boolean;
 }
 
 interface AlertState {
@@ -21,6 +22,7 @@ const CadastroUsuarios: React.FC = () => {
     nome: '',
     email: '',
     senha: '',
+    cSafety: false,
   });
 
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -58,6 +60,14 @@ const CadastroUsuarios: React.FC = () => {
 
   const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfirmPassword(e.target.value);
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -109,6 +119,7 @@ const CadastroUsuarios: React.FC = () => {
         nome: formData.nome,
         email: formData.email,
         senha: formData.senha,
+        cSafety: formData.cSafety,
       });
 
       showAlert('Usuário cadastrado com sucesso!', 'success');
@@ -117,6 +128,7 @@ const CadastroUsuarios: React.FC = () => {
         nome: '',
         email: '',
         senha: '',
+        cSafety: false,
       });
       setConfirmPassword('');
 
@@ -192,6 +204,18 @@ const CadastroUsuarios: React.FC = () => {
               disabled={loading}
               required
             />
+          </div>
+
+          <div className="form-group checkbox">
+            <input
+              type="checkbox"
+              id="cSafety"
+              name="cSafety"
+              checked={formData.cSafety}
+              onChange={handleCheckboxChange}
+              disabled={loading}
+            />
+            <label htmlFor="cSafety">C-Safety (acesso restrito)</label>
           </div>
 
           <div className="form-actions">

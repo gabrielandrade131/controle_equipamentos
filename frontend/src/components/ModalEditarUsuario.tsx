@@ -6,6 +6,7 @@ interface Usuario {
   nome: string;
   email: string;
   ativo: boolean;
+  cSafety: boolean;
 }
 
 interface ModalEditarUsuarioProps {
@@ -26,12 +27,14 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [ativo, setAtivo] = useState(true);
+  const [cSafety, setCSafety] = useState(false);
 
   useEffect(() => {
     if (usuario) {
       setNome(usuario.nome);
       setEmail(usuario.email);
       setAtivo(usuario.ativo);
+      setCSafety(Boolean(usuario.cSafety));
     }
   }, [usuario]);
 
@@ -44,6 +47,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
       nome,
       email,
       ativo,
+      cSafety,
     });
   };
 
@@ -91,6 +95,17 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
               disabled={loading}
             />
             <label htmlFor="ativo">Usuário Ativo</label>
+          </div>
+
+          <div className="form-group checkbox">
+            <input
+              type="checkbox"
+              id="cSafety"
+              checked={cSafety}
+              onChange={(e) => setCSafety(e.target.checked)}
+              disabled={loading}
+            />
+            <label htmlFor="cSafety">C-Safety (acesso restrito)</label>
           </div>
 
 

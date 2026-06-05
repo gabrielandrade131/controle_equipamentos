@@ -7,6 +7,7 @@ interface Usuario {
   email: string;
   ativo: boolean;
   cSafety: boolean;
+  verificado: boolean;
 }
 
 interface ModalEditarUsuarioProps {
@@ -15,6 +16,8 @@ interface ModalEditarUsuarioProps {
   onClose: () => void;
   onSave: (usuarioAtualizado: Partial<Usuario>) => void;
   loading: boolean;
+  canEditAll: boolean;
+  canEditVerification: boolean;
 }
 
 const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
@@ -23,11 +26,14 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
   onClose,
   onSave,
   loading,
+  canEditAll,
+  canEditVerification,
 }) => {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [ativo, setAtivo] = useState(true);
   const [cSafety, setCSafety] = useState(false);
+  const [verificado, setVerificado] = useState(false);
 
   useEffect(() => {
     if (usuario) {
@@ -35,6 +41,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
       setEmail(usuario.email);
       setAtivo(usuario.ativo);
       setCSafety(Boolean(usuario.cSafety));
+      setVerificado(Boolean(usuario.verificado));
     }
   }, [usuario]);
 
@@ -48,6 +55,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
       email,
       ativo,
       cSafety,
+      verificado,
     });
   };
 
@@ -61,6 +69,12 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
           </button>
         </div>
 
+        {!canEditAll ? (
+          <p className="modal-permission-note">
+            Seu perfil pode alterar apenas o status de verificação.
+          </p>
+        ) : null}
+
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
             <label htmlFor="nome">Nome Completo</label>
@@ -69,7 +83,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
               id="nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              disabled={loading}
+              disabled={loading || !canEditAll}
               required
             />
           </div>
@@ -81,7 +95,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
+              disabled={loading || !canEditAll}
               required
             />
           </div>
@@ -92,7 +106,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
               id="ativo"
               checked={ativo}
               onChange={(e) => setAtivo(e.target.checked)}
-              disabled={loading}
+              disabled={loading || !canEditAll}
             />
             <label htmlFor="ativo">Usuário Ativo</label>
           </div>
@@ -103,9 +117,20 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
               id="cSafety"
               checked={cSafety}
               onChange={(e) => setCSafety(e.target.checked)}
-              disabled={loading}
+              disabled={loading || !canEditAll}
             />
             <label htmlFor="cSafety">C-Safety (acesso restrito)</label>
+          </div>
+
+          <div className="form-group checkbox">
+            <input
+              type="checkbox"
+              id="verificado"
+              checked={verificado}
+              onChange={(e) => setVerificado(e.target.checked)}
+              disabled={loading || !canEditVerification}
+            />
+            <label htmlFor="verificado">Usuário verificado</label>
           </div>
 
 

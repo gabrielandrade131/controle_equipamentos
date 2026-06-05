@@ -52,6 +52,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: false,
+      verificado: false,
       criadoEm: createdAt,
     });
 
@@ -68,6 +69,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: false,
+      verificado: false,
     });
     expect(result).toEqual({
       id: 'user-1',
@@ -76,6 +78,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: false,
+      verificado: false,
       criadoEm: createdAt,
     });
   });
@@ -124,6 +127,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: false,
       cSafety: true,
+      verificado: true,
     });
     bcryptMock.compare.mockResolvedValue(true);
     jwtService.signAsync.mockResolvedValue('jwt-token');
@@ -136,6 +140,7 @@ describe('AuthService', () => {
     expect(jwtService.signAsync).toHaveBeenCalledWith({
       sub: 'user-1',
       email: 'gabriel@teste.com',
+      verificado: true,
     });
     expect(result).toEqual({
       access_token: 'jwt-token',
@@ -146,6 +151,7 @@ describe('AuthService', () => {
         ativo: true,
         precisaTrocarSenha: false,
         cSafety: true,
+        verificado: true,
       },
     });
   });

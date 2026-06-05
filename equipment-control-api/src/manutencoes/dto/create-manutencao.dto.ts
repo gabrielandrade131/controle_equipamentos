@@ -49,6 +49,11 @@ export class CreateManutencaoDto {
   @IsDateString()
   previsaoTermino?: string;
 
+  @ApiPropertyOptional({ example: '2026-05-05' })
+  @IsOptional()
+  @IsDateString()
+  dataParalisacao?: string;
+
   @ApiPropertyOptional({ example: 'Diagnostico inicial' })
   @IsOptional()
   @IsString()

@@ -4,6 +4,7 @@ import './ListaUsuarios.css';
 import AlertModal from '../components/AlertModal';
 import ModalEditarUsuario from '../components/ModalEditarUsuario';
 import ModalConfirmacao from '../components/ModalConfirmacao';
+import { canManageUserVerification, isAdminUser } from '../utils/auth';
 
 interface Usuario {
   id: string;
@@ -12,6 +13,7 @@ interface Usuario {
   ativo: boolean;
   precisaTrocarSenha: boolean;
   cSafety: boolean;
+  verificado: boolean;
   criadoEm: string;
 }
 
@@ -23,6 +25,8 @@ interface AlertState {
 }
 
 const ListaUsuarios: React.FC = () => {
+  const usuarioAdmin = isAdminUser();
+  const podeEditarVerificacao = canManageUserVerification();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
@@ -75,6 +79,14 @@ const ListaUsuarios: React.FC = () => {
   };
 
   const abrirModalEditar = (usuario: Usuario) => {
+    if (!podeEditarVerificacao) {
+      showAlert(
+        'Apenas usuários verificados podem alterar permissões de usuários.',
+        'warning',
+      );
+      return;
+    }
+
     setUsuarioEditando(usuario);
     setModalEditar(true);
   };
@@ -89,13 +101,20 @@ const ListaUsuarios: React.FC = () => {
 
     setLoadingAction(true);
     try {
-      await axiosInstance.put(`/users/${usuarioAtualizado.id}`, {
-        nome: usuarioAtualizado.nome,
-        email: usuarioAtualizado.email,
-        ativo: usuarioAtualizado.ativo,
-        precisaTrocarSenha: usuarioAtualizado.precisaTrocarSenha,
-        cSafety: usuarioAtualizado.cSafety,
-      });
+      const payload = usuarioAdmin
+        ? {
+            nome: usuarioAtualizado.nome,
+            email: usuarioAtualizado.email,
+            ativo: usuarioAtualizado.ativo,
+            precisaTrocarSenha: usuarioAtualizado.precisaTrocarSenha,
+            cSafety: usuarioAtualizado.cSafety,
+            verificado: usuarioAtualizado.verificado,
+          }
+        : {
+            verificado: usuarioAtualizado.verificado,
+          };
+
+      await axiosInstance.put(`/users/${usuarioAtualizado.id}`, payload);
 
       showAlert('Usuário atualizado com sucesso!', 'success');
       fecharModalEditar();
@@ -109,6 +128,11 @@ const ListaUsuarios: React.FC = () => {
   };
 
   const abrirModalDelecao = (usuario: Usuario) => {
+    if (!usuarioAdmin) {
+      showAlert('Apenas administradores podem deletar usuários.', 'warning');
+      return;
+    }
+
     setUsuarioDeletando(usuario);
     setModalConfirmarDelecao(true);
   };
@@ -139,13 +163,27 @@ const ListaUsuarios: React.FC = () => {
   return (
     <div className="lista-usuarios-container">
       <div className="lista-usuarios-header">
-        <h1>Gerenciamento de Usuários</h1>
-        <button
-          className="btn-novo-usuario"
-          onClick={() => window.location.href = '/usuarios/cadastro'}
-        >
-          + Novo Usuário
-        </button>
+        <div>
+          <h1>Gerenciamento de Usuários</h1>
+          {!usuarioAdmin && podeEditarVerificacao ? (
+            <p className="lista-usuarios-aviso">
+              Seu perfil pode alterar apenas o status de verificação dos usuários.
+            </p>
+          ) : null}
+          {!podeEditarVerificacao ? (
+            <p className="lista-usuarios-aviso">
+              Apenas usuários verificados podem gerenciar permissões de usuários.
+            </p>
+          ) : null}
+        </div>
+        {usuarioAdmin ? (
+          <button
+            className="btn-novo-usuario"
+            onClick={() => window.location.href = '/usuarios/cadastro'}
+          >
+            + Novo Usuário
+          </button>
+        ) : null}
       </div>
 
       {loading ? (
@@ -161,8 +199,9 @@ const ListaUsuarios: React.FC = () => {
                 <th>Email</th>
                 <th>Status</th>
                 <th>C-Safety</th>
+                <th>Verificado</th>
                 <th>Data Cadastro</th>
-                <th>Ações</th>
+                {podeEditarVerificacao || usuarioAdmin ? <th>Ações</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -176,25 +215,32 @@ const ListaUsuarios: React.FC = () => {
                     </span>
                   </td>
                   <td>{usuario.cSafety ? 'Sim' : 'Não'}</td>
+                  <td>{usuario.verificado ? 'Sim' : 'Não'}</td>
                   <td>{formatarData(usuario.criadoEm)}</td>
-                  <td>
-                    <div className="acoes">
-                      <button 
-                        className="btn-editar" 
-                        title="Editar"
-                        onClick={() => abrirModalEditar(usuario)}
-                      >
-                        ✎
-                      </button>
-                      <button 
-                        className="btn-deletar" 
-                        title="Deletar"
-                        onClick={() => abrirModalDelecao(usuario)}
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  </td>
+                  {podeEditarVerificacao || usuarioAdmin ? (
+                    <td>
+                      <div className="acoes">
+                        {podeEditarVerificacao ? (
+                          <button
+                            className="btn-editar"
+                            title="Editar"
+                            onClick={() => abrirModalEditar(usuario)}
+                          >
+                            ✎
+                          </button>
+                        ) : null}
+                        {usuarioAdmin ? (
+                          <button
+                            className="btn-deletar"
+                            title="Deletar"
+                            onClick={() => abrirModalDelecao(usuario)}
+                          >
+                            🗑
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -203,12 +249,14 @@ const ListaUsuarios: React.FC = () => {
       ) : (
         <div className="vazio">
           <p>Nenhum usuário cadastrado</p>
-          <button
-            className="btn-novo-usuario-grande"
-            onClick={() => window.location.href = '/usuarios/cadastro'}
-          >
-            Cadastrar Primeiro Usuário
-          </button>
+          {usuarioAdmin ? (
+            <button
+              className="btn-novo-usuario-grande"
+              onClick={() => window.location.href = '/usuarios/cadastro'}
+            >
+              Cadastrar Primeiro Usuário
+            </button>
+          ) : null}
         </div>
       )}
 
@@ -226,6 +274,8 @@ const ListaUsuarios: React.FC = () => {
         onClose={fecharModalEditar}
         onSave={salvarUsuario}
         loading={loadingAction}
+        canEditAll={usuarioAdmin}
+        canEditVerification={podeEditarVerificacao}
       />
 
       <ModalConfirmacao

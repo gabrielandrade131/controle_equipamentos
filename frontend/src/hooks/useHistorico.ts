@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import { HistoricoEquipamentoData, CreateHistoricoDto } from '../types/historico';
+import { extractDateInput, getLocalDateInput } from '../utils/date';
 
 type ApiListResponse<T> = {
   data: T[];
@@ -14,8 +15,8 @@ const formatRegistro = (registro: any) => ({
 });
 
 const toDateInput = (value?: string | null) => {
-  if (!value) return new Date().toISOString().split('T')[0];
-  return value.split('T')[0];
+  if (!value) return getLocalDateInput();
+  return extractDateInput(value);
 };
 
 const mapApiToHistorico = (producao: any): HistoricoEquipamentoData => ({

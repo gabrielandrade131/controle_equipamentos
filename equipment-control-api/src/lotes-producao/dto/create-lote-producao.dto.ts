@@ -59,6 +59,11 @@ export class CreateLoteProducaoDto {
   @IsDateString()
   dataTermino?: string;
 
+  @ApiPropertyOptional({ example: '2026-05-06' })
+  @IsOptional()
+  @IsDateString()
+  dataParalisacao?: string;
+
   @ApiPropertyOptional({
     example: StatusProducao.PROGRAMADA,
     enum: StatusProducao,

@@ -1,37 +1,28 @@
-import React, { useMemo, useState } from 'react';
-import { useProducoes } from '../hooks/useProducoes';
-import { FilterPanel } from '../components/FilterPanel';
-import { Pagination } from '../components/Pagination';
-import { useFilters } from '../hooks/useFilters';
-import { usePaginatedSelection } from '../hooks/usePaginatedSelection';
-import { CreateProducaoDto, Producao } from '../types/producao';
-import { PdfExporter } from '../components/PdfExporter';
-import { FormularioOrdem } from '../components/FormularioOrdem';
-import { buildSelectOptions } from '../utils/filterOptions';
-import { isCSafetyUser } from '../utils/auth';
-import '../pages/Producao.css';
-
-const calcularDiasProducao = (dataInicio: string, dataTermino?: string): number | null => {
-  if (!dataTermino) return null;
-
-  const inicio = new Date(dataInicio);
-  const fim = new Date(dataTermino);
-  const differenceInMs = fim.getTime() - inicio.getTime();
-  const dias = Math.ceil(differenceInMs / (1000 * 60 * 60 * 24));
-
-  return Math.max(0, dias);
-};
+import React, { useMemo, useState } from "react";
+import { useProducoes } from "../hooks/useProducoes";
+import { FilterPanel } from "../components/FilterPanel";
+import { Pagination } from "../components/Pagination";
+import { useFilters } from "../hooks/useFilters";
+import { usePaginatedSelection } from "../hooks/usePaginatedSelection";
+import { CreateProducaoDto, Producao } from "../types/producao";
+import { PdfExporter } from "../components/PdfExporter";
+import { FormularioOrdem } from "../components/FormularioOrdem";
+import { buildSelectOptions } from "../utils/filterOptions";
+import { formatDatePtBr } from "../utils/date";
+import { isCSafetyUser } from "../utils/auth";
+import "../pages/Producao.css";
 
 const formatarRotulo = (valor?: string | null) => {
-  if (!valor) return '-';
+  if (!valor) return "-";
 
-  return valor.replace(/_/g, ' ');
+  return valor.replace(/_/g, " ");
 };
 
 const OrdemProducao: React.FC = () => {
-  const { producoes, loading, error, criarProducao, atualizarProducao } = useProducoes();
-  const [modo, setModo] = useState<'lista' | 'criar' | 'editar'>('lista');
-  const { filters, updateFilters } = useFilters('ordem-filters', {});
+  const { producoes, loading, error, criarProducao, atualizarProducao } =
+    useProducoes();
+  const [modo, setModo] = useState<"lista" | "criar" | "editar">("lista");
+  const { filters, updateFilters } = useFilters("ordem-filters", {});
   const isCSafety = isCSafetyUser();
   const loteOptions = useMemo(
     () => buildSelectOptions(producoes.map((producao) => producao.numeroLote)),
@@ -49,10 +40,13 @@ const OrdemProducao: React.FC = () => {
   const filteredProducoes = useMemo(() => {
     return producoes.filter((p) => {
       if (filters.status && p.statusProducao !== filters.status) return false;
-      if (filters.tag && String(p.tag ?? '').trim() !== filters.tag) return false;
-      if (filters.modelo && String(p.modelo ?? '').trim() !== filters.modelo) return false;
+      if (filters.tag && String(p.tag ?? "").trim() !== filters.tag)
+        return false;
+      if (filters.modelo && String(p.modelo ?? "").trim() !== filters.modelo)
+        return false;
       if (filters.numeroLote) {
-        const loteProducao = p.numeroLote != null ? String(p.numeroLote).trim() : '';
+        const loteProducao =
+          p.numeroLote != null ? String(p.numeroLote).trim() : "";
         if (loteProducao !== filters.numeroLote) return false;
       }
       return true;
@@ -78,51 +72,69 @@ const OrdemProducao: React.FC = () => {
   const handleCriarOrdem = (novaProducao: CreateProducaoDto) => {
     criarProducao(novaProducao)
       .then(() => {
-        setModo('lista');
-        alert('Ordem de produção criada com sucesso!');
+        setModo("lista");
+        alert("Ordem de produção criada com sucesso!");
       })
       .catch((error) => {
-        console.error('Erro ao criar ordem de produção:', error);
-        alert(error.response?.data?.message || 'Não foi possível criar a ordem de produção.');
+        console.error("Erro ao criar ordem de produção:", error);
+        alert(
+          error.response?.data?.message ||
+            "Não foi possível criar a ordem de produção.",
+        );
       });
   };
 
-  const handleEditarOrdem = (producaoAtualizada: Producao | CreateProducaoDto) => {
+  const handleEditarOrdem = (
+    producaoAtualizada: Producao | CreateProducaoDto,
+  ) => {
     if (!selectedItem) return;
 
     atualizarProducao(selectedItem.id, producaoAtualizada as Producao)
       .then(() => {
-        setModo('lista');
-        alert('Ordem de produção atualizada com sucesso!');
+        setModo("lista");
+        alert("Ordem de produção atualizada com sucesso!");
       })
       .catch((error) => {
-        console.error('Erro ao atualizar ordem de produção:', error);
-        alert(error.response?.data?.message || 'Não foi possível atualizar a ordem de produção.');
+        console.error("Erro ao atualizar ordem de produção:", error);
+        alert(
+          error.response?.data?.message ||
+            "Não foi possível atualizar a ordem de produção.",
+        );
       });
   };
 
-  if (loading) return <div className="container"><p>Carregando...</p></div>;
-  if (error) return <div className="container error"><p>Erro: {error}</p></div>;
+  if (loading)
+    return (
+      <div className="container">
+        <p>Carregando...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="container error">
+        <p>Erro: {error}</p>
+      </div>
+    );
 
-  if (modo === 'criar') {
+  if (modo === "criar") {
     return (
       <div className="container">
         <FormularioOrdem
           onSalvar={handleCriarOrdem}
-          onCancelar={() => setModo('lista')}
+          onCancelar={() => setModo("lista")}
         />
       </div>
     );
   }
 
-  if (modo === 'editar' && selectedItem && !isCSafety) {
+  if (modo === "editar" && selectedItem && !isCSafety) {
     return (
       <div className="container">
         <FormularioOrdem
           producao={selectedItem}
           onSalvar={handleEditarOrdem}
           onCancelar={() => {
-            setModo('lista');
+            setModo("lista");
           }}
           isEditing
         />
@@ -135,10 +147,7 @@ const OrdemProducao: React.FC = () => {
       <h2>Ordem de Produção</h2>
 
       <div className="page-toolbar">
-        <button
-          onClick={() => setModo('criar')}
-          className="btn-primary"
-        >
+        <button onClick={() => setModo("criar")} className="btn-primary">
           Gerar Ordem de Produção
         </button>
       </div>
@@ -150,19 +159,29 @@ const OrdemProducao: React.FC = () => {
             onFiltersChange={updateFilters}
             fields={[
               {
-                key: 'status',
-                label: 'Status',
-                type: 'select',
+                key: "status",
+                label: "Status",
+                type: "select",
                 options: [
-                  { value: 'PROGRAMADA', label: 'Programada' },
-                  { value: 'EM_ANDAMENTO', label: 'Em andamento' },
-                  { value: 'CONCLUIDA', label: 'Concluída' },
-                  { value: 'PARALISADA', label: 'Paralisada' },
+                  { value: "PROGRAMADA", label: "Programada" },
+                  { value: "EM_ANDAMENTO", label: "Em andamento" },
+                  { value: "CONCLUIDA", label: "Concluída" },
+                  { value: "PARALISADA", label: "Paralisada" },
                 ],
               },
-              { key: 'numeroLote', label: 'Lote', type: 'select', options: loteOptions },
-              { key: 'tag', label: 'TAG', type: 'select', options: tagOptions },
-              { key: 'modelo', label: 'Modelo', type: 'select', options: modeloOptions },
+              {
+                key: "numeroLote",
+                label: "Lote",
+                type: "select",
+                options: loteOptions,
+              },
+              { key: "tag", label: "TAG", type: "select", options: tagOptions },
+              {
+                key: "modelo",
+                label: "Modelo",
+                type: "select",
+                options: modeloOptions,
+              },
             ]}
             titulo="Filtros"
           />
@@ -173,15 +192,15 @@ const OrdemProducao: React.FC = () => {
             <>
               <ul className="page-list">
                 {paginatedItems.map((producao: Producao) => (
-                <li
-                  key={producao.id}
-                  className={selectedId === producao.id ? 'active' : ''}
-                  onClick={() => selectItem(producao)}
-                >
-                  <strong>{producao.numeroOrdem}</strong>
-                  <small>{producao.modelo}</small>
-                  <small>{producao.statusProducao}</small>
-                </li>
+                  <li
+                    key={producao.id}
+                    className={selectedId === producao.id ? "active" : ""}
+                    onClick={() => selectItem(producao)}
+                  >
+                    <strong>{producao.numeroOrdem}</strong>
+                    <small>{producao.modelo}</small>
+                    <small>{producao.statusProducao}</small>
+                  </li>
                 ))}
               </ul>
               <Pagination
@@ -208,23 +227,23 @@ const OrdemProducao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Número do Lote:</label>
-                  <p>{selectedItem.numeroLote ?? '-'}</p>
+                  <p>{selectedItem.numeroLote ?? "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Série:</label>
-                  <p>{selectedItem.numeroSerie || '-'}</p>
+                  <p>{selectedItem.numeroSerie || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
-                  <p>{selectedItem.statusProducao || '-'}</p>
+                  <p>{selectedItem.statusProducao || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>TAG:</label>
-                  <p>{selectedItem.tag || '-'}</p>
+                  <p>{selectedItem.tag || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Tipo de Equipamento:</label>
-                  <p>{selectedItem.tipoEquipamentoNome || '-'}</p>
+                  <p>{selectedItem.tipoEquipamentoNome || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Modelo:</label>
@@ -232,38 +251,39 @@ const OrdemProducao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Data Solicitação:</label>
-                  <p>{selectedItem.dataSolicitacao}</p>
+                  <p>{formatDatePtBr(selectedItem.dataSolicitacao) || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Necessidade:</label>
-                  <p>{selectedItem.dataNecessidade || '-'}</p>
+                  <p>{formatDatePtBr(selectedItem.dataNecessidade) || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Início:</label>
-                  <p>{selectedItem.dataInicio || '-'}</p>
+                  <p>{formatDatePtBr(selectedItem.dataInicio) || "-"}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Data de Paralisação:</label>
+                  <p>{formatDatePtBr(selectedItem.dataParalisacao) || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Previsão:</label>
-                  <p>{selectedItem.dataPrevisao || '-'}</p>
+                  <p>{formatDatePtBr(selectedItem.dataPrevisao) || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Data de Término:</label>
-                  <p>{selectedItem.dataTermino || '-'}</p>
+                  <p>{formatDatePtBr(selectedItem.dataTermino) || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias Solicitação:</label>
-                  <p>{selectedItem.diasSolicitacao ?? '-'}</p>
+                  <p>{selectedItem.diasSolicitacao ?? "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Dias Produção:</label>
-                  <p>
-                    {selectedItem.diasProducao ??
-                      calcularDiasProducao(
-                        selectedItem.dataInicio || selectedItem.dataSolicitacao,
-                        selectedItem.dataTermino,
-                      ) ??
-                      '-'}
-                  </p>
+                  <p>{selectedItem.diasProducao ?? "-"}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Dias Paralisação:</label>
+                  <p>{selectedItem.diasParalisacao ?? "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Situação do Prazo:</label>
@@ -280,42 +300,54 @@ const OrdemProducao: React.FC = () => {
                 <p>{selectedItem.descricao}</p>
               </div>
 
-              {selectedItem.itensSeriados && selectedItem.itensSeriados.length > 0 && (
-                <div className="documents-section">
-                  <h3>Itens Serializados</h3>
-                  {selectedItem.itensSeriados.map((item) => (
-                    <div key={item.id} className="doc-item">
-                      <strong>Item {item.numero}</strong>
-                      <p>{item.descricao}</p>
-                      {item.numeroSerie && <small>Série: {item.numeroSerie}</small>}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {selectedItem.itensSeriados &&
+                selectedItem.itensSeriados.length > 0 && (
+                  <div className="documents-section">
+                    <h3>Itens Serializados</h3>
+                    {selectedItem.itensSeriados.map((item) => (
+                      <div key={item.id} className="doc-item">
+                        <strong>Item {item.numero}</strong>
+                        <p>{item.descricao}</p>
+                        {item.numeroSerie && (
+                          <small>Série: {item.numeroSerie}</small>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {selectedItem.documentos && selectedItem.documentos.length > 0 && (
-                <div className="documents-section">
-                  <h3>Documentos Relacionados</h3>
-                  {selectedItem.documentos.map((doc) => (
-                    <div key={doc.id} className="doc-item">
-                      <strong>{doc.nome}:</strong> {doc.codigo}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {selectedItem.documentos &&
+                selectedItem.documentos.length > 0 && (
+                  <div className="documents-section">
+                    <h3>Documentos Relacionados</h3>
+                    {selectedItem.documentos.map((doc) => (
+                      <div key={doc.id} className="doc-item">
+                        <strong>{doc.nome}:</strong> {doc.codigo}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {selectedItem.historicoProducao && selectedItem.historicoProducao.length > 0 ? (
+              {selectedItem.historicoProducao &&
+              selectedItem.historicoProducao.length > 0 ? (
                 <div className="documents-section">
                   <h3>Histórico de Produção</h3>
                   <div className="historico-producao-view">
                     {selectedItem.historicoProducao.map((registro) => (
-                      <div key={registro.id} className="historico-producao-item-view">
+                      <div
+                        key={registro.id}
+                        className="historico-producao-item-view"
+                      >
                         <strong>
                           {registro.criadoEm
-                            ? new Date(registro.criadoEm).toLocaleDateString('pt-BR')
-                            : 'Registro'}
+                            ? new Date(registro.criadoEm).toLocaleDateString(
+                                "pt-BR",
+                              )
+                            : "Registro"}
                         </strong>
-                        <small>Responsável: {registro.responsavel || '-'}</small>
+                        <small>
+                          Responsável: {registro.responsavel || "-"}
+                        </small>
                         <p>{registro.descricao}</p>
                       </div>
                     ))}
@@ -331,7 +363,7 @@ const OrdemProducao: React.FC = () => {
               <div className="action-buttons">
                 {!isCSafety && (
                   <button
-                    onClick={() => setModo('editar')}
+                    onClick={() => setModo("editar")}
                     className="btn-primary"
                   >
                     Editar
@@ -347,7 +379,6 @@ const OrdemProducao: React.FC = () => {
           )}
         </div>
       </div>
-
     </div>
   );
 };

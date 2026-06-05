@@ -36,6 +36,15 @@
   font-weight: 600;
 }
 
+.cadastro-aviso-permissao {
+  margin: -10px 0 20px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff3cd;
+  color: #856404;
+  font-size: 14px;
+}
+
 .cadastro-form {
   display: flex;
   flex-direction: column;

@@ -71,7 +71,7 @@
 
 .tipos-equipamento-primary {
   background: #b2cc21;
-  color: #17324d;
+  color: white;
 }
 
 .tipos-equipamento-primary:disabled,
@@ -81,8 +81,8 @@
 }
 
 .tipos-equipamento-secondary {
-  background: #edf2f7;
-  color: #17324d;
+  background: #FF1C20;
+  color: white;
 }
 
 .tipos-equipamento-feedback {
@@ -96,6 +96,10 @@
 
 .tipos-equipamento-feedback.success {
   color: #2e7d32;
+}
+
+.tipos-equipamento-feedback.warning {
+  color: #9a6700;
 }
 
 .tipos-equipamento-list-header {

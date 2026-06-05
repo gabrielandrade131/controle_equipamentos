@@ -1,18 +1,24 @@
-import { useCallback, useEffect, useState } from 'react';
-import axiosInstance from '../services/axiosConfig';
-import { CreateProducaoDto, Documento, HistoricoProducaoItem, Producao } from '../types/producao';
+import { useCallback, useEffect, useState } from "react";
+import axiosInstance from "../services/axiosConfig";
+import {
+  CreateProducaoDto,
+  Documento,
+  HistoricoProducaoItem,
+  Producao,
+} from "../types/producao";
+import { extractDateInput } from "../utils/date";
 
 type ApiListResponse<T> = {
   data: T[];
 };
 
 const toDateInput = (value?: string | null) => {
-  if (!value) return '';
-  return value.split('T')[0];
+  if (!value) return "";
+  return extractDateInput(value);
 };
 
 const parseAnexos = (valor?: string | null) => {
-  const texto = String(valor ?? '').trim();
+  const texto = String(valor ?? "").trim();
   if (!texto) return [] as string[];
 
   try {
@@ -26,14 +32,14 @@ const parseAnexos = (valor?: string | null) => {
 
   return texto
     .split(/\r?\n/)
-    .map((linha) => linha.replace(/^-+\s*/, '').trim())
+    .map((linha) => linha.replace(/^-+\s*/, "").trim())
     .filter(Boolean);
 };
 
 const formatarCodigoDocumento = (valor?: string | null) => {
   const anexos = parseAnexos(valor);
-  if (anexos.length === 0) return '';
-  return anexos.join(', ');
+  if (anexos.length === 0) return "";
+  return anexos.join(", ");
 };
 
 const buildDocumentos = (producao: any): Documento[] => {
@@ -41,32 +47,56 @@ const buildDocumentos = (producao: any): Documento[] => {
 
   const listaPecas = formatarCodigoDocumento(producao.listaPecas);
   if (listaPecas) {
-    documentos.push({ id: `${producao.id}-listaPecas`, nome: 'Lista de Peças', codigo: listaPecas });
+    documentos.push({
+      id: `${producao.id}-listaPecas`,
+      nome: "Lista de Peças",
+      codigo: listaPecas,
+    });
   }
-  const sequencialMontagem = producao.sequenciaMontagem ?? producao.sequencialMontagem;
+  const sequencialMontagem =
+    producao.sequenciaMontagem ?? producao.sequencialMontagem;
   const sequencialMontagemCodigo = formatarCodigoDocumento(sequencialMontagem);
   if (sequencialMontagemCodigo) {
-    documentos.push({ id: `${producao.id}-sequencialMontagem`, nome: 'Sequencial de Montagem', codigo: sequencialMontagemCodigo });
+    documentos.push({
+      id: `${producao.id}-sequencialMontagem`,
+      nome: "Sequencial de Montagem",
+      codigo: sequencialMontagemCodigo,
+    });
   }
   const inspecaoMontagem = formatarCodigoDocumento(producao.inspecaoMontagem);
   if (inspecaoMontagem) {
-    documentos.push({ id: `${producao.id}-inspecaoMontagem`, nome: 'Inspeção de Montagem', codigo: inspecaoMontagem });
+    documentos.push({
+      id: `${producao.id}-inspecaoMontagem`,
+      nome: "Inspeção de Montagem",
+      codigo: inspecaoMontagem,
+    });
   }
-  const historicoEquipamento = formatarCodigoDocumento(producao.historicoEquipamento);
+  const historicoEquipamento = formatarCodigoDocumento(
+    producao.historicoEquipamento,
+  );
   if (historicoEquipamento) {
-    documentos.push({ id: `${producao.id}-historicoEquipamento`, nome: 'Histórico do Equipamento', codigo: historicoEquipamento });
+    documentos.push({
+      id: `${producao.id}-historicoEquipamento`,
+      nome: "Histórico do Equipamento",
+      codigo: historicoEquipamento,
+    });
   }
-  const procedimentoTestes = producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes;
+  const procedimentoTestes =
+    producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes;
   const procedimentoTestesCodigo = formatarCodigoDocumento(procedimentoTestes);
   if (procedimentoTestesCodigo) {
-    documentos.push({ id: `${producao.id}-procedimentoTeste`, nome: 'Procedimento para Testes', codigo: procedimentoTestesCodigo });
+    documentos.push({
+      id: `${producao.id}-procedimentoTeste`,
+      nome: "Procedimento para Testes",
+      codigo: procedimentoTestesCodigo,
+    });
   }
 
   return documentos;
 };
 
 const getDescricaoComplementar = (producao: any): string => {
-  const descricao = producao.descricao ?? '';
+  const descricao = producao.descricao ?? "";
   const tipoNome = producao.tipoEquipamento?.nome;
 
   if (!tipoNome || !descricao.startsWith(tipoNome)) {
@@ -76,80 +106,99 @@ const getDescricaoComplementar = (producao: any): string => {
   return descricao.slice(tipoNome.length).trim();
 };
 
-const getDescricaoItemSeriado = (item: { numero?: string; descricao?: string; numeroSerie?: string }) => {
-  const descricao = item.descricao?.trim() ?? '';
+const getDescricaoItemSeriado = (item: {
+  numero?: string;
+  descricao?: string;
+  numeroSerie?: string;
+}) => {
+  const descricao = item.descricao?.trim() ?? "";
 
-  if (descricao.startsWith('Numero:') || descricao.includes(' - Serie:')) {
+  if (descricao.startsWith("Numero:") || descricao.includes(" - Serie:")) {
     return descricao;
   }
 
   const partes = [
-    item.numero ? `Numero: ${item.numero.trim()}` : '',
+    item.numero ? `Numero: ${item.numero.trim()}` : "",
     descricao,
-    item.numeroSerie ? `Serie: ${item.numeroSerie.trim()}` : '',
+    item.numeroSerie ? `Serie: ${item.numeroSerie.trim()}` : "",
   ].filter(Boolean);
 
-  return partes.join(' - ');
+  return partes.join(" - ");
 };
 
-const mapHistoricoProducao = (observacoes: any[] | undefined | null): HistoricoProducaoItem[] =>
+const mapHistoricoProducao = (
+  observacoes: any[] | undefined | null,
+): HistoricoProducaoItem[] =>
   (observacoes ?? []).map((observacao: any) => ({
     id: observacao.id,
-    descricao: String(observacao.descricao ?? '').trim(),
-    responsavel: String(observacao.responsavel ?? '').trim(),
+    descricao: String(observacao.descricao ?? "").trim(),
+    responsavel: String(observacao.responsavel ?? "").trim(),
     criadoEm: observacao.criadoEm ?? undefined,
   }));
 
 const getHistoricoNovo = (historico?: HistoricoProducaoItem[] | null) =>
-  (historico ?? []).filter((item) => item.id.startsWith('novo-') || !item.id);
+  (historico ?? []).filter((item) => item.id.startsWith("novo-") || !item.id);
 
-const parseItemSeriado = (item: { id: string; descricao?: string | null }, index: number) => {
-  const descricaoCompleta = item.descricao ?? '';
-  const partes = descricaoCompleta.split(' - ');
-  const numeroPart = partes.find((parte) => parte.startsWith('Numero: '));
-  const seriePart = partes.find((parte) => parte.startsWith('Serie: '));
+const parseItemSeriado = (
+  item: { id: string; descricao?: string | null },
+  index: number,
+) => {
+  const descricaoCompleta = item.descricao ?? "";
+  const partes = descricaoCompleta.split(" - ");
+  const numeroPart = partes.find((parte) => parte.startsWith("Numero: "));
+  const seriePart = partes.find((parte) => parte.startsWith("Serie: "));
   const descricao = partes
-    .filter((parte) => !parte.startsWith('Numero: ') && !parte.startsWith('Serie: '))
-    .join(' - ');
+    .filter(
+      (parte) => !parte.startsWith("Numero: ") && !parte.startsWith("Serie: "),
+    )
+    .join(" - ");
 
   return {
     id: item.id,
-    numero: numeroPart?.replace('Numero: ', '') || String(index + 1),
+    numero: numeroPart?.replace("Numero: ", "") || String(index + 1),
     descricao: descricao || descricaoCompleta,
-    numeroSerie: seriePart?.replace('Serie: ', '') || '',
+    numeroSerie: seriePart?.replace("Serie: ", "") || "",
   };
 };
 
 export const mapApiToProducao = (producao: any): Producao => ({
   id: producao.id,
-  numeroOrdem: String(producao.numeroOrdem ?? ''),
+  numeroOrdem: String(producao.numeroOrdem ?? ""),
   numeroLote: producao.numeroLote ?? producao.loteProducao?.numeroLote ?? null,
   loteProducao: producao.loteProducao ?? undefined,
-  numeroSerie: producao.numeroSerie ?? '',
-  tag: producao.tag ?? '',
+  numeroSerie: producao.numeroSerie ?? "",
+  tag: producao.tag ?? "",
   dataSolicitacao: toDateInput(producao.dataSolicitacao),
   dataNecessidade: toDateInput(producao.dataNecessidade),
   dataInicio: toDateInput(producao.dataInicio),
+  dataParalisacao: toDateInput(producao.dataParalisacao),
   dataPrevisao: toDateInput(producao.dataPrevisao ?? producao.previsaoTermino),
   dataTermino: toDateInput(producao.dataTermino),
-  statusProducao: producao.statusProducao ?? 'PROGRAMADA',
-  tipoEquipamentoId: producao.tipoEquipamentoId ?? '',
-  tipoEquipamentoNome: producao.tipoEquipamento?.nome ?? '',
-  modelo: producao.modelo ?? '',
+  statusProducao: producao.statusProducao ?? "PROGRAMADA",
+  tipoEquipamentoId: producao.tipoEquipamentoId ?? "",
+  tipoEquipamentoNome: producao.tipoEquipamento?.nome ?? "",
+  modelo: producao.modelo ?? "",
   descricao: getDescricaoComplementar(producao),
   itensSeriados: (producao.itensSeriados ?? []).map(parseItemSeriado),
   documentos: buildDocumentos(producao),
-  observacoes: (producao.observacoes ?? []).map((observacao: any) => observacao.descricao).join('\n'),
+  observacoes: (producao.observacoes ?? [])
+    .map((observacao: any) => observacao.descricao)
+    .join("\n"),
   historicoProducao: mapHistoricoProducao(producao.observacoes),
-  listaPecas: producao.listaPecas ?? '',
-  sequencialMontagem: producao.sequenciaMontagem ?? producao.sequencialMontagem ?? '',
-  inspecaoMontagem: producao.inspecaoMontagem ?? '',
-  historicoEquipamento: producao.historicoEquipamento ?? '',
-  procedimentoTestes: producao.procedimentoTesteInspecaoMontagem ?? producao.procedimentoTestes ?? '',
+  listaPecas: producao.listaPecas ?? "",
+  sequencialMontagem:
+    producao.sequenciaMontagem ?? producao.sequencialMontagem ?? "",
+  inspecaoMontagem: producao.inspecaoMontagem ?? "",
+  historicoEquipamento: producao.historicoEquipamento ?? "",
+  procedimentoTestes:
+    producao.procedimentoTesteInspecaoMontagem ??
+    producao.procedimentoTestes ??
+    "",
   createdAt: producao.criadoEm,
   updatedAt: producao.atualizadoEm,
   diasSolicitacao: producao.diasSolicitacao ?? null,
   diasProducao: producao.diasProducao ?? null,
+  diasParalisacao: producao.diasParalisacao ?? null,
   situacaoPrazo: producao.situacaoPrazo ?? null,
   resultadoPrazo: producao.resultadoPrazo ?? null,
 });
@@ -158,6 +207,7 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   dataSolicitacao: producao.dataSolicitacao || undefined,
   dataNecessidade: producao.dataNecessidade || undefined,
   dataInicio: producao.dataInicio || undefined,
+  dataParalisacao: producao.dataParalisacao || undefined,
   previsaoTermino: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,
   statusProducao: producao.statusProducao || undefined,
@@ -185,6 +235,7 @@ const mapProducaoToLoteApi = (producao: CreateProducaoDto) => ({
   dataSolicitacao: producao.dataSolicitacao || undefined,
   dataNecessidade: producao.dataNecessidade || undefined,
   dataInicio: producao.dataInicio || undefined,
+  dataParalisacao: producao.dataParalisacao || undefined,
   previsaoTermino: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,
   statusProducao: producao.statusProducao || undefined,
@@ -198,13 +249,20 @@ export const useProducoes = () => {
   const carregarProducoes = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get<ApiListResponse<any>>('/producoes', {
-        params: { limit: 100 },
-      });
+      const response = await axiosInstance.get<ApiListResponse<any>>(
+        "/producoes",
+        {
+          params: { limit: 100 },
+        },
+      );
       setProducoes(response.data.data.map(mapApiToProducao));
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Erro ao carregar produções');
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Erro ao carregar produções",
+      );
     } finally {
       setLoading(false);
     }
@@ -215,7 +273,10 @@ export const useProducoes = () => {
   }, [carregarProducoes]);
 
   const criarProducao = async (novaProducao: CreateProducaoDto) => {
-    const response = await axiosInstance.post('/lotes-producao', mapProducaoToLoteApi(novaProducao));
+    const response = await axiosInstance.post(
+      "/lotes-producao",
+      mapProducaoToLoteApi(novaProducao),
+    );
     const primeiroEquipamento = response.data.equipamentos?.[0];
     let producaoCriada = primeiroEquipamento
       ? mapApiToProducao({
@@ -227,6 +288,7 @@ export const useProducoes = () => {
           dataSolicitacao: response.data.dataSolicitacao,
           dataNecessidade: response.data.dataNecessidade,
           dataInicio: response.data.dataInicio,
+          dataParalisacao: response.data.dataParalisacao,
           previsaoTermino: response.data.previsaoTermino,
           dataTermino: response.data.dataTermino,
           statusProducao: response.data.statusProducao,
@@ -239,11 +301,19 @@ export const useProducoes = () => {
     return producaoCriada;
   };
 
-  const atualizarProducao = async (id: string, producaoAtualizada: Producao) => {
-    const response = await axiosInstance.put(`/producoes/${id}`, mapProducaoToApi(producaoAtualizada));
+  const atualizarProducao = async (
+    id: string,
+    producaoAtualizada: Producao,
+  ) => {
+    const response = await axiosInstance.put(
+      `/producoes/${id}`,
+      mapProducaoToApi(producaoAtualizada),
+    );
     let producao = mapApiToProducao(response.data);
 
-    const historicoNovo = getHistoricoNovo(producaoAtualizada.historicoProducao);
+    const historicoNovo = getHistoricoNovo(
+      producaoAtualizada.historicoProducao,
+    );
 
     if (historicoNovo.length > 0) {
       await Promise.all(
@@ -259,7 +329,7 @@ export const useProducoes = () => {
       producao = mapApiToProducao(refreshed.data);
     }
 
-    if (producaoAtualizada.tag && producao.statusProducao === 'CONCLUIDA') {
+    if (producaoAtualizada.tag && producao.statusProducao === "CONCLUIDA") {
       const tagResponse = await axiosInstance.patch(`/producoes/${id}/tag`, {
         tag: producaoAtualizada.tag,
       });

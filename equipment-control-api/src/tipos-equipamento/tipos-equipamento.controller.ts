@@ -13,6 +13,7 @@ import { TiposEquipamentoService } from './tipos-equipamento.service';
 import { CreateTipoEquipamentoDto } from './dto/create-tipo-equipamento.dto';
 import { UpdateTipoEquipamentoDto } from './dto/update-tipo-equipamento.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { VerifiedUserGuard } from '../auth/verified-user.guard';
 
 @ApiTags('Tipos de Equipamento')
 @UseGuards(JwtAuthGuard)
@@ -24,9 +25,10 @@ export class TiposEquipamentoController {
   ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, VerifiedUserGuard)
   @ApiOperation({ summary: 'Cadastrar tipo de equipamento' })
-  create(@Body() body: CreateTipoEquipamentoDto) {
-    return this.tiposEquipamentoService.create(body);
+  create(@Body() dto: CreateTipoEquipamentoDto) {
+    return this.tiposEquipamentoService.create(dto);
   }
 
   @Get()

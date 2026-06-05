@@ -79,6 +79,11 @@ export class UpdateManutencaoDto {
   @IsDateString()
   previsaoTermino?: string;
 
+  @ApiPropertyOptional({ example: '2026-05-05' })
+  @IsOptional()
+  @IsDateString()
+  dataParalisacao?: string;
+
   @ApiPropertyOptional({ example: '2026-04-25' })
   @IsOptional()
   @IsDateString()

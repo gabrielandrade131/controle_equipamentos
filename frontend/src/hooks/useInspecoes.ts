@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
+import { extractDateInput, getLocalDateInput } from '../utils/date';
 import {
   NOMES_INSTRUMENTOS_AFERICAO,
   NOMES_VERIFICACOES_GERAIS_PREMONTAGEM,
@@ -16,8 +17,8 @@ const INSTRUMENTOS_KEY = 'instrumentosAferi' + String.fromCharCode(231) + String
 const NOMES_VERIFICACOES_PREMONTAGEM = NOMES_VERIFICACOES_GERAIS_PREMONTAGEM;
 
 const toDateInput = (value?: string | null) => {
-  if (!value) return new Date().toISOString().split('T')[0];
-  return value.split('T')[0];
+  if (!value) return getLocalDateInput();
+  return extractDateInput(value);
 };
 
 const conformidadeToFront = (value?: boolean | null) => {

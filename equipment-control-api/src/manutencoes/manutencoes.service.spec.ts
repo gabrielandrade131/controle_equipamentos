@@ -98,6 +98,22 @@ describe('ManutencoesService', () => {
     expect(result.totalPages).toBe(1);
   });
 
+  it('calculates diasParalisacao when status is PARALISADA', async () => {
+    prisma.manutencao.findMany.mockResolvedValue([
+      {
+        id: 'man-1',
+        statusManutencao: 'PARALISADA',
+        dataParalisacao: new Date('2024-01-01T00:00:00.000Z'),
+        dataTermino: new Date('2024-01-03T00:00:00.000Z'),
+      },
+    ]);
+    prisma.manutencao.count.mockResolvedValue(1);
+
+    const result = await service.findAll({ page: 1, limit: 10 });
+
+    expect(result.data[0].diasParalisacao).toBe(2);
+  });
+
   it('throws when updating missing maintenance', async () => {
     prisma.manutencao.findUnique.mockResolvedValue(null);
 
@@ -146,6 +162,36 @@ describe('ManutencoesService', () => {
         },
       ],
     });
+  });
+
+  it('sets dataParalisacao when updating status to PARALISADA', async () => {
+    prisma.manutencao.findUnique.mockResolvedValueOnce({
+      id: 'man-1',
+      statusManutencao: 'EM_MANUTENCAO',
+      dataParalisacao: null,
+      historicoAlteracoes: [],
+    });
+    prisma.manutencao.update.mockResolvedValue({ id: 'man-1' });
+    prisma.historicoManutencao.createMany.mockResolvedValue({ count: 1 });
+    prisma.manutencao.findUnique.mockResolvedValueOnce({
+      id: 'man-1',
+      statusManutencao: 'PARALISADA',
+      dataParalisacao: new Date(),
+      historicoAlteracoes: [],
+    });
+
+    await service.update('man-1', { statusManutencao: 'PARALISADA' } as any, {
+      nome: 'Gabriel',
+    });
+
+    expect(prisma.manutencao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          statusManutencao: 'PARALISADA',
+          dataParalisacao: expect.any(Date),
+        }),
+      }),
+    );
   });
 
   it('removes maintenance by soft delete', async () => {

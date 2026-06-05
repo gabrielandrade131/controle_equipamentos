@@ -22,4 +22,10 @@ describe('LotesProducaoService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  it('monta numero de serie com modelo, lote e ordem', () => {
+    expect((service as any).montarNumeroSerie('CSEX420ACM', 1, 20)).toBe(
+      'CSEX420ACM-1-20',
+    );
+  });
 });

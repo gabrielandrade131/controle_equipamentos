@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import './CadastroUsuarios.css';
 import AlertModal from '../components/AlertModal';
+import { isAdminUser } from '../utils/auth';
 
 interface CreateUserDto {
   nome: string;
   email: string;
   senha: string;
   cSafety: boolean;
+  verificado: boolean;
 }
 
 interface AlertState {
@@ -18,11 +20,13 @@ interface AlertState {
 }
 
 const CadastroUsuarios: React.FC = () => {
+  const usuarioAdmin = isAdminUser();
   const [formData, setFormData] = useState<CreateUserDto>({
     nome: '',
     email: '',
     senha: '',
     cSafety: false,
+    verificado: false,
   });
 
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -112,6 +116,11 @@ const CadastroUsuarios: React.FC = () => {
       return;
     }
 
+    if (!usuarioAdmin) {
+      showAlert('Apenas administradores podem cadastrar usuários.', 'error');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -120,6 +129,7 @@ const CadastroUsuarios: React.FC = () => {
         email: formData.email,
         senha: formData.senha,
         cSafety: formData.cSafety,
+        verificado: formData.verificado,
       });
 
       showAlert('Usuário cadastrado com sucesso!', 'success');
@@ -129,6 +139,7 @@ const CadastroUsuarios: React.FC = () => {
         email: '',
         senha: '',
         cSafety: false,
+        verificado: false,
       });
       setConfirmPassword('');
 
@@ -149,6 +160,11 @@ const CadastroUsuarios: React.FC = () => {
     <div className="cadastro-usuarios-container">
       <div className="cadastro-form-wrapper">
         <h1 className="cadastro-titulo">Cadastro de Usuário</h1>
+        {!usuarioAdmin ? (
+          <p className="cadastro-aviso-permissao">
+            Apenas administradores podem cadastrar usuários.
+          </p>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="cadastro-form">
           <div className="form-group">
@@ -160,7 +176,7 @@ const CadastroUsuarios: React.FC = () => {
               value={formData.nome}
               onChange={handleInputChange}
               placeholder="Digite o nome completo"
-              disabled={loading}
+              disabled={loading || !usuarioAdmin}
               required
             />
           </div>
@@ -174,7 +190,7 @@ const CadastroUsuarios: React.FC = () => {
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Digite o email"
-              disabled={loading}
+              disabled={loading || !usuarioAdmin}
               required
             />
           </div>
@@ -188,7 +204,7 @@ const CadastroUsuarios: React.FC = () => {
               value={formData.senha}
               onChange={handleInputChange}
               placeholder="Digite a senha (mínimo 5 caracteres)"
-              disabled={loading}
+              disabled={loading || !usuarioAdmin}
               required
             />
           </div>
@@ -201,7 +217,7 @@ const CadastroUsuarios: React.FC = () => {
               value={confirmPassword}
               onChange={handleConfirmPasswordChange}
               placeholder="Confirme a senha"
-              disabled={loading}
+              disabled={loading || !usuarioAdmin}
               required
             />
           </div>
@@ -213,16 +229,28 @@ const CadastroUsuarios: React.FC = () => {
               name="cSafety"
               checked={formData.cSafety}
               onChange={handleCheckboxChange}
-              disabled={loading}
+              disabled={loading || !usuarioAdmin}
             />
             <label htmlFor="cSafety">C-Safety (acesso restrito)</label>
+          </div>
+
+          <div className="form-group checkbox">
+            <input
+              type="checkbox"
+              id="verificado"
+              name="verificado"
+              checked={formData.verificado}
+              onChange={handleCheckboxChange}
+              disabled={loading || !usuarioAdmin}
+            />
+            <label htmlFor="verificado">Usuário verificado</label>
           </div>
 
           <div className="form-actions">
             <button
               type="submit"
               className="btn-submit"
-              disabled={loading}
+              disabled={loading || !usuarioAdmin}
             >
               {loading ? 'Cadastrando...' : 'Cadastrar'}
             </button>

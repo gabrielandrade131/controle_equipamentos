@@ -19,6 +19,22 @@ import * as ExcelJS from 'exceljs';
 export class ProducoesService {
   constructor(private prisma: PrismaService) {}
 
+  private parseDateInput(data?: string | Date | null): Date | null {
+    if (!data) {
+      return null;
+    }
+
+    if (data instanceof Date) {
+      return data;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return new Date(`${data}T12:00:00.000Z`);
+    }
+
+    return new Date(data);
+  }
+
   private normalizarInicioDoDiaUTC(data: Date): Date {
     return new Date(
       Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate()),
@@ -27,12 +43,13 @@ export class ProducoesService {
 
   private montarNumeroSerie(
     modelo?: string | null,
+    numeroLote?: number | null,
     numeroOrdem?: number | null,
   ): string | null {
-    if (!modelo || !numeroOrdem) {
+    if (!modelo || !numeroLote || !numeroOrdem) {
       return null;
     }
-    return `${modelo}-${numeroOrdem}`;
+    return `${modelo}-${numeroLote}-${numeroOrdem}`;
   }
 
   private montarDescricao(
@@ -74,6 +91,7 @@ export class ProducoesService {
     T extends {
       dataSolicitacao?: Date | null;
       dataInicio?: Date | null;
+      dataParalisacao?: Date | null;
       dataNecessidade?: Date | null;
       previsaoTermino?: Date | null;
       dataTermino?: Date | null;
@@ -81,6 +99,7 @@ export class ProducoesService {
     },
   >(producao: T) {
     const deveCalcular = producao.statusProducao === 'EM_ANDAMENTO';
+    const deveCalcularParalisacao = producao.statusProducao === 'PARALISADA';
 
     const prazo = this.calcularPrazoProducao(
       producao.statusProducao ?? null,
@@ -103,6 +122,12 @@ export class ProducoesService {
             producao.dataTermino ?? null,
           )
         : null,
+      diasParalisacao: deveCalcularParalisacao
+        ? this.calcularDiasProducao(
+            producao.dataParalisacao ?? null,
+            producao.dataTermino ?? null,
+          )
+        : null,
 
       situacaoPrazo: prazo.situacaoPrazo,
       resultadoPrazo: prazo.resultadoPrazo,
@@ -120,6 +145,7 @@ export class ProducoesService {
         dataSolicitacao?: Date | null;
         dataNecessidade?: Date | null;
         dataInicio?: Date | null;
+        dataParalisacao?: Date | null;
         previsaoTermino?: Date | null;
         dataTermino?: Date | null;
         statusProducao?: string | null;
@@ -140,6 +166,7 @@ export class ProducoesService {
       dataSolicitacao: lote?.dataSolicitacao ?? null,
       dataNecessidade: lote?.dataNecessidade ?? null,
       dataInicio: lote?.dataInicio ?? null,
+      dataParalisacao: lote?.dataParalisacao ?? null,
       previsaoTermino: lote?.previsaoTermino ?? null,
       dataTermino: lote?.dataTermino ?? null,
       statusProducao: lote?.statusProducao ?? null,
@@ -472,15 +499,24 @@ export class ProducoesService {
       descricao: data.descricaoComplemento,
       statusProducao: data.statusProducao,
       dataSolicitacao: data.dataSolicitacao
-        ? new Date(data.dataSolicitacao)
+        ? this.parseDateInput(data.dataSolicitacao)
         : undefined,
       dataNecessidade: data.dataNecessidade
-        ? new Date(data.dataNecessidade)
+        ? this.parseDateInput(data.dataNecessidade)
         : undefined,
       solicitante: data.solicitante,
-      dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
-      previsaoTermino: previsaoTermino ? new Date(previsaoTermino) : undefined,
-      dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
+      dataInicio: data.dataInicio
+        ? this.parseDateInput(data.dataInicio)
+        : undefined,
+      dataParalisacao: data.dataParalisacao
+        ? this.parseDateInput(data.dataParalisacao)
+        : undefined,
+      previsaoTermino: previsaoTermino
+        ? this.parseDateInput(previsaoTermino)
+        : undefined,
+      dataTermino: data.dataTermino
+        ? this.parseDateInput(data.dataTermino)
+        : undefined,
       listaPecas: data.listaPecas,
       sequenciaMontagem: data.sequencialMontagem,
       inspecaoMontagem: data.inspecaoMontagem,
@@ -518,6 +554,28 @@ export class ProducoesService {
       );
 
       const producaoAtualizada = await this.prisma.$transaction(async (tx) => {
+        const statusFinal: string | undefined =
+          data.statusProducao ??
+          (producaoAtual.loteProducao?.statusProducao as string | undefined) ??
+          undefined;
+        const dataParalisacaoAtual =
+          producaoAtual.loteProducao?.dataParalisacao ?? null;
+        let dataParalisacao: Date | null | undefined;
+
+        if (data.dataParalisacao !== undefined) {
+          dataParalisacao = data.dataParalisacao
+            ? this.parseDateInput(data.dataParalisacao)
+            : null;
+        } else if (statusFinal === PrismaStatusProducao.PARALISADA) {
+          dataParalisacao = dataParalisacaoAtual ?? new Date();
+        } else if (
+          producaoAtual.loteProducao?.statusProducao ===
+            PrismaStatusProducao.PARALISADA &&
+          statusFinal !== PrismaStatusProducao.PARALISADA
+        ) {
+          dataParalisacao = null;
+        }
+
         if (historicoParaCriar.length > 0) {
           await tx.historicoProducao.createMany({
             data: historicoParaCriar.map((item) => ({
@@ -534,18 +592,21 @@ export class ProducoesService {
           where: { id: producaoAtual.loteProducaoId },
           data: {
             dataSolicitacao: data.dataSolicitacao
-              ? new Date(data.dataSolicitacao)
+              ? this.parseDateInput(data.dataSolicitacao)
               : undefined,
             dataNecessidade: data.dataNecessidade
-              ? new Date(data.dataNecessidade)
+              ? this.parseDateInput(data.dataNecessidade)
               : undefined,
             solicitante: data.solicitante,
-            dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
+            dataInicio: data.dataInicio
+              ? this.parseDateInput(data.dataInicio)
+              : undefined,
+            dataParalisacao,
             previsaoTermino: previsaoTermino
-              ? new Date(previsaoTermino)
+              ? this.parseDateInput(previsaoTermino)
               : undefined,
             dataTermino: data.dataTermino
-              ? new Date(data.dataTermino)
+              ? this.parseDateInput(data.dataTermino)
               : undefined,
             statusProducao: data.statusProducao as
               | PrismaStatusProducao
@@ -561,6 +622,7 @@ export class ProducoesService {
           data: {
             numeroSerie: this.montarNumeroSerie(
               data.modelo ?? producaoAtual.loteProducao?.modelo,
+              producaoAtual.loteProducao?.numeroLote,
               producaoAtual.numeroOrdem,
             ),
             descricao: descricaoAtualizada,
@@ -761,11 +823,16 @@ export class ProducoesService {
     data: CreateHistoricoEquipamentoDto,
   ) {
     await this.findOne(id);
+    const dataHistorico = this.parseDateInput(data.data);
+
+    if (!dataHistorico) {
+      throw new BadRequestException('Data do histórico é obrigatória.');
+    }
 
     return this.prisma.historicoEquipamentoRegistro.create({
       data: {
         equipmentId: id,
-        data: new Date(data.data),
+        data: dataHistorico,
         historico: data.historico,
         assinatura: data.assinatura,
       },

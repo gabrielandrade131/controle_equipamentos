@@ -23,6 +23,7 @@ export class UsersService {
     ativo?: boolean;
     precisaTrocarSenha?: boolean;
     cSafety?: boolean;
+    verificado?: boolean;
   }) {
     return this.prisma.user.create({
       data: {
@@ -32,6 +33,7 @@ export class UsersService {
         ativo: data.ativo ?? true,
         precisaTrocarSenha: data.precisaTrocarSenha ?? true,
         cSafety: data.cSafety ?? false,
+        verificado: data.verificado ?? false,
       },
     });
   }
@@ -61,6 +63,7 @@ export class UsersService {
         ativo: true,
         precisaTrocarSenha: true,
         cSafety: true,
+        verificado: true,
         criadoEm: true,
       },
       orderBy: {
@@ -77,6 +80,7 @@ export class UsersService {
       ativo?: boolean;
       precisaTrocarSenha?: boolean;
       cSafety?: boolean;
+      verificado?: boolean;
     },
   ) {
     await this.findOne(id);

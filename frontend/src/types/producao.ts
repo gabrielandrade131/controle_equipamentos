@@ -19,17 +19,16 @@ export interface HistoricoProducaoItem {
 }
 
 export type StatusProducao =
-  | 'PROGRAMADA'
-  | 'EM_ANDAMENTO'
-  | 'CONCLUIDA'
-  | 'PARALISADA';
+  | "PROGRAMADA"
+  | "EM_ANDAMENTO"
+  | "CONCLUIDA"
+  | "PARALISADA";
 
 export interface TipoEquipamento {
   id: string;
   nome: string;
   ativo: boolean;
 }
-
 
 export interface CreateProducaoDto {
   numeroOrdem: string;
@@ -43,6 +42,7 @@ export interface CreateProducaoDto {
     statusProducao?: StatusProducao;
     dataSolicitacao?: string;
     dataInicio?: string;
+    dataParalisacao?: string;
     previsaoTermino?: string;
     dataTermino?: string;
     tipoEquipamento?: {
@@ -55,6 +55,7 @@ export interface CreateProducaoDto {
   dataSolicitacao: string;
   dataNecessidade?: string;
   dataInicio?: string;
+  dataParalisacao?: string;
   dataPrevisao?: string;
   dataTermino?: string;
   statusProducao?: StatusProducao;
@@ -79,6 +80,7 @@ export interface Producao extends CreateProducaoDto {
   updatedAt?: string;
   diasSolicitacao?: number | null;
   diasProducao?: number | null;
-  situacaoPrazo?: 'NO_PRAZO' | 'ATENCAO' | 'ATRASADA' | 'CONCLUIDA' | null;
-  resultadoPrazo?: 'CONCLUIDA_NO_PRAZO' | 'CONCLUIDA_COM_ATRASO' | null;
+  diasParalisacao?: number | null;
+  situacaoPrazo?: "NO_PRAZO" | "ATENCAO" | "ATRASADA" | "CONCLUIDA" | null;
+  resultadoPrazo?: "CONCLUIDA_NO_PRAZO" | "CONCLUIDA_COM_ATRASO" | null;
 }

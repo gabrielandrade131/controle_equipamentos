@@ -42,7 +42,15 @@ export class ManutencoesService {
       return null;
     }
 
-    return data instanceof Date ? data : new Date(data);
+    if (data instanceof Date) {
+      return data;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return new Date(`${data}T12:00:00.000Z`);
+    }
+
+    return new Date(data);
   }
 
   private mesmaData(a?: Date | null, b?: Date | null): boolean {
@@ -106,11 +114,14 @@ export class ManutencoesService {
     T extends {
       dataRetornoBase?: Date | null;
       dataInicio?: Date | null;
+      dataParalisacao?: Date | null;
       dataTermino?: Date | null;
       statusManutencao?: string | null;
     },
   >(manutencao: T) {
     const deveCalcular = manutencao.statusManutencao === 'EM_MANUTENCAO';
+    const deveCalcularParalisacao =
+      manutencao.statusManutencao === 'PARALISADA';
     const deveCalcularEspera =
       Boolean(manutencao.dataRetornoBase) &&
       (manutencao.statusManutencao === 'PENDENTE' ||
@@ -130,7 +141,41 @@ export class ManutencoesService {
             manutencao.dataTermino ?? null,
           )
         : null,
+      diasParalisacao: deveCalcularParalisacao
+        ? this.calcularDias(
+            manutencao.dataParalisacao ?? null,
+            manutencao.dataTermino ?? null,
+          )
+        : null,
     };
+  }
+
+  private resolverDataParalisacao(
+    statusAtual?: string | null,
+    statusNovo?: StatusManutencao | null,
+    dataParalisacaoAtual?: Date | null,
+    dataParalisacaoInformada?: string | null,
+  ): Date | null | undefined {
+    if (dataParalisacaoInformada !== undefined) {
+      return dataParalisacaoInformada
+        ? this.normalizarData(dataParalisacaoInformada)
+        : null;
+    }
+
+    const statusFinal = statusNovo ?? statusAtual ?? null;
+
+    if (statusFinal === StatusManutencao.PARALISADA) {
+      return dataParalisacaoAtual ?? new Date();
+    }
+
+    if (
+      statusAtual === StatusManutencao.PARALISADA &&
+      statusFinal !== StatusManutencao.PARALISADA
+    ) {
+      return null;
+    }
+
+    return undefined;
   }
 
   private montarWhere(
@@ -390,13 +435,15 @@ export class ManutencoesService {
         modeloEquipamento: data.modeloEquipamento,
         tag: data.tag,
         situacaoEquipamento: data.situacaoEquipamento,
-        dataRetornoBase: data.dataRetornoBase
-          ? new Date(data.dataRetornoBase)
-          : null,
-        dataInicio: data.dataInicio ? new Date(data.dataInicio) : null,
-        previsaoTermino: data.previsaoTermino
-          ? new Date(data.previsaoTermino)
-          : null,
+        dataRetornoBase: this.normalizarData(data.dataRetornoBase),
+        dataInicio: this.normalizarData(data.dataInicio),
+        dataParalisacao: this.resolverDataParalisacao(
+          null,
+          data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
+          null,
+          data.dataParalisacao,
+        ),
+        previsaoTermino: this.normalizarData(data.previsaoTermino),
         diagnostico: data.diagnostico,
         responsavelManutencao: data.responsavelManutencao,
         statusManutencao:
@@ -492,18 +539,32 @@ export class ManutencoesService {
       modeloEquipamento: data.modeloEquipamento,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
-      dataRetornoBase: data.dataRetornoBase
-        ? new Date(data.dataRetornoBase)
-        : undefined,
+      dataRetornoBase:
+        data.dataRetornoBase !== undefined
+          ? this.normalizarData(data.dataRetornoBase)
+          : undefined,
       diagnostico: data.diagnostico,
       responsavelManutencao: data.responsavelManutencao,
       statusManutencao: data.statusManutencao,
       avaliacaoFinalConforme: data.avaliacaoFinalConforme,
-      dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
-      previsaoTermino: data.previsaoTermino
-        ? new Date(data.previsaoTermino)
-        : undefined,
-      dataTermino: data.dataTermino ? new Date(data.dataTermino) : undefined,
+      dataInicio:
+        data.dataInicio !== undefined
+          ? this.normalizarData(data.dataInicio)
+          : undefined,
+      dataParalisacao: this.resolverDataParalisacao(
+        manutencaoAtual.statusManutencao,
+        data.statusManutencao,
+        manutencaoAtual.dataParalisacao,
+        data.dataParalisacao,
+      ),
+      previsaoTermino:
+        data.previsaoTermino !== undefined
+          ? this.normalizarData(data.previsaoTermino)
+          : undefined,
+      dataTermino:
+        data.dataTermino !== undefined
+          ? this.normalizarData(data.dataTermino)
+          : undefined,
     };
 
     const alteradoPor = user?.nome || user?.email || user?.username || null;
@@ -526,6 +587,7 @@ export class ManutencoesService {
       'statusManutencao',
       'avaliacaoFinalConforme',
       'dataInicio',
+      'dataParalisacao',
       'previsaoTermino',
       'dataTermino',
     ];
@@ -609,8 +671,10 @@ export class ManutencoesService {
       },
       { header: 'Data de Retorno à Base', key: 'dataRetornoBase', width: 22 },
       { header: 'Data de Início', key: 'dataInicio', width: 18 },
+      { header: 'Data de Paralisação', key: 'dataParalisacao', width: 18 },
       { header: 'Data de Término', key: 'dataTermino', width: 18 },
       { header: 'Dias de Manutenção', key: 'diasManutencao', width: 20 },
+      { header: 'Dias de Paralisação', key: 'diasParalisacao', width: 20 },
       { header: 'Status da Manutenção', key: 'statusManutencao', width: 24 },
       { header: 'Responsável', key: 'responsavelManutencao', width: 24 },
       { header: 'Diagnóstico', key: 'diagnostico', width: 45 },
@@ -627,8 +691,10 @@ export class ManutencoesService {
         situacaoEquipamento: manutencao.situacaoEquipamento,
         dataRetornoBase: manutencao.dataRetornoBase,
         dataInicio: manutencao.dataInicio,
+        dataParalisacao: manutencao.dataParalisacao,
         dataTermino: manutencao.dataTermino,
         diasManutencao: manutencao.diasManutencao,
+        diasParalisacao: manutencao.diasParalisacao,
         statusManutencao: manutencao.statusManutencao,
         responsavelManutencao: manutencao.responsavelManutencao,
         diagnostico: manutencao.diagnostico,
@@ -664,12 +730,13 @@ export class ManutencoesService {
     });
     worksheet.getColumn('dataRetornoBase').numFmt = 'dd/MM/yyyy';
     worksheet.getColumn('dataInicio').numFmt = 'dd/MM/yyyy';
+    worksheet.getColumn('dataParalisacao').numFmt = 'dd/MM/yyyy';
     worksheet.getColumn('dataTermino').numFmt = 'dd/MM/yyyy';
     worksheet.getColumn('criadoEm').numFmt = 'dd/MM/yyyy HH:mm:ss';
 
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'N1',
+      to: 'P1',
     };
 
     worksheet.views = [

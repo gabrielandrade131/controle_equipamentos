@@ -25,4 +25,9 @@ export class CreateUserDto {
   @IsBoolean()
   @IsOptional()
   cSafety?: boolean;
+
+  @ApiProperty({ example: false, required: false })
+  @IsBoolean()
+  @IsOptional()
+  verificado?: boolean;
 }

@@ -54,6 +54,12 @@ describe('ProducoesService', () => {
     );
   });
 
+  it('monta numero de serie com modelo, lote e ordem', () => {
+    expect((service as any).montarNumeroSerie('CSEX420ACM', 1, 20)).toBe(
+      'CSEX420ACM-1-20',
+    );
+  });
+
   it('findAll paginates results and calculates totals', async () => {
     prisma.equipment.findMany.mockResolvedValue([
       {

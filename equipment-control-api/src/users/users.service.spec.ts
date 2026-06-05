@@ -65,6 +65,7 @@ describe('UsersService', () => {
         ativo: true,
         precisaTrocarSenha: true,
         cSafety: false,
+        verificado: false,
       },
     });
   });

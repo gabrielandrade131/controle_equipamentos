@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import { TipoEquipamento } from '../types/producao';
+import { isVerifiedUser } from '../utils/auth';
 import './TiposEquipamento.css';
 
 type FormState = {
@@ -30,6 +31,7 @@ const TiposEquipamentoPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const usuarioVerificado = isVerifiedUser();
 
   const tiposOrdenados = useMemo(
     () => [...tipos].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
@@ -47,8 +49,8 @@ const TiposEquipamentoPage: React.FC = () => {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-          err.message ||
-          'Não foi possível carregar os tipos de equipamento.',
+        err.message ||
+        'Não foi possível carregar os tipos de equipamento.',
       );
     } finally {
       setLoading(false);
@@ -68,6 +70,11 @@ const TiposEquipamentoPage: React.FC = () => {
       return;
     }
 
+    if (!usuarioVerificado) {
+      setError('Apenas usuários verificados podem cadastrar tipos de equipamento.');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -81,8 +88,8 @@ const TiposEquipamentoPage: React.FC = () => {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-          err.message ||
-          'Não foi possível cadastrar o tipo de equipamento.',
+        err.message ||
+        'Não foi possível cadastrar o tipo de equipamento.',
       );
     } finally {
       setSaving(false);
@@ -101,6 +108,11 @@ const TiposEquipamentoPage: React.FC = () => {
       <div className="tipos-equipamento-layout">
         <section className="tipos-equipamento-card">
           <h3>Novo Tipo</h3>
+          {!usuarioVerificado ? (
+            <p className="tipos-equipamento-feedback warning">
+              Apenas usuários verificados podem cadastrar tipos de equipamento.
+            </p>
+          ) : null}
           <form onSubmit={handleSubmit} className="tipos-equipamento-form">
             <label htmlFor="nomeTipoEquipamento">Nome do tipo</label>
             <input
@@ -109,8 +121,13 @@ const TiposEquipamentoPage: React.FC = () => {
               value={form.nome}
               onChange={(e) => setForm({ nome: e.target.value })}
               placeholder="Ex.: Exaustor SH-30"
+              disabled={!usuarioVerificado || saving}
             />
-            <button type="submit" className="tipos-equipamento-primary" disabled={saving}>
+            <button
+              type="submit"
+              className="tipos-equipamento-secondary"
+              disabled={!usuarioVerificado || saving}
+            >
               {saving ? 'Salvando...' : 'Cadastrar tipo'}
             </button>
           </form>

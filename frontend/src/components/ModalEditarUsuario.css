@@ -67,6 +67,15 @@
   gap: 16px;
 }
 
+.modal-permission-note {
+  margin: 16px 20px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff3cd;
+  color: #856404;
+  font-size: 14px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

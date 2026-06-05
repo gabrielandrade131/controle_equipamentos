@@ -45,6 +45,11 @@ export class CreateProducaoDto {
   @IsDateString()
   dataTermino?: string;
 
+  @ApiPropertyOptional({ example: '2026-04-20' })
+  @IsOptional()
+  @IsDateString()
+  dataParalisacao?: string;
+
   @ApiPropertyOptional({
     example: 'PROGRAMADA',
     description: 'Status: PROGRAMADA, PARALISADA, EM_ANDAMENTO, CONCLUIDA',

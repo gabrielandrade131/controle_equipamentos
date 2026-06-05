@@ -22,6 +22,12 @@
   margin: 0;
 }
 
+.lista-usuarios-aviso {
+  margin: 8px 0 0;
+  color: #856404;
+  font-size: 14px;
+}
+
 .btn-novo-usuario {
   background: #FF1C20;
   color: white;

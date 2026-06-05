@@ -6,6 +6,12 @@ import { isCSafetyUser } from '../../utils/auth';
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const isCSafety = isCSafetyUser();
+  const menuItems = [
+    { label: 'Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false },
+    { label: 'Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true },
+    { label: 'Usuários', path: '/usuarios', icon: 'group', hiddenForCSafety: true },
+    { label: 'Tipos de Equipamento', path: '/tipos-equipamento', icon: 'category', hiddenForCSafety: true },
+  ];
 
   const handleNavigate = (path: string) => {
     navigate(path, { replace: true });
@@ -14,30 +20,18 @@ const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <ul>
-        <li>
-          <button onClick={() => handleNavigate('/producao')} className="nav-link">
-            Produção
-          </button>
-        </li>
-        {!isCSafety && (
-          <>
-            <li>
-              <button onClick={() => handleNavigate('/manutencao')} className="nav-link">
-                Manutenção
+        {menuItems
+          .filter((item) => !(isCSafety && item.hiddenForCSafety))
+          .map((item) => (
+            <li key={item.path}>
+              <button onClick={() => handleNavigate(item.path)} className="nav-link">
+                <span className="material-symbols-outlined nav-link-icon" aria-hidden="true">
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
               </button>
             </li>
-            <li>
-              <button onClick={() => handleNavigate('/usuarios')} className="nav-link">
-                Usuários
-              </button>
-            </li>
-            <li>
-              <button onClick={() => handleNavigate('/tipos-equipamento')} className="nav-link">
-                Tipos de Equipamento
-              </button>
-            </li>
-          </>
-        )}
+          ))}
       </ul>
     </nav>
   );

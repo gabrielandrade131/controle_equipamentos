@@ -32,6 +32,7 @@ export class AuthService {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: data.cSafety ?? false,
+      verificado: data.verificado ?? false,
     });
 
     return {
@@ -41,6 +42,7 @@ export class AuthService {
       ativo: usuario.ativo,
       precisaTrocarSenha: usuario.precisaTrocarSenha,
       cSafety: usuario.cSafety,
+      verificado: usuario.verificado,
       criadoEm: usuario.criadoEm,
     };
   }
@@ -65,6 +67,7 @@ export class AuthService {
     const payload = {
       sub: usuario.id,
       email: usuario.email,
+      verificado: usuario.verificado,
     };
 
     const access_token = await this.jwtService.signAsync(payload);
@@ -78,6 +81,7 @@ export class AuthService {
         ativo: usuario.ativo,
         precisaTrocarSenha: usuario.precisaTrocarSenha,
         cSafety: usuario.cSafety,
+        verificado: usuario.verificado,
       },
     };
   }

@@ -12,6 +12,22 @@ import { UpdateLoteProducaoDto } from './dto/update-lote-producao.dto';
 export class LotesProducaoService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private parseDateInput(data?: string | Date | null): Date | null {
+    if (!data) {
+      return null;
+    }
+
+    if (data instanceof Date) {
+      return data;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return new Date(`${data}T12:00:00.000Z`);
+    }
+
+    return new Date(data);
+  }
+
   private normalizarInicioDoDiaUTC(data: Date): Date {
     return new Date(
       Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate()),
@@ -20,13 +36,14 @@ export class LotesProducaoService {
 
   private montarNumeroSerie(
     modelo?: string | null,
+    numeroLote?: number | null,
     numeroOrdem?: number | null,
   ) {
-    if (!modelo || !numeroOrdem) {
+    if (!modelo || !numeroLote || !numeroOrdem) {
       return null;
     }
 
-    return `${modelo}-${numeroOrdem}`;
+    return `${modelo}-${numeroLote}-${numeroOrdem}`;
   }
 
   private calcularDiasProducao(
@@ -109,6 +126,8 @@ export class LotesProducaoService {
   private adicionarCamposCalculados(lote: any) {
     const deveCalcularProducao =
       lote.statusProducao === StatusProducao.EM_ANDAMENTO;
+    const deveCalcularParalisacao =
+      lote.statusProducao === StatusProducao.PARALISADA;
 
     const prazo = this.calcularPrazoProducao(
       lote.statusProducao,
@@ -129,9 +148,64 @@ export class LotesProducaoService {
             lote.dataTermino ?? null,
           )
         : null,
+      diasParalisacao: deveCalcularParalisacao
+        ? this.calcularDiasProducao(
+            lote.dataParalisacao ?? null,
+            lote.dataTermino ?? null,
+          )
+        : null,
       situacaoPrazo: prazo.situacaoPrazo,
       resultadoPrazo: prazo.resultadoPrazo,
     };
+  }
+
+  private montarDataAtualizacaoLote(
+    loteAtual: {
+      dataParalisacao?: Date | null;
+      statusProducao?: string | null;
+    },
+    data: UpdateLoteProducaoDto,
+  ): Prisma.LoteProducaoUncheckedUpdateInput {
+    const statusFinal: string | null =
+      data.statusProducao ?? loteAtual.statusProducao ?? null;
+    const dataAtualizacao: Prisma.LoteProducaoUncheckedUpdateInput = {
+      tipoEquipamentoId: data.tipoEquipamentoId,
+      modelo: data.modelo,
+      descricao: data.descricao,
+      solicitante: data.solicitante,
+      quantidade: data.quantidade,
+      dataSolicitacao: data.dataSolicitacao
+        ? this.parseDateInput(data.dataSolicitacao)
+        : undefined,
+      dataInicio: data.dataInicio
+        ? this.parseDateInput(data.dataInicio)
+        : undefined,
+      dataNecessidade: data.dataNecessidade
+        ? this.parseDateInput(data.dataNecessidade)
+        : undefined,
+      previsaoTermino: data.previsaoTermino
+        ? this.parseDateInput(data.previsaoTermino)
+        : undefined,
+      dataTermino: data.dataTermino
+        ? this.parseDateInput(data.dataTermino)
+        : undefined,
+      statusProducao: data.statusProducao,
+    };
+
+    if (data.dataParalisacao !== undefined) {
+      dataAtualizacao.dataParalisacao = data.dataParalisacao
+        ? this.parseDateInput(data.dataParalisacao)
+        : null;
+    } else if (statusFinal === StatusProducao.PARALISADA) {
+      dataAtualizacao.dataParalisacao = loteAtual.dataParalisacao ?? new Date();
+    } else if (
+      loteAtual.statusProducao === StatusProducao.PARALISADA &&
+      statusFinal !== StatusProducao.PARALISADA
+    ) {
+      dataAtualizacao.dataParalisacao = null;
+    }
+
+    return dataAtualizacao;
   }
 
   async create(data: CreateLoteProducaoDto) {
@@ -160,15 +234,28 @@ export class LotesProducaoService {
           solicitante: data.solicitante,
           quantidade: data.quantidade,
           dataSolicitacao: data.dataSolicitacao
-            ? new Date(data.dataSolicitacao)
+            ? this.parseDateInput(data.dataSolicitacao)
             : null,
-          dataInicio: data.dataInicio ? new Date(data.dataInicio) : null,
+          dataInicio: data.dataInicio
+            ? this.parseDateInput(data.dataInicio)
+            : null,
           dataNecessidade: data.dataNecessidade
-            ? new Date(data.dataNecessidade)
+            ? this.parseDateInput(data.dataNecessidade)
             : null,
           previsaoTermino: data.previsaoTermino
-            ? new Date(data.previsaoTermino)
+            ? this.parseDateInput(data.previsaoTermino)
             : null,
+          dataTermino: data.dataTermino
+            ? this.parseDateInput(data.dataTermino)
+            : null,
+          dataParalisacao:
+            data.statusProducao === StatusProducao.PARALISADA
+              ? data.dataParalisacao
+                ? this.parseDateInput(data.dataParalisacao)
+                : new Date()
+              : data.dataParalisacao
+                ? this.parseDateInput(data.dataParalisacao)
+                : null,
           statusProducao: data.statusProducao ?? StatusProducao.PROGRAMADA,
         },
       });
@@ -194,6 +281,7 @@ export class LotesProducaoService {
 
         const identificadorEquipamento = this.montarNumeroSerie(
           lote.modelo,
+          lote.numeroLote,
           equipamento.numeroOrdem,
         );
 
@@ -296,24 +384,7 @@ export class LotesProducaoService {
         where: {
           id,
         },
-        data: {
-          tipoEquipamentoId: data.tipoEquipamentoId,
-          modelo: data.modelo,
-          descricao: data.descricao,
-          solicitante: data.solicitante,
-          quantidade: data.quantidade,
-          dataSolicitacao: data.dataSolicitacao
-            ? new Date(data.dataSolicitacao)
-            : undefined,
-          dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
-          previsaoTermino: data.previsaoTermino
-            ? new Date(data.previsaoTermino)
-            : undefined,
-          dataTermino: data.dataTermino
-            ? new Date(data.dataTermino)
-            : undefined,
-          statusProducao: data.statusProducao,
-        },
+        data: this.montarDataAtualizacaoLote(loteAtual, data),
         include: {
           tipoEquipamento: true,
           equipamentos: {
@@ -339,6 +410,7 @@ export class LotesProducaoService {
         for (const equipamento of equipamentos) {
           const identificadorEquipamento = this.montarNumeroSerie(
             data.modelo,
+            loteAtualizado.numeroLote,
             equipamento.numeroOrdem,
           );
 

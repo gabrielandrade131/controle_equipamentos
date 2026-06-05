@@ -98,6 +98,7 @@ model User {
   ativo                   Boolean                           @default(true)
   precisaTrocarSenha      Boolean                           @default(true)
   cSafety                 Boolean                           @default(false)
+  verificado              Boolean                           @default(false)
   criadoEm                DateTime                          @default(now())   
 }
 
@@ -144,6 +145,7 @@ model Manutencao {
 
   dataRetornoBase         DateTime?
   dataInicio              DateTime?
+  dataParalisacao         DateTime?
   previsaoTermino         DateTime?
   dataTermino             DateTime?
   
@@ -192,6 +194,7 @@ model LoteProducao {
 
   dataSolicitacao           DateTime?
   dataInicio                DateTime?
+  dataParalisacao           DateTime?
   dataNecessidade           DateTime?
   previsaoTermino           DateTime?
   dataTermino               DateTime?

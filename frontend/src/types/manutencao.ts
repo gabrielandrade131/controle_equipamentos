@@ -1,13 +1,13 @@
 // Tipos para Inspeção de Manutenção
 
-export type RespostaBinaria = 'SIM' | 'NÃO' | 'N/A' | '';
+export type RespostaBinaria = "SIM" | "NÃO" | "N/A" | "";
 
 export type StatusManutencao =
-  | 'EM_QUARENTENA'
-  | 'PENDENTE'
-  | 'EM_MANUTENCAO'
-  | 'CONCLUIDA'
-  | 'PARALISADA';
+  | "EM_QUARENTENA"
+  | "PENDENTE"
+  | "EM_MANUTENCAO"
+  | "CONCLUIDA"
+  | "PARALISADA";
 
 export interface ItemInspecao {
   id: string;
@@ -42,48 +42,50 @@ export interface InspecaoManutencao {
   destino: string;
   dataRetornoBase?: string;
   previsaoTermino?: string;
+  dataParalisacao?: string;
   responsavel: string;
   statusManutencao: StatusManutencao;
   dataTermino?: string;
   diasEsperaManutencao?: number | null;
   diasManutencao?: number | null;
-  
+  diasParalisacao?: number | null;
+
   // Certificações e Documentação
   certificacoes: ItemInspecao[];
-  
+
   // Estrutura e Integridade Mecânica
   estruturaMecanica: ItemInspecao[];
-  
+
   // Sistema Hidráulico
   sistemaHidraulico: ItemInspecao[];
-  
+
   // Sistema Pneumático
   sistemaPneumatico: ItemInspecao[];
-  
+
   // Sistema Elétrico
   sistemaEletrico: ItemInspecao[];
-  
+
   // Dispositivos de Segurança
   dispositivoSeguranca: ItemInspecao[];
-  
+
   // Componentes Operacionais
   componentesOperacionais: ItemInspecao[];
-  
+
   // Acessórios e Itens Específicos
   acessorios: ItemInspecao[];
-  
+
   // Testes Operacionais
   testesOperacionais: ItemInspecao[];
-  
+
   // Avaliação Final
-  avaliacaoFinal: 'CONFORME' | 'NÃO CONFORME' | '';
+  avaliacaoFinal: "CONFORME" | "NÃO CONFORME" | "";
   observacoes?: string;
   observacoesHistorico?: ObservacaoHistorico[];
   assinatura?: string;
-  
+
   // Imagens/Fotos
   imagensAnexadas?: string[];
-  
+
   criadoEm?: string;
   atualizadoEm?: string;
 }

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { InspecaoManutencao, ObservacaoHistorico } from '../types/manutencao';
-import { useTiposEquipamento } from '../hooks/useTiposEquipamento';
-import './ModalEditarDetalhesManutencao.css';
+import React, { useState } from "react";
+import { InspecaoManutencao, ObservacaoHistorico } from "../types/manutencao";
+import { useTiposEquipamento } from "../hooks/useTiposEquipamento";
+import { formatDatePtBr, getLocalDateInput } from "../utils/date";
+import "./ModalEditarDetalhesManutencao.css";
 
 interface ModalEditarDetalhesManutencaoProps {
   inspecao: InspecaoManutencao;
@@ -11,15 +12,11 @@ interface ModalEditarDetalhesManutencaoProps {
   isCreating?: boolean;
 }
 
-export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutencaoProps> = ({
-  inspecao,
-  onSalvar,
-  onCancelar,
-  titulo,
-  isCreating,
-}) => {
+export const ModalEditarDetalhesManutencao: React.FC<
+  ModalEditarDetalhesManutencaoProps
+> = ({ inspecao, onSalvar, onCancelar, titulo, isCreating }) => {
   const [formData, setFormData] = useState<InspecaoManutencao>(inspecao);
-  const [novaObservacao, setNovaObservacao] = useState('');
+  const [novaObservacao, setNovaObservacao] = useState("");
   const { tiposEquipamento } = useTiposEquipamento();
 
   const handleInputChange = (campo: keyof InspecaoManutencao, valor: any) => {
@@ -29,15 +26,35 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
     }));
   };
 
+  const handleStatusChange = (valor: string) => {
+    setFormData((prev) => {
+      const statusManutencao = valor as InspecaoManutencao["statusManutencao"];
+      const changes: Partial<InspecaoManutencao> = { statusManutencao };
+
+      if (statusManutencao === "PARALISADA" && !prev.dataParalisacao) {
+        changes.dataParalisacao = getLocalDateInput();
+      }
+
+      if (statusManutencao !== "PARALISADA") {
+        changes.dataParalisacao = "";
+      }
+
+      return {
+        ...prev,
+        ...changes,
+      };
+    });
+  };
+
   const handleAdicionarObservacao = () => {
     if (!novaObservacao.trim()) {
-      alert('Digite uma observação antes de adicionar.');
+      alert("Digite uma observação antes de adicionar.");
       return;
     }
 
     const observacao: ObservacaoHistorico = {
       id: `obs_${Date.now()}`,
-      data: new Date().toISOString().split('T')[0],
+      data: getLocalDateInput(),
       texto: novaObservacao,
     };
 
@@ -46,7 +63,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
       observacoesHistorico: [...(prev.observacoesHistorico || []), observacao],
     }));
 
-    setNovaObservacao('');
+    setNovaObservacao("");
   };
 
   const handleSalvar = () => {
@@ -57,47 +74,46 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
     <div className="manutencao-modal-overlay">
       <div className="manutencao-modal-content">
         <div className="manutencao-modal-header">
-          <h2>{titulo || 'Editar Detalhes da Manutenção'}</h2>
-          <button
-            onClick={onCancelar}
-            className="manutencao-modal-close"
-          >
+          <h2>{titulo || "Editar Detalhes da Manutenção"}</h2>
+          <button onClick={onCancelar} className="manutencao-modal-close">
             ✕
           </button>
         </div>
 
         <div className="manutencao-modal-body">
           <div className="form-grid">
-            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
+            <div className={isCreating ? "form-group" : "form-group read-only"}>
               <label>Ordem de Manutenção</label>
               <input
                 type="text"
-                value={formData.numeroOrdemManutencao ?? '-'}
+                value={formData.numeroOrdemManutencao ?? "-"}
                 readOnly={!isCreating}
               />
             </div>
 
-            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
+            <div className={isCreating ? "form-group" : "form-group read-only"}>
               <label>TAG</label>
               <input
                 type="text"
-                value={formData.tag || ''}
-                onChange={(e) => handleInputChange('tag', e.target.value)}
+                value={formData.tag || ""}
+                onChange={(e) => handleInputChange("tag", e.target.value)}
                 readOnly={!isCreating}
-                placeholder={isCreating ? 'Digite a TAG' : '-'}
+                placeholder={isCreating ? "Digite a TAG" : "-"}
               />
             </div>
 
-            <div className={isCreating ? 'form-group' : 'form-group'}>
+            <div className={isCreating ? "form-group" : "form-group"}>
               <label>Tipo de equipamento</label>
               <select
-                value={formData.tipoEquipamentoId || ''}
+                value={formData.tipoEquipamentoId || ""}
                 onChange={(e) => {
-                  const tipoSelecionado = tiposEquipamento.find((tipo) => tipo.id === e.target.value);
+                  const tipoSelecionado = tiposEquipamento.find(
+                    (tipo) => tipo.id === e.target.value,
+                  );
                   setFormData((prev) => ({
                     ...prev,
                     tipoEquipamentoId: e.target.value,
-                    tipoEquipamento: tipoSelecionado?.nome || '',
+                    tipoEquipamento: tipoSelecionado?.nome || "",
                   }));
                 }}
               >
@@ -110,25 +126,27 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               </select>
             </div>
 
-            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
+            <div className={isCreating ? "form-group" : "form-group read-only"}>
               <label>Fabricante</label>
               <input
                 type="text"
-                value={formData.fabricante || ''}
-                onChange={(e) => handleInputChange('fabricante', e.target.value)}
+                value={formData.fabricante || ""}
+                onChange={(e) =>
+                  handleInputChange("fabricante", e.target.value)
+                }
                 readOnly={!isCreating}
-                placeholder={isCreating ? 'Digite o fabricante' : '-'}
+                placeholder={isCreating ? "Digite o fabricante" : "-"}
               />
             </div>
 
-            <div className={isCreating ? 'form-group' : 'form-group read-only'}>
+            <div className={isCreating ? "form-group" : "form-group read-only"}>
               <label>Modelo</label>
               <input
                 type="text"
-                value={formData.modelo || ''}
-                onChange={(e) => handleInputChange('modelo', e.target.value)}
+                value={formData.modelo || ""}
+                onChange={(e) => handleInputChange("modelo", e.target.value)}
                 readOnly={!isCreating}
-                placeholder={isCreating ? 'Digite o modelo' : '-'}
+                placeholder={isCreating ? "Digite o modelo" : "-"}
               />
             </div>
 
@@ -137,7 +155,9 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <input
                 type="date"
                 value={formData.dataInicio}
-                onChange={(e) => handleInputChange('dataInicio', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("dataInicio", e.target.value)
+                }
               />
             </div>
 
@@ -145,8 +165,10 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <label>Retorno à Base</label>
               <input
                 type="date"
-                value={formData.dataRetornoBase || ''}
-                onChange={(e) => handleInputChange('dataRetornoBase', e.target.value)}
+                value={formData.dataRetornoBase || ""}
+                onChange={(e) =>
+                  handleInputChange("dataRetornoBase", e.target.value)
+                }
               />
             </div>
 
@@ -154,8 +176,10 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <label>Previsão de Término</label>
               <input
                 type="date"
-                value={formData.previsaoTermino || ''}
-                onChange={(e) => handleInputChange('previsaoTermino', e.target.value)}
+                value={formData.previsaoTermino || ""}
+                onChange={(e) =>
+                  handleInputChange("previsaoTermino", e.target.value)
+                }
               />
             </div>
 
@@ -163,8 +187,22 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <label>Data de Término</label>
               <input
                 type="date"
-                value={formData.dataTermino || ''}
-                onChange={(e) => handleInputChange('dataTermino', e.target.value)}
+                value={formData.dataTermino || ""}
+                onChange={(e) =>
+                  handleInputChange("dataTermino", e.target.value)
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Data de Paralisação</label>
+              <input
+                type="date"
+                value={formData.dataParalisacao || ""}
+                onChange={(e) =>
+                  handleInputChange("dataParalisacao", e.target.value)
+                }
+                disabled={formData.statusManutencao !== "PARALISADA"}
               />
             </div>
 
@@ -173,7 +211,9 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <input
                 type="text"
                 value={formData.responsavel}
-                onChange={(e) => handleInputChange('responsavel', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("responsavel", e.target.value)
+                }
               />
             </div>
 
@@ -181,7 +221,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <label>Status da Manutenção</label>
               <select
                 value={formData.statusManutencao}
-                onChange={(e) => handleInputChange('statusManutencao', e.target.value)}
+                onChange={(e) => handleStatusChange(e.target.value)}
               >
                 <option value="EM_QUARENTENA">Em quarentena</option>
                 <option value="PENDENTE">Pendente</option>
@@ -195,7 +235,7 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <label>Dias em Espera</label>
               <input
                 type="text"
-                value={formData.diasEsperaManutencao ?? '-'}
+                value={formData.diasEsperaManutencao ?? "-"}
                 readOnly
               />
             </div>
@@ -204,7 +244,16 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
               <label>Dias em Manutenção</label>
               <input
                 type="text"
-                value={formData.diasManutencao ?? '-'}
+                value={formData.diasManutencao ?? "-"}
+                readOnly
+              />
+            </div>
+
+            <div className="form-group read-only">
+              <label>Dias em Paralisação</label>
+              <input
+                type="text"
+                value={formData.diasParalisacao ?? "-"}
                 readOnly
               />
             </div>
@@ -213,19 +262,22 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
           <div className="form-group full">
             <label>Histórico de Observações</label>
             <div className="observacoes-historico">
-              {formData.observacoesHistorico && formData.observacoesHistorico.length > 0 ? (
+              {formData.observacoesHistorico &&
+              formData.observacoesHistorico.length > 0 ? (
                 <div className="observacoes-lista">
                   {formData.observacoesHistorico.map((obs, index) => (
                     <div key={obs.id || index} className="observacao-item">
                       <div className="observacao-header">
-                        <strong>{new Date(obs.data).toLocaleDateString('pt-BR')}</strong>
+                        <strong>{formatDatePtBr(obs.data)}</strong>
                       </div>
                       <p className="observacao-texto">{obs.texto}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="sem-observacoes">Nenhuma observação registrada.</p>
+                <p className="sem-observacoes">
+                  Nenhuma observação registrada.
+                </p>
               )}
             </div>
           </div>
@@ -250,16 +302,10 @@ export const ModalEditarDetalhesManutencao: React.FC<ModalEditarDetalhesManutenc
         </div>
 
         <div className="manutencao-modal-footer">
-          <button
-            onClick={onCancelar}
-            className="btn-primary"
-          >
+          <button onClick={onCancelar} className="btn-primary">
             Cancelar
           </button>
-          <button
-            onClick={handleSalvar}
-            className="btn-primary"
-          >
+          <button onClick={handleSalvar} className="btn-primary">
             Salvar
           </button>
         </div>

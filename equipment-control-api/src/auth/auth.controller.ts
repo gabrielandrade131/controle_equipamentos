@@ -4,6 +4,9 @@ import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { CurrentUser } from './current-user.decorator';
+import { assertAdminUser } from './user-permissions';
+import type { AuthenticatedUser } from './user-permissions';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -14,7 +17,11 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cadastrar usuário' })
-  register(@Body() body: CreateUserDto) {
+  register(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Body() body: CreateUserDto,
+  ) {
+    assertAdminUser(usuarioAtual);
     return this.authService.register(body);
   }
 

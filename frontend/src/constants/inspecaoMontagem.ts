@@ -1,4 +1,5 @@
 import { CreateInspecaoMontageDto, VerificacaoItem } from '../types/inspecao';
+import { getLocalDateInput } from '../utils/date';
 
 type VerificacaoTemplate = {
   nome: string;
@@ -280,7 +281,7 @@ export const NOMES_VERIFICACOES_GERAIS_PREMONTAGEM = VERIFICACOES_GERAIS_PREMONT
 export const NOMES_VERIFICACAO_POSMONTAGEM = VERIFICACAO_POSMONTAGEM_TEMPLATES.map(({ nome }) => nome);
 
 export const criarFormularioInspecaoMontagemVazio = (): CreateInspecaoMontageDto => {
-  const dataAtual = new Date().toISOString().split('T')[0];
+  const dataAtual = getLocalDateInput();
 
   return {
     numeroSerie: '',

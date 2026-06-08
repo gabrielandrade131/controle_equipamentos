@@ -25,9 +25,9 @@
   flex-wrap: wrap;
 }
 
-.btn-primary {
+.manutencao-page .btn-primary {
   padding: 12px 24px;
-  background-color: '#FF1C20';
+  background-color: #FF1C20;
   color: white;
   border: none;
   border-radius: 6px;
@@ -38,7 +38,7 @@
   box-shadow: 0 2px 4px rgba(255, 28, 32, 0.2);
 }
 
-.btn-primary:hover {
+.manutencao-page .btn-primary:hover {
   background-color: #CC1319;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(255, 28, 32, 0.3);
@@ -198,7 +198,7 @@
   border-top: 1px solid #e0e0e0;
 }
 
-.btn-secondary {
+.manutencao-page .btn-secondary {
   padding: 10px 16px;
   background-color: #B2CC21;
   color: white;
@@ -210,7 +210,7 @@
   transition: all 0.3s ease;
 }
 
-.btn-secondary:hover {
+.manutencao-page .btn-secondary:hover {
   background-color: #0a3a70;
   transform: translateY(-2px);
   box-shadow: 0 2px 6px rgba(13, 76, 148, 0.2);

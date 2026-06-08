@@ -1,6 +1,7 @@
 header {
   height: 40px;
 }
+
 .container {
   width: min(100%, var(--page-shell-max-width));
   margin: 0 auto;
@@ -24,7 +25,7 @@ header {
   margin-bottom: 24px;
 }
 
-.btn-novo {
+.btn-primary {
   background: #FF1C20;
   color: white;
   border: none;
@@ -37,12 +38,12 @@ header {
   box-shadow: 0 2px 4px rgba(255, 28, 32, 0.3);
 }
 
-.btn-novo:hover {
+.btn-primary:hover {
   background: #CC1319;
   box-shadow: 0 4px 8px rgba(255, 28, 32, 0.4);
 }
 
-.btn-novo:active {
+.btn-primary:active {
   transform: translateY(1px);
 }
 

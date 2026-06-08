@@ -257,8 +257,8 @@
   border-top: 1px solid #eee;
 }
 
-.btn-primary,
-.btn-secondary {
+.manutencao-modal-footer .btn-primary,
+.manutencao-modal-footer .btn-secondary {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
@@ -268,20 +268,20 @@
   transition: all 0.2s ease;
 }
 
-.btn-primary {
+.manutencao-modal-footer .btn-primary {
   background-color: #b2cc21;
   color: white;
 }
 
-.btn-primary:hover {
+.manutencao-modal-footer .btn-primary:hover {
   background-color: #9ab31b;
 }
 
-.btn-secondary {
+.manutencao-modal-footer .btn-secondary {
   background-color: #f0f0f0;
   color: #333;
 }
 
-.btn-secondary:hover {
+.manutencao-modal-footer .btn-secondary:hover {
   background-color: #e0e0e0;
 }

@@ -108,7 +108,7 @@ const ListaUsuarios: React.FC = () => {
   const abrirModalEditar = (usuario: Usuario) => {
     if (!podeEditarVerificacao) {
       showAlert(
-        'Apenas usuários verificados podem alterar permissões de usuários.',
+        'Apenas usuários master podem alterar permissões de usuários.',
         'warning',
       );
       return;
@@ -199,7 +199,7 @@ const ListaUsuarios: React.FC = () => {
           ) : null}
           {!podeEditarVerificacao ? (
             <p className="lista-usuarios-aviso">
-              Apenas usuários verificados podem gerenciar permissões de usuários.
+              Apenas usuários master podem gerenciar permissões de usuários.
             </p>
           ) : null}
         </div>

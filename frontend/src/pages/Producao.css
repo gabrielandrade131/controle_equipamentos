@@ -201,9 +201,9 @@
 }
 
 /* Buttons Padronizado */
-.btn-primary,
-.btn-secondary,
-.btn-danger {
+.producao-page .btn-primary,
+.producao-page .btn-secondary,
+.producao-page .btn-danger {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -213,32 +213,32 @@
   transition: all 0.3s ease;
 }
 
-.btn-primary {
+.producao-page .btn-primary {
   background-color: #FF1C20;
   color: white;
   box-shadow: 0 2px 4px rgba(255, 28, 32, 0.3);
 }
 
-.btn-primary:hover {
+.producao-page .btn-primary:hover {
   background-color: #CC1319;
   box-shadow: 0 4px 8px rgba(255, 28, 32, 0.4);
 }
 
-.btn-secondary {
+.producao-page .btn-secondary {
   background-color: #FF1C20;
   color: white;
 }
 
-.btn-secondary:hover {
+.producao-page .btn-secondary:hover {
   background-color: #CC1319;
 }
 
-.btn-danger {
+.producao-page .btn-danger {
   background-color: #f44336;
   color: white;
 }
 
-.btn-danger:hover {
+.producao-page .btn-danger:hover {
   background-color: #da190b;
 }
 

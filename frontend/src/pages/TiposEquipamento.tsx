@@ -71,7 +71,7 @@ const TiposEquipamentoPage: React.FC = () => {
     }
 
     if (!usuarioVerificado) {
-      setError('Apenas usuários verificados podem cadastrar tipos de equipamento.');
+      setError('Apenas usuários master podem cadastrar tipos de equipamento.');
       return;
     }
 
@@ -110,7 +110,7 @@ const TiposEquipamentoPage: React.FC = () => {
           <h3>Novo Tipo</h3>
           {!usuarioVerificado ? (
             <p className="tipos-equipamento-feedback warning">
-              Apenas usuários verificados podem cadastrar tipos de equipamento.
+              Apenas usuários master podem cadastrar tipos de equipamento.
             </p>
           ) : null}
           <form onSubmit={handleSubmit} className="tipos-equipamento-form">

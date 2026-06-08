@@ -55,6 +55,30 @@ const parseObservacoesDiarias = (diagnostico: any) => {
   }
 };
 
+const extrairObservacaoTexto = (diagnostico: any): string => {
+  if (!diagnostico) return "";
+
+  if (typeof diagnostico !== "string") {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(diagnostico);
+
+    if (!Array.isArray(parsed)) {
+      return "";
+    }
+
+    const ultimaObservacao = [...parsed]
+      .reverse()
+      .find((item) => typeof item?.texto === "string" && item.texto.trim().length > 0);
+
+    return ultimaObservacao?.texto ?? "";
+  } catch {
+    return diagnostico;
+  }
+};
+
 const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   const base = criarInspecaoVazia();
   const avaliacaoFinal =
@@ -77,13 +101,21 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     dataRetornoBase: toDateInput(manutencao.dataRetornoBase, false),
     previsaoTermino: toDateInput(manutencao.previsaoTermino, false),
     dataParalisacao: toDateInput(manutencao.dataParalisacao, false),
-    localManutencao: manutencao.origem === "SYNCHRO" ? "Retorno Synchro" : "",
+    localManutencao:
+      manutencao.origem === "SYNCHRO"
+        ? "Retorno Synchro"
+        : manutencao.origem === "MANUAL"
+          ? "Manutenção manual"
+          : "",
     tipoEquipamentoId:
       manutencao.tipoEquipamentoId ?? manutencao.tipoEquipamento?.id ?? "",
     tipoEquipamento:
       manutencao.tipoEquipamento?.nome ?? manutencao.tipoEquipamentoNome ?? "",
     fabricante:
-      manutencao.tipoEquipamento?.nome ?? manutencao.tipoEquipamentoNome ?? "",
+      manutencao.fabricante ??
+      manutencao.fabricanteEquipamento ??
+      manutencao.fabricanteNome ??
+      "",
     modelo: manutencao.modeloEquipamento ?? "",
     tag: manutencao.tag ?? "",
     numeroOrdemManutencao: manutencao.numeroOrdemManutencao ?? null,
@@ -95,6 +127,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     diasManutencao: manutencao.diasManutencao ?? null,
     diasParalisacao: manutencao.diasParalisacao ?? null,
     avaliacaoFinal,
+    observacoes: extrairObservacaoTexto(manutencao.diagnostico),
     observacoesHistorico: parseObservacoesDiarias(manutencao.diagnostico),
     imagensAnexadas,
     criadoEm: manutencao.criadoEm,
@@ -114,9 +147,11 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   previsaoTermino: inspecao.previsaoTermino || undefined,
   dataParalisacao: inspecao.dataParalisacao || undefined,
   dataTermino: inspecao.dataTermino || undefined,
-  diagnostico: inspecao.observacoesHistorico?.length
-    ? JSON.stringify(inspecao.observacoesHistorico)
-    : undefined,
+  diagnostico:
+    inspecao.observacoes?.trim() ||
+    (inspecao.observacoesHistorico?.length
+      ? JSON.stringify(inspecao.observacoesHistorico)
+      : undefined),
   responsavelManutencao: inspecao.responsavel || undefined,
   statusManutencao: (inspecao.statusManutencao ||
     "EM_MANUTENCAO") as StatusManutencao,
@@ -204,6 +239,24 @@ export const useManutencao = () => {
     return inspecaoAtualizada;
   };
 
+  const atualizarInspecaoConcluida = async (
+    id: string,
+    inspecao: InspecaoManutencao,
+  ) => {
+    const response = await axiosInstance.patch(`/manutencoes/${id}`, {
+      diagnostico: inspecao.observacoes?.trim() || undefined,
+      avaliacaoFinalConforme:
+        inspecao.avaliacaoFinal === ""
+          ? undefined
+          : inspecao.avaliacaoFinal === "CONFORME",
+    });
+    const inspecaoAtualizada = mapApiToInspecao(response.data);
+    setHistorico((prev) =>
+      prev.map((item) => (item.id === id ? inspecaoAtualizada : item)),
+    );
+    return inspecaoAtualizada;
+  };
+
   const removerInspecao = async (id: string) => {
     await axiosInstance.delete(`/manutencoes/${id}`);
     setHistorico((prev) => prev.filter((item) => item.id !== id));
@@ -215,6 +268,7 @@ export const useManutencao = () => {
     error,
     adicionarInspecao,
     atualizarInspecao,
+    atualizarInspecaoConcluida,
     removerInspecao,
     buscarFotosRecebimento,
   };

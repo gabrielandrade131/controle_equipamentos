@@ -42,6 +42,14 @@
   font-size: 13px;
 }
 
+.form-group-readonly input,
+.form-group-readonly select,
+.form-group-readonly textarea {
+  background-color: #f1f3f5;
+  color: #495057;
+  cursor: not-allowed;
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {

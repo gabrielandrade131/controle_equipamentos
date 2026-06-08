@@ -4,7 +4,7 @@ import './ListaUsuarios.css';
 import AlertModal from '../components/AlertModal';
 import ModalEditarUsuario from '../components/ModalEditarUsuario';
 import ModalConfirmacao from '../components/ModalConfirmacao';
-import { canManageUserVerification, isAdminUser } from '../utils/auth';
+import { getAuthUser, isAdminUser } from '../utils/auth';
 
 interface Usuario {
   id: string;
@@ -25,8 +25,7 @@ interface AlertState {
 }
 
 const ListaUsuarios: React.FC = () => {
-  const usuarioAdmin = isAdminUser();
-  const podeEditarVerificacao = canManageUserVerification();
+  const [usuarioLogado, setUsuarioLogado] = useState(() => getAuthUser());
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
@@ -40,6 +39,11 @@ const ListaUsuarios: React.FC = () => {
   const [usuarioDeletando, setUsuarioDeletando] = useState<Usuario | null>(null);
   const [modalEditar, setModalEditar] = useState(false);
   const [modalConfirmarDelecao, setModalConfirmarDelecao] = useState(false);
+
+  const usuarioAdmin = Boolean(
+    usuarioLogado?.email && isAdminUser(),
+  );
+  const podeEditarVerificacao = usuarioAdmin || Boolean(usuarioLogado?.verificado);
 
   const showAlert = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
     const titles: Record<string, string> = {
@@ -61,7 +65,30 @@ const ListaUsuarios: React.FC = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get('/users');
-      setUsuarios(response.data);
+      const usuariosCarregados = response.data;
+      setUsuarios(usuariosCarregados);
+
+      const usuarioSessao = getAuthUser();
+      if (usuarioSessao) {
+        const usuarioAtualizado = usuariosCarregados.find(
+          (usuario: Usuario) =>
+            usuario.id === usuarioSessao.id || usuario.email === usuarioSessao.email,
+        );
+
+        if (usuarioAtualizado) {
+          const proximoUsuarioLogado = {
+            ...usuarioSessao,
+            nome: usuarioAtualizado.nome,
+            email: usuarioAtualizado.email,
+            ativo: usuarioAtualizado.ativo,
+            cSafety: usuarioAtualizado.cSafety,
+            verificado: usuarioAtualizado.verificado,
+          };
+
+          sessionStorage.setItem('authUser', JSON.stringify(proximoUsuarioLogado));
+          setUsuarioLogado(proximoUsuarioLogado);
+        }
+      }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Erro ao carregar usuários';
       showAlert(errorMessage, 'error');
@@ -103,16 +130,16 @@ const ListaUsuarios: React.FC = () => {
     try {
       const payload = usuarioAdmin
         ? {
-            nome: usuarioAtualizado.nome,
-            email: usuarioAtualizado.email,
-            ativo: usuarioAtualizado.ativo,
-            precisaTrocarSenha: usuarioAtualizado.precisaTrocarSenha,
-            cSafety: usuarioAtualizado.cSafety,
-            verificado: usuarioAtualizado.verificado,
-          }
+          nome: usuarioAtualizado.nome,
+          email: usuarioAtualizado.email,
+          ativo: usuarioAtualizado.ativo,
+          precisaTrocarSenha: usuarioAtualizado.precisaTrocarSenha,
+          cSafety: usuarioAtualizado.cSafety,
+          verificado: usuarioAtualizado.verificado,
+        }
         : {
-            verificado: usuarioAtualizado.verificado,
-          };
+          verificado: usuarioAtualizado.verificado,
+        };
 
       await axiosInstance.put(`/users/${usuarioAtualizado.id}`, payload);
 
@@ -199,7 +226,7 @@ const ListaUsuarios: React.FC = () => {
                 <th>Email</th>
                 <th>Status</th>
                 <th>C-Safety</th>
-                <th>Verificado</th>
+                <th>Master</th>
                 <th>Data Cadastro</th>
                 {podeEditarVerificacao || usuarioAdmin ? <th>Ações</th> : null}
               </tr>

@@ -1668,6 +1668,7 @@ const CHECKLISTS_POR_EQUIPAMENTO: Record<string, ChecklistTemplate> = {
   [normalizarChave("Guincho tripé")]: CHECKLIST_GUINCHO_TRIPE,
   [normalizarChave("Hidrojato de alta pressão")]:
     CHECKLIST_HIDROJATO_ALTA_PRESSAO,
+  [normalizarChave("Hidrojato BP")]: CHECKLIST_HIDROJATO_ALTA_PRESSAO,
   [normalizarChave("HPU - UEH-50")]: CHECKLIST_HPU_UEH_50,
   [normalizarChave("UEH-50")]: CHECKLIST_HPU_UEH_50,
   [normalizarChave("HPU - UEH-75")]: CHECKLIST_HPU_UEH_75,
@@ -1678,6 +1679,7 @@ const CHECKLISTS_POR_EQUIPAMENTO: Record<string, ChecklistTemplate> = {
   [normalizarChave("Shaker")]: CHECKLIST_SHAKER,
   [normalizarChave("Soprador pneumático")]: CHECKLIST_SOPRADOR_PNEUMATICO,
   [normalizarChave("WPU - Unidade lavadora")]: CHECKLIST_WPU_UNIDADE_LAVADORA,
+  [normalizarChave("WPU")]: CHECKLIST_WPU_UNIDADE_LAVADORA,
   [normalizarChave("Unidade lavadora")]: CHECKLIST_WPU_UNIDADE_LAVADORA,
 };
 

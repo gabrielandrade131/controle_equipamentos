@@ -45,6 +45,7 @@ export const Manutencao: React.FC = () => {
     historico,
     adicionarInspecao,
     atualizarInspecao,
+    atualizarInspecaoConcluida,
     buscarFotosRecebimento,
   } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
@@ -136,22 +137,16 @@ export const Manutencao: React.FC = () => {
   const handleEditarInspecao = (inspecao: InspecaoManutencao) => {
     if (!selectedItem?.id) return;
 
-    if (selectedItem.statusManutencao === "CONCLUIDA") {
-      alert("Manutenção concluída não pode ser editada.");
-      setModo("lista");
-      return;
-    }
-
-    atualizarInspecao(selectedItem.id, inspecao)
+    atualizarInspecaoConcluida(selectedItem.id, inspecao)
       .then(() => {
         setModo("lista");
-        alert("Manutenção atualizada com sucesso!");
+        alert("Inspeção salva com sucesso!");
       })
       .catch((error) => {
-        console.error("Erro ao atualizar manutenção:", error);
+        console.error("Erro ao salvar inspeção:", error);
         alert(
           error.response?.data?.message ||
-            "Não foi possível atualizar a manutenção.",
+            "Não foi possível salvar a inspeção.",
         );
       });
   };

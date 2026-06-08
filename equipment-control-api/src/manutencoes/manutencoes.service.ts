@@ -516,9 +516,37 @@ export class ManutencoesService {
     }
 
     if (manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA) {
-      throw new BadRequestException(
-        'Manutencao concluida nao pode ser editada.',
+      const camposPermitidosInspecao = [
+        'diagnostico',
+        'avaliacaoFinalConforme',
+      ] as const;
+
+      const camposRecebidos = Object.entries(data)
+        .filter(([, value]) => value !== undefined)
+        .map(([campo]) => campo);
+
+      const possuiCampoNaoPermitido = camposRecebidos.some(
+        (campo) => !camposPermitidosInspecao.includes(campo as (typeof camposPermitidosInspecao)[number]),
       );
+
+      if (possuiCampoNaoPermitido) {
+        throw new BadRequestException(
+          'Manutencao concluida nao pode ter seus dados editados.',
+        );
+      }
+
+      const manutencaoAtualizadaConcluida = await this.prisma.manutencao.update({
+        where: { id },
+        data: {
+          diagnostico: data.diagnostico,
+          avaliacaoFinalConforme: data.avaliacaoFinalConforme,
+        },
+        include: {
+          tipoEquipamento: true,
+        },
+      });
+
+      return this.adicionarDiasManutencao(manutencaoAtualizadaConcluida);
     }
 
     const tipoEquipamento = await this.resolverTipoEquipamento(

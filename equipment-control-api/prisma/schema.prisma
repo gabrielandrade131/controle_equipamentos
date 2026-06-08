@@ -105,6 +105,7 @@ model User {
 model TipoEquipamento {
   id                String          @id @default(uuid())
   nome              String          @unique
+  
   ativo             Boolean         @default(true)
   criadoEm          DateTime        @default(now())
   atualizadoEm      DateTime        @updatedAt

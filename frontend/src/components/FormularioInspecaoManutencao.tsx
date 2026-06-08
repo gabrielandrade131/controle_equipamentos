@@ -7,7 +7,6 @@ import {
   SecaoInspecaoKey,
 } from '../constants/inspecaoManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
-import { useTiposEquipamento } from '../hooks/useTiposEquipamento';
 import './FormularioInspecaoManutencao.css';
 
 interface FormularioInspecaoManutencaoProps {
@@ -28,7 +27,6 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
   );
-  const { tiposEquipamento } = useTiposEquipamento();
   usePdfExportManutencao();
 
   useEffect(() => {
@@ -40,6 +38,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   }, [inspecao.tipoEquipamento]);
 
   const documentoBloqueado = inspecao.statusManutencao !== 'CONCLUIDA';
+  const dadosManutencaoSomenteLeitura = true;
 
   const handleInputChange = (campo: CampoInspecao, valor: string) => {
     let value: any = valor;
@@ -168,127 +167,133 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
       <div className="dados-equipamento">
         <h2>Dados da Manutenção</h2>
         <div className="grid-inputs">
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Data de Início da Manutenção</label>
             <input
               type="date"
               value={inspecao.dataInicio}
               onChange={(e) => handleInputChange('dataInicio', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Local da Manutenção</label>
             <input
               type="text"
               value={inspecao.localManutencao}
               onChange={(e) => handleInputChange('localManutencao', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Tipo de Equipamento</label>
-            <select
-              value={inspecao.tipoEquipamentoId || ''}
-              onChange={(e) => {
-                const tipoSelecionado = tiposEquipamento.find((tipo) => tipo.id === e.target.value);
-                setInspecao((prev) => ({
-                  ...prev,
-                  tipoEquipamentoId: e.target.value,
-                  tipoEquipamento: tipoSelecionado?.nome || '',
-                }));
-              }}
-            >
-              <option value="">-- Selecione um tipo --</option>
-              {tiposEquipamento.map((tipo) => (
-                <option key={tipo.id} value={tipo.nome}>
-                  {tipo.nome}
-                </option>
-              ))}
-            </select>
+            <input
+              type="text"
+              value={inspecao.tipoEquipamento || ''}
+              readOnly
+              disabled
+            />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Fabricante</label>
             <input
               type="text"
               value={inspecao.fabricante}
               onChange={(e) => handleInputChange('fabricante', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Modelo</label>
             <input
               type="text"
               value={inspecao.modelo}
               onChange={(e) => handleInputChange('modelo', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>TAG</label>
             <input
               type="text"
               value={inspecao.tag}
               onChange={(e) => handleInputChange('tag', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Número de Ordem de Manutenção</label>
             <input
               type="number"
               value={inspecao.numeroOrdemManutencao || ''}
               onChange={(e) => handleInputChange('numeroOrdemManutencao', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Destino</label>
             <input
               type="text"
               value={inspecao.destino}
               onChange={(e) => handleInputChange('destino', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Data de Retorno à Base</label>
             <input
               type="date"
               value={inspecao.dataRetornoBase || ''}
               onChange={(e) => handleInputChange('dataRetornoBase', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Previsão de Término</label>
             <input
               type="date"
               value={inspecao.previsaoTermino || ''}
               onChange={(e) => handleInputChange('previsaoTermino', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Responsável *</label>
             <input
               type="text"
               value={inspecao.responsavel}
               onChange={(e) => handleInputChange('responsavel', e.target.value)}
               required
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Status da Manutenção</label>
-            <select
+            <input
+              type="text"
               value={inspecao.statusManutencao}
-              onChange={(e) => handleInputChange('statusManutencao', e.target.value as any)}
-            >
-              <option value="PENDENTE">Pendente</option>
-              <option value="EM_QUARENTENA">Em Quarentena</option>
-              <option value="EM_MANUTENCAO">Em Manutenção</option>
-              <option value="PARALISADA">Paralisada</option>
-              <option value="CONCLUIDA">Concluída</option>
-            </select>
+              readOnly
+              disabled
+            />
           </div>
-          <div className="form-group">
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Data de Término</label>
             <input
               type="date"
               value={inspecao.dataTermino || ''}
               onChange={(e) => handleInputChange('dataTermino', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
         </div>

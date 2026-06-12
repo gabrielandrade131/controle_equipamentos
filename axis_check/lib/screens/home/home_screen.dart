@@ -175,8 +175,7 @@ class _HomeActionItem extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.onTap,
-    this.showDivider = true,
-  });
+  }) : showDivider = true;
 
   @override
   Widget build(BuildContext context) {

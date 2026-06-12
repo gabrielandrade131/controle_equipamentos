@@ -87,6 +87,7 @@ class SynchroService {
             numeroSerie: 'CSEX420ACM-13',
             tag: 'CSEX420ACM-13',
             situacaoAtual: 'Em operação',
+            previstoRetorno: true,
           ),
           EquipamentoOperacao(
             id: 'eq-2',
@@ -95,6 +96,7 @@ class SynchroService {
             numeroSerie: 'BP-200-22',
             tag: 'BP-200-22',
             situacaoAtual: 'Em operação',
+            previstoRetorno: false,
           ),
         ],
       ),
@@ -113,6 +115,7 @@ class SynchroService {
             numeroSerie: 'GP-500-31',
             tag: 'GP-500-31',
             situacaoAtual: 'Em operação',
+            previstoRetorno: false,
           ),
         ],
       ),
@@ -138,7 +141,8 @@ class SynchroService {
       ];
 
       final equipamentosSemDuplicidade = {
-        for (final equipamento in equipamentosAgrupados) equipamento.id: equipamento,
+        for (final equipamento in equipamentosAgrupados)
+          equipamento.id: equipamento,
       }.values.toList();
 
       mapa[chave] = osExistente.copyWith(

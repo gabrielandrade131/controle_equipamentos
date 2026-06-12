@@ -376,7 +376,7 @@ export const Manutencao: React.FC = () => {
                   </p>
                 </div>
                 <div className="detail-item">
-                  <label>Dias em Espera:</label>
+                  <label>Dias em quarentena:</label>
                   <p>{selectedItem.diasEsperaManutencao ?? "-"}</p>
                 </div>
                 <div className="detail-item">

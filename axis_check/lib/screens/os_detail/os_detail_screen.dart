@@ -14,10 +14,7 @@ import 'finalizar_recebimento_screen.dart';
 class OsDetailScreen extends StatefulWidget {
   final OsOperacao os;
 
-  const OsDetailScreen({
-    super.key,
-    required this.os,
-  });
+  const OsDetailScreen({super.key, required this.os});
 
   @override
   State<OsDetailScreen> createState() => _OsDetailScreenState();
@@ -43,9 +40,7 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
     final checklist = await Navigator.push<ChecklistRecebimento>(
       context,
       MaterialPageRoute(
-        builder: (_) => EquipamentoChecklistScreen(
-          equipamento: equipamento,
-        ),
+        builder: (_) => EquipamentoChecklistScreen(equipamento: equipamento),
       ),
     );
 
@@ -87,6 +82,12 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
   Widget build(BuildContext context) {
     final os = widget.os;
     final total = os.equipamentos.length;
+    final equipamentosPrevistos = os.equipamentos
+        .where((equipamento) => equipamento.previstoRetorno)
+        .toList();
+    final outrosEquipamentos = os.equipamentos
+        .where((equipamento) => !equipamento.previstoRetorno)
+        .toList();
 
     return Scaffold(
       bottomNavigationBar: SafeArea(
@@ -94,7 +95,9 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
         child: SizedBox(
           height: 54,
           child: ElevatedButton(
-            onPressed: possuiEquipamentoParaEnviar ? finalizarRecebimento : null,
+            onPressed: possuiEquipamentoParaEnviar
+                ? finalizarRecebimento
+                : null,
             child: Text(
               possuiEquipamentoParaEnviar
                   ? 'Enviar equipamentos recebidos'
@@ -155,6 +158,8 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
                   cliente: os.cliente,
                   unidade: os.unidade,
                   totalEquipamentos: total,
+                  totalPrevistos: equipamentosPrevistos.length,
+                  totalOutros: outrosEquipamentos.length,
                 ),
 
                 const SizedBox(height: 16),
@@ -193,24 +198,56 @@ class _OsDetailScreenState extends State<OsDetailScreen> {
 
                 const SizedBox(height: 10),
 
-                ...os.equipamentos.map((equipamento) {
-                  final checklist = checklistsPorEquipamento[equipamento.id];
-                  final conferido = checklist != null;
-                  final possuiAvaria = checklist?.possuiAvaria == true;
+                _EquipamentosSectionHeader(
+                  title: 'Previstos para retorno',
+                  total: equipamentosPrevistos.length,
+                ),
+                const SizedBox(height: 8),
+                if (equipamentosPrevistos.isNotEmpty)
+                  ...equipamentosPrevistos.map(
+                    (equipamento) => _buildEquipamentoListItem(equipamento),
+                  )
+                else
+                  const _EquipamentosSectionEmptyState(
+                    message:
+                        'Nenhum equipamento marcado pelo supervisor como previsão de retorno.',
+                  ),
 
-                  return _EquipamentoListItem(
-                    equipamento: equipamento,
-                    conferido: conferido,
-                    possuiAvaria: possuiAvaria,
-                    totalFotos: checklist?.fotos.length ?? 0,
-                    onTap: () => abrirChecklist(equipamento),
-                  );
-                }),
+                const SizedBox(height: 18),
+
+                _EquipamentosSectionHeader(
+                  title: 'Outros equipamentos da OS',
+                  total: outrosEquipamentos.length,
+                ),
+                const SizedBox(height: 8),
+                if (outrosEquipamentos.isNotEmpty)
+                  ...outrosEquipamentos.map(
+                    (equipamento) => _buildEquipamentoListItem(equipamento),
+                  )
+                else
+                  const _EquipamentosSectionEmptyState(
+                    message:
+                        'Todos os equipamentos desta OS já estão classificados como previstos para retorno.',
+                  ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEquipamentoListItem(EquipamentoOperacao equipamento) {
+    final checklist = checklistsPorEquipamento[equipamento.id];
+    final conferido = checklist != null;
+    final possuiAvaria = checklist?.possuiAvaria == true;
+
+    return _EquipamentoListItem(
+      equipamento: equipamento,
+      conferido: conferido,
+      possuiAvaria: possuiAvaria,
+      totalFotos: checklist?.fotos.length ?? 0,
+      onTap: () => abrirChecklist(equipamento),
     );
   }
 }
@@ -219,10 +256,7 @@ class _InfoSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const _InfoSection({
-    required this.title,
-    required this.children,
-  });
+  const _InfoSection({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -231,9 +265,7 @@ class _InfoSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,11 +291,8 @@ class _InfoRow extends StatelessWidget {
   final String value;
   final bool showDivider;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.showDivider = true,
-  });
+  const _InfoRow({required this.label, required this.value})
+    : showDivider = true;
 
   @override
   Widget build(BuildContext context) {
@@ -296,10 +325,7 @@ class _InfoRow extends StatelessWidget {
         if (showDivider)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(
-              height: 1,
-              color: AppColors.border,
-            ),
+            child: Divider(height: 1, color: AppColors.border),
           )
         else
           const SizedBox(height: 10),
@@ -327,8 +353,8 @@ class _EquipamentoListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusTexto = conferido
         ? possuiAvaria
-            ? 'Conferido com avaria'
-            : 'Conferido'
+              ? 'Conferido com avaria'
+              : 'Conferido'
         : 'Pendente';
 
     return InkWell(
@@ -404,11 +430,77 @@ class _EquipamentoListItem extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(
-            height: 1,
-            color: AppColors.border,
+          const Divider(height: 1, color: AppColors.border),
+        ],
+      ),
+    );
+  }
+}
+
+class _EquipamentosSectionHeader extends StatelessWidget {
+  final String title;
+  final int total;
+
+  const _EquipamentosSectionHeader({required this.title, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: AppColors.black,
+              ),
+            ),
+          ),
+          Text(
+            '$total',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: AppColors.techBlue,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EquipamentosSectionEmptyState extends StatelessWidget {
+  final String message;
+
+  const _EquipamentosSectionEmptyState({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.mutedText,
+          height: 1.35,
+        ),
       ),
     );
   }
@@ -446,7 +538,7 @@ class _FotosSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: fotos.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final foto = fotos[index];
 
@@ -475,11 +567,14 @@ class _FotosSection extends StatelessWidget {
                     width: 160,
                     height: 100,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 160,
                       height: 100,
                       color: AppColors.border,
-                      child: const Icon(Icons.broken_image, color: AppColors.mutedText),
+                      child: const Icon(
+                        Icons.broken_image,
+                        color: AppColors.mutedText,
+                      ),
                     ),
                   ),
                 ),
@@ -492,18 +587,21 @@ class _FotosSection extends StatelessWidget {
   }
 }
 
-
 class _OperationSummary extends StatelessWidget {
   final String numeroOs;
   final String cliente;
   final String unidade;
   final int totalEquipamentos;
+  final int totalPrevistos;
+  final int totalOutros;
 
   const _OperationSummary({
     required this.numeroOs,
     required this.cliente,
     required this.unidade,
     required this.totalEquipamentos,
+    required this.totalPrevistos,
+    required this.totalOutros,
   });
 
   @override
@@ -527,9 +625,21 @@ class _OperationSummary extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _SummaryLine(label: 'OS', value: numeroOs),
-          _SummaryLine(label: 'Cliente', value: cliente.isEmpty ? 'Não informado' : cliente),
-          _SummaryLine(label: 'Unidade', value: unidade.isEmpty ? 'Não informada' : unidade),
-          _SummaryLine(label: 'Equipamentos', value: '$totalEquipamentos', showDivider: false),
+          _SummaryLine(
+            label: 'Cliente',
+            value: cliente.isEmpty ? 'Não informado' : cliente,
+          ),
+          _SummaryLine(
+            label: 'Unidade',
+            value: unidade.isEmpty ? 'Não informada' : unidade,
+          ),
+          _SummaryLine(label: 'Equipamentos', value: '$totalEquipamentos'),
+          _SummaryLine(label: 'Previstos', value: '$totalPrevistos'),
+          _SummaryLine(
+            label: 'Outros',
+            value: '$totalOutros',
+            showDivider: false,
+          ),
         ],
       ),
     );
@@ -581,10 +691,7 @@ class _SummaryLine extends StatelessWidget {
         if (showDivider)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(
-              height: 1,
-              color: AppColors.border,
-            ),
+            child: Divider(height: 1, color: AppColors.border),
           )
         else
           const SizedBox(height: 10),

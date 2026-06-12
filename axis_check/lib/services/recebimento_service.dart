@@ -105,6 +105,7 @@ class RecebimentoService {
           'numeroOs': os.numeroOs,
           'tag': checklist.tag,
           'numeroSerie': checklist.numeroSerie,
+          'previstoRetorno': equipamento.previstoRetorno,
           'tipoEquipamento': checklist.tipoEquipamento.isNotEmpty
               ? checklist.tipoEquipamento
               : equipamento.tipoEquipamento,

@@ -168,6 +168,7 @@ export const mapApiToProducao = (producao: any): Producao => ({
   loteProducao: producao.loteProducao ?? undefined,
   numeroSerie: producao.numeroSerie ?? "",
   tag: producao.tag ?? "",
+  validade: toDateInput(producao.validade),
   dataSolicitacao: toDateInput(producao.dataSolicitacao),
   dataNecessidade: toDateInput(producao.dataNecessidade),
   dataInicio: toDateInput(producao.dataInicio),
@@ -210,6 +211,7 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   dataParalisacao: producao.dataParalisacao || undefined,
   previsaoTermino: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,
+  validade: producao.validade ?? undefined,
   statusProducao: producao.statusProducao || undefined,
   tipoEquipamentoId: producao.tipoEquipamentoId || undefined,
   modelo: producao.modelo || undefined,
@@ -238,6 +240,7 @@ const mapProducaoToLoteApi = (producao: CreateProducaoDto) => ({
   dataParalisacao: producao.dataParalisacao || undefined,
   previsaoTermino: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,
+  validade: producao.validade || undefined,
   statusProducao: producao.statusProducao || undefined,
 });
 

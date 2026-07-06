@@ -7,6 +7,7 @@ import {
   SecaoInspecaoKey,
 } from '../constants/inspecaoManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
+import { getAuthUserDisplayName } from '../utils/auth';
 import './FormularioInspecaoManutencao.css';
 
 interface FormularioInspecaoManutencaoProps {
@@ -24,10 +25,20 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   inspecaoInicial,
   isEditing = false,
 }) => {
+  const usuarioExecutor = getAuthUserDisplayName();
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
   );
   usePdfExportManutencao();
+
+  useEffect(() => {
+    if (!usuarioExecutor) return;
+
+    setInspecao((prev) => ({
+      ...prev,
+      responsavel: usuarioExecutor,
+    }));
+  }, [usuarioExecutor]);
 
   useEffect(() => {
     setInspecao((prev) =>
@@ -150,12 +161,22 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleSalvar = () => {
-    if (!inspecao.responsavel) {
-      alert('Por favor, preencha o campo obrigatório: Responsável');
+    const executor = usuarioExecutor || inspecao.responsavel;
+
+    if (!executor) {
+      alert('Por favor, preencha o campo obrigatório: Executado por');
       return;
     }
 
-    onSalvar?.(inspecao);
+    if (!documentoBloqueado && !inspecao.validade) {
+      alert('Informe a validade do equipamento considerando a peça que vence primeiro.');
+      return;
+    }
+
+    onSalvar?.({
+      ...inspecao,
+      responsavel: executor,
+    });
   };
 
   return (
@@ -192,6 +213,15 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
             <input
               type="text"
               value={inspecao.tipoEquipamento || ''}
+              readOnly
+              disabled
+            />
+          </div>
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
+            <label>Tipo de Manutenção</label>
+            <input
+              type="text"
+              value={inspecao.tipoManutencao === 'PREVENTIVA' ? 'Preventiva' : 'Corretiva'}
               readOnly
               disabled
             />
@@ -267,12 +297,23 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
             />
           </div>
           <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
-            <label>Responsável *</label>
+            <label>Executado por *</label>
             <input
               type="text"
               value={inspecao.responsavel}
               onChange={(e) => handleInputChange('responsavel', e.target.value)}
+              placeholder="Preenchido automaticamente pelo usuário logado"
               required
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
+            />
+          </div>
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
+            <label>Revisado por</label>
+            <input
+              type="text"
+              value={inspecao.responsavelRevisao || ''}
+              onChange={(e) => handleInputChange('responsavelRevisao', e.target.value)}
               readOnly={dadosManutencaoSomenteLeitura}
               disabled={dadosManutencaoSomenteLeitura}
             />
@@ -305,6 +346,21 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
 
       <div className={`avaliacao-final${documentoBloqueado ? ' secao-inspecao-bloqueada' : ''}`}>
         <h3>AVALIAÇÃO FINAL</h3>
+        <div className="validade-manutencao-box">
+          <div className="form-group">
+            <label>Validade do equipamento *</label>
+            <input
+              type="date"
+              value={inspecao.validade || ''}
+              onChange={(e) => handleInputChange('validade', e.target.value)}
+              disabled={documentoBloqueado}
+            />
+          </div>
+          <p>
+            A validade deve considerar a peça, componente, certificado ou item
+            inspecionado que vence primeiro.
+          </p>
+        </div>
         <div className="respostas">
           {(['CONFORME', 'NÃO CONFORME'] as const).map((aval) => (
             <label key={aval} className="checkbox-label">

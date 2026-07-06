@@ -1774,6 +1774,7 @@ export const criarInspecaoVazia = (): InspecaoManutencao => {
   const base: InspecaoManutencao = {
     dataInicio: dataAtual,
     localManutencao: "",
+    tipoManutencao: "CORRETIVA",
     tipoEquipamento: "",
     fabricante: "",
     modelo: "",
@@ -1784,8 +1785,10 @@ export const criarInspecaoVazia = (): InspecaoManutencao => {
     previsaoTermino: "",
     dataParalisacao: "",
     responsavel: "",
+    responsavelRevisao: "",
     statusManutencao: "EM_MANUTENCAO",
     dataTermino: "",
+    validade: "",
     certificacoes: [],
     estruturaMecanica: [],
     sistemaHidraulico: [],

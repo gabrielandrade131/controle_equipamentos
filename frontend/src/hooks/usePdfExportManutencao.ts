@@ -76,6 +76,21 @@ export const usePdfExportManutencao = () => {
         pdf.text(text, x, currentY);
       };
 
+      const drawCenteredText = (
+        text: string,
+        startX: number,
+        endX: number,
+        currentY: number,
+        options?: { bold?: boolean; size?: number }
+      ) => {
+        pdf.setFont('helvetica', options?.bold ? 'bold' : 'normal');
+        pdf.setFontSize(options?.size ?? 9);
+        pdf.setTextColor(0, 0, 0);
+        const textWidth = pdf.getTextWidth(text);
+        const centerX = startX + (endX - startX) / 2;
+        pdf.text(text, centerX - textWidth / 2, currentY);
+      };
+
       const drawDataGrid = () => {
         const rows = [
           [
@@ -88,7 +103,11 @@ export const usePdfExportManutencao = () => {
           ],
           [
             { label: 'Status', value: inspecao.statusManutencao || '-' },
-            { label: 'Responsável', value: inspecao.responsavel || '-' },
+            { label: 'Executado por', value: inspecao.responsavel || '-' },
+          ],
+          [
+            { label: 'Revisado por', value: inspecao.responsavelRevisao || '-' },
+            { label: 'Validade', value: formatDate(inspecao.validade) },
           ],
           [
             { label: 'Fabricante', value: inspecao.fabricante || '-' },
@@ -97,6 +116,13 @@ export const usePdfExportManutencao = () => {
           [
             { label: 'Ordem de Manutenção', value: String(inspecao.numeroOrdemManutencao ?? '-') },
             { label: 'TAG', value: inspecao.tag || '-' },
+          ],
+          [
+            {
+              label: 'Tipo de manutenção',
+              value: inspecao.tipoManutencao === 'PREVENTIVA' ? 'Preventiva' : 'Corretiva',
+            },
+            { label: 'Tipo de equipamento', value: inspecao.tipoEquipamento || '-' },
           ],
           [
             { label: 'Destino', value: inspecao.destino || '-' },
@@ -274,16 +300,27 @@ export const usePdfExportManutencao = () => {
       }
 
       sectionHeader('ASSINATURA');
-      ensureSpace(24);
-      drawText(`Responsável: ${inspecao.responsavel || '-'}`, marginX, y + 2, { size: 9 });
-      y += 12;
+      ensureSpace(36);
+      const assinaturaLineWidth = 78;
+      const assinaturaGap = 24;
+      const assinaturaTotalWidth = assinaturaLineWidth * 2 + assinaturaGap;
+      const assinaturaStartX = marginX + (contentWidth - assinaturaTotalWidth) / 2;
+      const linhaExecutanteInicio = assinaturaStartX;
+      const linhaExecutanteFim = linhaExecutanteInicio + assinaturaLineWidth;
+      const linhaRevisaoInicio = linhaExecutanteFim + assinaturaGap;
+      const linhaRevisaoFim = linhaRevisaoInicio + assinaturaLineWidth;
+      drawText(`Executado por: ${inspecao.responsavel || '-'}`, linhaExecutanteInicio, y + 2, { size: 9 });
+      drawText(`Revisado por: ${inspecao.responsavelRevisao || '-'}`, linhaRevisaoInicio, y + 2, { size: 9 });
+      y += 20;
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(marginX, y, marginX + 85, y);
-      drawText('Assinatura', marginX, y + 5, { size: 8 });
+      pdf.line(linhaExecutanteInicio, y, linhaExecutanteFim, y);
+      drawCenteredText('Assinatura executante', linhaExecutanteInicio, linhaExecutanteFim, y + 5, { size: 8 });
+      pdf.line(linhaRevisaoInicio, y, linhaRevisaoFim, y);
+      drawCenteredText('Assinatura revisão', linhaRevisaoInicio, linhaRevisaoFim, y + 5, { size: 8 });
       drawText(
         `Data: ${formatDate(inspecao.dataTermino)}`,
-        marginX + 105,
-        y + 2,
+        marginX,
+        y + 18,
         { size: 9 }
       );
 

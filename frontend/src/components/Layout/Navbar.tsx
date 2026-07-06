@@ -9,6 +9,7 @@ const Navbar: React.FC = () => {
   const menuItems = [
     { label: 'Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false },
     { label: 'Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true },
+    { label: 'Validades', path: '/validade-equipamentos', icon: 'event_upcoming', hiddenForCSafety: true },
     { label: 'Usuários', path: '/usuarios', icon: 'group', hiddenForCSafety: true },
     { label: 'Tipos de Equipamento', path: '/tipos-equipamento', icon: 'category', hiddenForCSafety: true },
   ];

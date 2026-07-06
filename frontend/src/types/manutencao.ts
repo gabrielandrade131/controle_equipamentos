@@ -9,6 +9,8 @@ export type StatusManutencao =
   | "CONCLUIDA"
   | "PARALISADA";
 
+export type TipoManutencao = "CORRETIVA" | "PREVENTIVA";
+
 export interface ItemInspecao {
   id: string;
   titulo: string;
@@ -33,10 +35,12 @@ export interface InspecaoManutencao {
   id?: string;
   dataInicio: string;
   localManutencao: string;
+  tipoManutencao: TipoManutencao;
   tipoEquipamentoId?: string;
   tipoEquipamento?: string;
   fabricante: string;
   modelo: string;
+  numeroSerie?: string;
   tag: string;
   numeroOrdemManutencao?: number | null;
   destino: string;
@@ -44,8 +48,10 @@ export interface InspecaoManutencao {
   previsaoTermino?: string;
   dataParalisacao?: string;
   responsavel: string;
+  responsavelRevisao?: string;
   statusManutencao: StatusManutencao;
   dataTermino?: string;
+  validade?: string;
   diasEsperaManutencao?: number | null;
   diasManutencao?: number | null;
   diasParalisacao?: number | null;

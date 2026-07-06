@@ -301,6 +301,8 @@ export const criarFormularioInspecaoMontagemVazio = (): CreateInspecaoMontageDto
     resultadoFinal: '',
     observacoes: undefined,
     responsavel: '',
+    responsavelServico: '',
+    responsavelRevisao: '',
     data: dataAtual,
     nomeAssinante: '',
     aprovado: false,

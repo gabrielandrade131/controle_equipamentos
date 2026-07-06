@@ -79,14 +79,22 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
   return {
     id: producao.id,
     numeroSerie: producao.numeroSerie ?? '',
+    numeroLote: producao.numeroLote ?? producao.loteProducao?.numeroLote ?? null,
+    tag: producao.tag ?? '',
+    statusProducao: producao.statusProducao ?? '',
+    tipoEquipamentoNome: producao.tipoEquipamento?.nome ?? '',
     dataInspecao: toDateInput(producao.atualizadoEm || producao.criadoEm),
     modelo: producao.modelo ?? '',
+    dataInicio: producao.dataInicio ? extractDateInput(producao.dataInicio) : '',
+    dataTermino: producao.dataTermino ? extractDateInput(producao.dataTermino) : '',
     [INSTRUMENTOS_KEY]: instrumentosAfericao,
     verificacoesGeraisPremontagem,
     verificacaoPosmontagem,
     resultadoFinal: preenchido ? (reprovado ? 'REPROVADO' : 'APROVADO') : '',
     observacoes: '',
-    responsavel: '',
+    responsavel: producao.responsavelServico ?? '',
+    responsavelServico: producao.responsavelServico ?? '',
+    responsavelRevisao: producao.responsavelRevisao ?? '',
     data: toDateInput(producao.atualizadoEm || producao.criadoEm),
     assinatura: '',
     nomeAssinante: '',
@@ -138,11 +146,14 @@ export const useInspecoes = () => {
       ),
     );
 
-    if (inspecao.imagensAnexadas?.length) {
-      await axiosInstance.patch(`/producoes/${producaoId}`, {
-        imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas),
-      });
-    }
+    await axiosInstance.patch(`/producoes/${producaoId}`, {
+      responsavelServico:
+        inspecao.responsavelServico || inspecao.responsavel || undefined,
+      responsavelRevisao: inspecao.responsavelRevisao || undefined,
+      ...(inspecao.imagensAnexadas?.length
+        ? { imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas) }
+        : {}),
+    });
 
     await carregarInspecoes();
   };

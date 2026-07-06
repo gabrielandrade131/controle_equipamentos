@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { InspecaoMontagem, CreateInspecaoMontageDto } from '../types/inspecao';
 import { criarFormularioInspecaoMontagemVazio } from '../constants/inspecaoMontagem';
+import { getAuthUserDisplayName } from '../utils/auth';
 import './FormularioInspecao.css';
 
 interface FormularioInspecaoProps {
@@ -27,11 +28,22 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 }) => {
   const formularioPadrao = criarFormularioInspecaoMontagemVazio();
   const PREFIXO_NUMERO_SERIE = 'NºSérie:';
+  const usuarioExecutor = getAuthUserDisplayName();
 
   const [formData, setFormData] = useState<CreateInspecaoMontageDto>(() => ({
     ...criarFormularioInspecaoMontagemVazio(),
     ...inspecaoInicial,
   }));
+
+  useEffect(() => {
+    if (!usuarioExecutor) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      responsavel: usuarioExecutor,
+      responsavelServico: usuarioExecutor,
+    }));
+  }, [usuarioExecutor]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -188,6 +200,8 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 
     const formDataNormalizado: CreateInspecaoMontageDto = {
       ...formData,
+      responsavel: usuarioExecutor || formData.responsavelServico || formData.responsavel,
+      responsavelServico: usuarioExecutor || formData.responsavelServico || formData.responsavel,
       verificacoesGeraisPremontagem: aplicarInstrumentosFixosPremontagem(
         formData.verificacoesGeraisPremontagem,
       ),
@@ -837,14 +851,27 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
       <div className="form-section">
         <h3>Assinatura</h3>
         <div className="form-group">
-          <label htmlFor="responsavel">Responsável:</label>
+          <label htmlFor="responsavelServico">Executado por:</label>
           <input
             type="text"
-            id="responsavel"
-            name="responsavel"
-            value={formData.responsavel}
+            id="responsavelServico"
+            name="responsavelServico"
+            value={formData.responsavelServico || formData.responsavel || ''}
             onChange={handleInputChange}
-            placeholder="Nome do responsável"
+            placeholder="Preenchido automaticamente pelo usuário logado"
+            readOnly
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="responsavelRevisao">Revisado por:</label>
+          <input
+            type="text"
+            id="responsavelRevisao"
+            name="responsavelRevisao"
+            value={formData.responsavelRevisao || ''}
+            onChange={handleInputChange}
+            placeholder="Nome de quem revisou"
             required
           />
         </div>

@@ -27,6 +27,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [draftFilters, setDraftFilters] = useState<FilterType>(filters);
+  const [activeAutocomplete, setActiveAutocomplete] = useState<string | null>(null);
 
   useEffect(() => {
     setDraftFilters(filters);
@@ -81,7 +82,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             {fields.map((field) => (
               <div key={String(field.key)} className="filter-field">
                 <label>{field.label}</label>
-                {field.type === 'text' && (
+                {field.type === 'text' && !field.options?.length && (
                   <input
                     type="text"
                     placeholder={field.placeholder}
@@ -89,6 +90,60 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                     onChange={(e) => handleInputChange(field.key, e.target.value)}
                     className="filter-input"
                   />
+                )}
+                {field.type === 'text' && !!field.options?.length && (
+                  <div className="filter-autocomplete">
+                    <input
+                      type="text"
+                      placeholder={field.placeholder}
+                      value={(draftFilters[field.key] as string) || ''}
+                      onChange={(e) => handleInputChange(field.key, e.target.value)}
+                      onFocus={() => setActiveAutocomplete(String(field.key))}
+                      onBlur={() => {
+                        window.setTimeout(() => setActiveAutocomplete(null), 120);
+                      }}
+                      className="filter-input"
+                      autoComplete="off"
+                    />
+                    {activeAutocomplete === String(field.key) && (
+                      <div className="filter-autocomplete-menu">
+                        {field.options
+                          .filter((opt) => {
+                            const typedValue = String(draftFilters[field.key] || '')
+                              .trim()
+                              .toLowerCase();
+                            if (!typedValue) return true;
+                            return opt.label.toLowerCase().includes(typedValue);
+                          })
+                          .slice(0, 8)
+                          .map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              className="filter-autocomplete-option"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleInputChange(field.key, opt.value);
+                                setActiveAutocomplete(null);
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        {field.options.filter((opt) => {
+                          const typedValue = String(draftFilters[field.key] || '')
+                            .trim()
+                            .toLowerCase();
+                          if (!typedValue) return true;
+                          return opt.label.toLowerCase().includes(typedValue);
+                        }).length === 0 && (
+                          <span className="filter-autocomplete-empty">
+                            Nenhuma opção encontrada
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
                 {field.type === 'date' && (
                   <input

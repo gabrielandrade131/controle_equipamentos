@@ -1,33 +1,71 @@
 # Dependencies
 node_modules/
-/.pnp
+**/node_modules/
+.pnp/
 .pnp.js
 
-# Testing
-/coverage
+# Build output
+build/
+dist/
+out/
+coverage/
+**/build/
+**/dist/
+**/coverage/
 
-# Production
-/build
-/dist
-
-# Environment variables
+# Environment variables and local config
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!.env.sample
 
 # Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 lerna-debug.log*
-.pnpm-debug.log*
 .codex-*.log
+
+# Runtime and temporary files
+.tmp/
+tmp/
+temp/
+downloads/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Python
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Prisma / databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Uploads and generated files
+uploads/
+media/
+staticfiles/
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
@@ -36,19 +74,14 @@ Thumbs.db
 *.swo
 *~
 
-# SSH Keys (NUNCA commitar!)
+# SSH keys and local credentials
+*.pem
+*.key
+*.crt
 *.pub
-Suporte123@
-Suporte123@.pub
+@Mb1R3$p0N$e
+@Mb1R3$p0N$e.pub
 id_rsa
 id_rsa.pub
 id_ed25519
 id_ed25519.pub
-
-# Package locks (opcional, geralmente não comitamos)
-package-lock.json
-yarn.lock
-
-# Temporary files
-.tmp/
-temp/

@@ -8,7 +8,7 @@ import { CreateProducaoDto, Producao } from "../types/producao";
 import { PdfExporter } from "../components/PdfExporter";
 import { FormularioOrdem } from "../components/FormularioOrdem";
 import { buildSelectOptions } from "../utils/filterOptions";
-import { formatDatePtBr } from "../utils/date";
+import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { isCSafetyUser } from "../utils/auth";
 import "../pages/Producao.css";
 
@@ -16,6 +16,16 @@ const formatarRotulo = (valor?: string | null) => {
   if (!valor) return "-";
 
   return valor.replace(/_/g, " ");
+};
+
+const matchesTextFilter = (
+  value: string | number | null | undefined,
+  filter?: string,
+) => {
+  const normalizedFilter = String(filter ?? "").trim().toLowerCase();
+  if (!normalizedFilter) return true;
+
+  return String(value ?? "").trim().toLowerCase().includes(normalizedFilter);
 };
 
 const OrdemProducao: React.FC = () => {
@@ -32,6 +42,17 @@ const OrdemProducao: React.FC = () => {
     () => buildSelectOptions(producoes.map((producao) => producao.tag)),
     [producoes],
   );
+  const numeroSerieOptions = useMemo(
+    () => buildSelectOptions(producoes.map((producao) => producao.numeroSerie)),
+    [producoes],
+  );
+  const tipoEquipamentoOptions = useMemo(
+    () =>
+      buildSelectOptions(
+        producoes.map((producao) => producao.tipoEquipamentoNome),
+      ),
+    [producoes],
+  );
   const modeloOptions = useMemo(
     () => buildSelectOptions(producoes.map((producao) => producao.modelo)),
     [producoes],
@@ -40,14 +61,25 @@ const OrdemProducao: React.FC = () => {
   const filteredProducoes = useMemo(() => {
     return producoes.filter((p) => {
       if (filters.status && p.statusProducao !== filters.status) return false;
-      if (filters.tag && String(p.tag ?? "").trim() !== filters.tag)
+      if (!matchesTextFilter(p.numeroLote, filters.numeroLote)) return false;
+      if (!matchesTextFilter(p.tag, filters.tag)) return false;
+      if (!matchesTextFilter(p.numeroSerie, filters.numeroSerie)) return false;
+      if (!matchesTextFilter(p.tipoEquipamentoNome, filters.tipoEquipamento))
         return false;
-      if (filters.modelo && String(p.modelo ?? "").trim() !== filters.modelo)
-        return false;
-      if (filters.numeroLote) {
-        const loteProducao =
-          p.numeroLote != null ? String(p.numeroLote).trim() : "";
-        if (loteProducao !== filters.numeroLote) return false;
+      if (!matchesTextFilter(p.modelo, filters.modelo)) return false;
+      if (filters.dataInicio || filters.dataTermino) {
+        const inicioTrabalho = p.dataInicio;
+
+        if (!inicioTrabalho) return false;
+        const fimTrabalho =
+          p.dataTermino ||
+          (p.statusProducao === "CONCLUIDA"
+            ? inicioTrabalho
+            : getLocalDateInput());
+
+        if (filters.dataTermino && inicioTrabalho > filters.dataTermino)
+          return false;
+        if (filters.dataInicio && fimTrabalho < filters.dataInicio) return false;
       }
       return true;
     });
@@ -172,15 +204,47 @@ const OrdemProducao: React.FC = () => {
               {
                 key: "numeroLote",
                 label: "Lote",
-                type: "select",
+                type: "text",
+                placeholder: "Digite o lote",
                 options: loteOptions,
               },
-              { key: "tag", label: "TAG", type: "select", options: tagOptions },
+              {
+                key: "tag",
+                label: "TAG",
+                type: "text",
+                placeholder: "Digite a TAG",
+                options: tagOptions,
+              },
+              {
+                key: "numeroSerie",
+                label: "Série",
+                type: "text",
+                placeholder: "Digite a série",
+                options: numeroSerieOptions,
+              },
+              {
+                key: "tipoEquipamento",
+                label: "Tipo de equipamento",
+                type: "text",
+                placeholder: "Digite o tipo",
+                options: tipoEquipamentoOptions,
+              },
               {
                 key: "modelo",
                 label: "Modelo",
-                type: "select",
+                type: "text",
+                placeholder: "Digite o modelo",
                 options: modeloOptions,
+              },
+              {
+                key: "dataInicio",
+                label: "Data início",
+                type: "date",
+              },
+              {
+                key: "dataTermino",
+                label: "Data fim",
+                type: "date",
               },
             ]}
             titulo="Filtros"
@@ -240,6 +304,10 @@ const OrdemProducao: React.FC = () => {
                 <div className="detail-item">
                   <label>TAG:</label>
                   <p>{selectedItem.tag || "-"}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Validade do Equipamento:</label>
+                  <p>{formatDatePtBr(selectedItem.validade) || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Tipo de Equipamento:</label>

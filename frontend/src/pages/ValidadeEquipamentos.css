@@ -1,0 +1,192 @@
+.validade-page {
+  width: min(100%, var(--page-shell-max-width));
+  margin: 0 auto;
+  padding: var(--page-shell-padding-y) var(--page-shell-padding-x) 32px;
+  box-sizing: border-box;
+  color: #17324d;
+}
+
+.validade-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.validade-header h2 {
+  margin: 0 0 8px;
+  color: #17324d;
+}
+
+.validade-header p {
+  margin: 0;
+  color: #52657a;
+}
+
+.validade-controls {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 190px);
+  align-items: center;
+  gap: 10px;
+}
+
+.validade-controls label,
+.validade-toggle {
+  font-weight: 600;
+  color: #17324d;
+}
+
+.validade-controls select {
+  border: 1px solid #bfd0de;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #17324d;
+  font-size: 14px;
+}
+
+.validade-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.validade-summary-item {
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.validade-summary-item span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.validade-summary-item strong {
+  font-size: 14px;
+}
+
+.validade-summary-item.danger {
+  border-left: 5px solid #c62828;
+}
+
+.validade-summary-item.warning {
+  border-left: 5px solid #f57c00;
+}
+
+.validade-summary-item.attention {
+  border-left: 5px solid #fbc02d;
+}
+
+.validade-summary-item.neutral {
+  border-left: 5px solid #78909c;
+}
+
+.validade-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.validade-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.validade-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.validade-table th,
+.validade-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e6edf3;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.validade-table th {
+  background: #f4f7fb;
+  color: #17324d;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.validade-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.validade-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.validade-badge.vencido {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.validade-badge.vence_hoje {
+  background: #fff3e0;
+  color: #bf360c;
+}
+
+.validade-badge.proximo {
+  background: #fff8e1;
+  color: #8a5a00;
+}
+
+.validade-badge.no_prazo {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.validade-badge.sem_validade {
+  background: #eceff1;
+  color: #455a64;
+}
+
+.validade-empty {
+  padding: 28px;
+  color: #52657a;
+  text-align: center;
+}
+
+.validade-error {
+  color: #c62828;
+}
+
+@media (max-width: 900px) {
+  .validade-header {
+    flex-direction: column;
+  }
+
+  .validade-controls {
+    grid-template-columns: auto minmax(110px, 1fr);
+  }
+
+  .validade-summary {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .validade-summary {
+    grid-template-columns: 1fr;
+  }
+}

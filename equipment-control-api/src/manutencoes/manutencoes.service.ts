@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
-import { OrigemManutencao, Prisma, StatusManutencao } from '@prisma/client';
+import {
+  OrigemManutencao,
+  Prisma,
+  StatusManutencao,
+  TipoManutencao,
+} from '@prisma/client';
 import { CreateManutencaoSynchroDto } from './dto/create-manutencao-synchro.dto';
 import { CreateManutencaoDto } from './dto/create-manutencao.dto';
 import { UpdateManutencaoDto } from './dto/update-manutencao.dto';
@@ -88,6 +93,97 @@ export class ManutencoesService {
     }
 
     return String(value);
+  }
+
+  private async adicionarValidadeEquipamento<T extends { tag?: string | null }>(
+    manutencao: T,
+  ) {
+    const tag = this.normalizarTexto(manutencao.tag);
+
+    if (!tag) {
+      return {
+        ...manutencao,
+        validadeEquipamento: null,
+      };
+    }
+
+    const equipamento = await this.prisma.equipment.findFirst({
+      where: {
+        tag: {
+          equals: tag,
+          mode: 'insensitive',
+        },
+        ativo: true,
+      },
+      select: {
+        validade: true,
+      },
+    });
+
+    return {
+      ...manutencao,
+      validadeEquipamento: equipamento?.validade ?? null,
+    };
+  }
+
+  private async atualizarValidadeEquipamentoPorTag(
+    tag?: string | null,
+    validade?: string,
+    alteradoPor?: string | null,
+  ) {
+    if (validade === undefined) {
+      return;
+    }
+
+    const tagNormalizada = this.normalizarTexto(tag);
+
+    if (!tagNormalizada) {
+      return;
+    }
+
+    const equipamento = await this.prisma.equipment.findFirst({
+      where: {
+        tag: {
+          equals: tagNormalizada,
+          mode: 'insensitive',
+        },
+        ativo: true,
+      },
+      select: {
+        id: true,
+        validade: true,
+      },
+    });
+
+    if (!equipamento) {
+      return;
+    }
+
+    const novaValidade = this.normalizarData(validade);
+
+    if (this.mesmaData(equipamento.validade, novaValidade)) {
+      return;
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.equipment.update({
+        where: {
+          id: equipamento.id,
+        },
+        data: {
+          validade: novaValidade,
+        },
+      }),
+      this.prisma.historicoProducao.create({
+        data: {
+          equipmentId: equipamento.id,
+          campo: 'validade',
+          valorAnterior: this.formatarValor(equipamento.validade),
+          valorNovo: this.formatarValor(novaValidade),
+          alteradoPor,
+        },
+      }),
+    ]);
   }
 
   private calcularDias(
@@ -432,6 +528,7 @@ export class ManutencoesService {
         origem: OrigemManutencao.MANUAL,
         tipoEquipamentoId: tipoEquipamento.tipoEquipamentoId,
         tipoEquipamentoNome: tipoEquipamento.tipoEquipamentoNome,
+        tipoManutencao: data.tipoManutencao ?? TipoManutencao.CORRETIVA,
         modeloEquipamento: data.modeloEquipamento,
         tag: data.tag,
         situacaoEquipamento: data.situacaoEquipamento,
@@ -446,6 +543,7 @@ export class ManutencoesService {
         previsaoTermino: this.normalizarData(data.previsaoTermino),
         diagnostico: data.diagnostico,
         responsavelManutencao: data.responsavelManutencao,
+        responsavelRevisao: data.responsavelRevisao,
         statusManutencao:
           data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
         avaliacaoFinalConforme: data.avaliacaoFinalConforme,
@@ -455,7 +553,15 @@ export class ManutencoesService {
       },
     });
 
-    return this.adicionarDiasManutencao(manutencao);
+    await this.atualizarValidadeEquipamentoPorTag(
+      manutencao.tag,
+      data.validade,
+      data.responsavelManutencao,
+    );
+
+    return this.adicionarValidadeEquipamento(
+      this.adicionarDiasManutencao(manutencao),
+    );
   }
 
   async findAll(filters: FilterManutencaoDto) {
@@ -481,8 +587,16 @@ export class ManutencoesService {
       this.prisma.manutencao.count({ where }),
     ]);
 
+    const manutencoesComValidade = await Promise.all(
+      data.map((manutencao) =>
+        this.adicionarValidadeEquipamento(
+          this.adicionarDiasManutencao(manutencao),
+        ),
+      ),
+    );
+
     return {
-      data: data.map((manutencao) => this.adicionarDiasManutencao(manutencao)),
+      data: manutencoesComValidade,
       total,
       page,
       limit,
@@ -503,7 +617,9 @@ export class ManutencoesService {
       throw new NotFoundException('Manutenção não encontrada.');
     }
 
-    return this.adicionarDiasManutencao(manutencao);
+    return this.adicionarValidadeEquipamento(
+      this.adicionarDiasManutencao(manutencao),
+    );
   }
 
   async update(id: string, data: UpdateManutencaoDto, user?: UsuarioHistorico) {
@@ -515,10 +631,19 @@ export class ManutencoesService {
       throw new NotFoundException('Manutenção não encontrada.');
     }
 
+    const alteradoPor = user?.nome || user?.email || user?.username || null;
+    const responsavelManutencaoFinal =
+      data.responsavelManutencao !== undefined
+        ? alteradoPor ?? data.responsavelManutencao
+        : undefined;
+
     if (manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA) {
       const camposPermitidosInspecao = [
         'diagnostico',
         'avaliacaoFinalConforme',
+        'validade',
+        'responsavelManutencao',
+        'responsavelRevisao',
       ] as const;
 
       const camposRecebidos = Object.entries(data)
@@ -540,13 +665,23 @@ export class ManutencoesService {
         data: {
           diagnostico: data.diagnostico,
           avaliacaoFinalConforme: data.avaliacaoFinalConforme,
+          responsavelManutencao: responsavelManutencaoFinal,
+          responsavelRevisao: data.responsavelRevisao,
         },
         include: {
           tipoEquipamento: true,
         },
       });
 
-      return this.adicionarDiasManutencao(manutencaoAtualizadaConcluida);
+      await this.atualizarValidadeEquipamentoPorTag(
+        manutencaoAtualizadaConcluida.tag,
+        data.validade,
+        alteradoPor,
+      );
+
+      return this.adicionarValidadeEquipamento(
+        this.adicionarDiasManutencao(manutencaoAtualizadaConcluida),
+      );
     }
 
     const tipoEquipamento = await this.resolverTipoEquipamento(
@@ -564,6 +699,7 @@ export class ManutencoesService {
         data.tipoEquipamentoNome !== undefined
           ? tipoEquipamento.tipoEquipamentoNome
           : undefined,
+      tipoManutencao: data.tipoManutencao,
       modeloEquipamento: data.modeloEquipamento,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
@@ -572,7 +708,8 @@ export class ManutencoesService {
           ? this.normalizarData(data.dataRetornoBase)
           : undefined,
       diagnostico: data.diagnostico,
-      responsavelManutencao: data.responsavelManutencao,
+      responsavelManutencao: responsavelManutencaoFinal,
+      responsavelRevisao: data.responsavelRevisao,
       statusManutencao: data.statusManutencao,
       avaliacaoFinalConforme: data.avaliacaoFinalConforme,
       dataInicio:
@@ -595,8 +732,6 @@ export class ManutencoesService {
           : undefined,
     };
 
-    const alteradoPor = user?.nome || user?.email || user?.username || null;
-
     const historicoParaCriar: {
       campo: string;
       valorAnterior: string | null;
@@ -606,12 +741,14 @@ export class ManutencoesService {
     const camposMonitorados: Array<keyof typeof novosDados> = [
       'tipoEquipamentoId',
       'tipoEquipamentoNome',
+      'tipoManutencao',
       'modeloEquipamento',
       'tag',
       'situacaoEquipamento',
       'dataRetornoBase',
       'diagnostico',
       'responsavelManutencao',
+      'responsavelRevisao',
       'statusManutencao',
       'avaliacaoFinalConforme',
       'dataInicio',
@@ -647,6 +784,12 @@ export class ManutencoesService {
         tipoEquipamento: true,
       },
     });
+
+    await this.atualizarValidadeEquipamentoPorTag(
+      manutencaoAtualizada.tag,
+      data.validade,
+      alteradoPor,
+    );
 
     if (historicoParaCriar.length > 0) {
       await this.prisma.historicoManutencao.createMany({
@@ -690,6 +833,7 @@ export class ManutencoesService {
         width: 12,
       },
       { header: 'Tipo de Equipamento', key: 'tipoEquipamentoNome', width: 24 },
+      { header: 'Tipo de Manutenção', key: 'tipoManutencao', width: 22 },
       { header: 'Modelo', key: 'modeloEquipamento', width: 28 },
       { header: 'TAG', key: 'tag', width: 18 },
       {
@@ -704,7 +848,8 @@ export class ManutencoesService {
       { header: 'Dias de Manutenção', key: 'diasManutencao', width: 20 },
       { header: 'Dias de Paralisação', key: 'diasParalisacao', width: 20 },
       { header: 'Status da Manutenção', key: 'statusManutencao', width: 24 },
-      { header: 'Responsável', key: 'responsavelManutencao', width: 24 },
+      { header: 'Executado por', key: 'responsavelManutencao', width: 24 },
+      { header: 'Revisado por', key: 'responsavelRevisao', width: 24 },
       { header: 'Diagnóstico', key: 'diagnostico', width: 45 },
       { header: 'Origem', key: 'origem', width: 14 },
       { header: 'Criado em', key: 'criadoEm', width: 20 },
@@ -714,6 +859,7 @@ export class ManutencoesService {
       worksheet.addRow({
         numeroOrdemManutencao: manutencao.numeroOrdemManutencao,
         tipoEquipamentoNome: manutencao.tipoEquipamentoNome,
+        tipoManutencao: manutencao.tipoManutencao,
         modeloEquipamento: manutencao.modeloEquipamento,
         tag: manutencao.tag,
         situacaoEquipamento: manutencao.situacaoEquipamento,
@@ -725,6 +871,7 @@ export class ManutencoesService {
         diasParalisacao: manutencao.diasParalisacao,
         statusManutencao: manutencao.statusManutencao,
         responsavelManutencao: manutencao.responsavelManutencao,
+        responsavelRevisao: manutencao.responsavelRevisao,
         diagnostico: manutencao.diagnostico,
         origem: manutencao.origem,
         criadoEm: manutencao.criadoEm,
@@ -764,7 +911,7 @@ export class ManutencoesService {
 
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'P1',
+      to: 'Q1',
     };
 
     worksheet.views = [

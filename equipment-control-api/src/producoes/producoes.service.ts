@@ -483,6 +483,10 @@ export class ProducoesService {
       data.descricaoComplemento ?? descricaoComplementoAtual;
 
     const alteradoPor = user?.nome || user?.email || user?.username || null;
+    const responsavelServicoFinal =
+      data.responsavelServico !== undefined
+        ? alteradoPor ?? data.responsavelServico
+        : undefined;
 
     const historicoParaCriar: {
       campo: string;
@@ -517,11 +521,15 @@ export class ProducoesService {
       dataTermino: data.dataTermino
         ? this.parseDateInput(data.dataTermino)
         : undefined,
+      validade:
+        data.validade !== undefined ? this.parseDateInput(data.validade) : undefined,
       listaPecas: data.listaPecas,
       sequenciaMontagem: data.sequencialMontagem,
       inspecaoMontagem: data.inspecaoMontagem,
       historicoEquipamento: data.historicoEquipamento,
       procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
+      responsavelServico: responsavelServicoFinal,
+      responsavelRevisao: data.responsavelRevisao,
     };
 
     for (const [campo, novoValor] of Object.entries(camposMonitorados)) {
@@ -626,11 +634,17 @@ export class ProducoesService {
               producaoAtual.numeroOrdem,
             ),
             descricao: descricaoAtualizada,
+            validade:
+              data.validade !== undefined
+                ? this.parseDateInput(data.validade)
+                : undefined,
             listaPecas: data.listaPecas,
             sequenciaMontagem: data.sequencialMontagem,
             inspecaoMontagem: data.inspecaoMontagem,
             historicoEquipamento: data.historicoEquipamento,
             procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
+            responsavelServico: responsavelServicoFinal,
+            responsavelRevisao: data.responsavelRevisao,
             itensSeriados:
               data.itensSeriados !== undefined
                 ? {

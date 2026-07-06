@@ -6,7 +6,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { StatusManutencao } from '@prisma/client';
+import { StatusManutencao, TipoManutencao } from '@prisma/client';
 
 export class CreateManutencaoDto {
   @ApiPropertyOptional({ example: 'uuid-do-tipo-equipamento' })
@@ -18,6 +18,15 @@ export class CreateManutencaoDto {
   @IsOptional()
   @IsString()
   tipoEquipamentoNome?: string;
+
+  @ApiPropertyOptional({
+    enum: TipoManutencao,
+    example: TipoManutencao.CORRETIVA,
+    description: 'Tipo: CORRETIVA ou PREVENTIVA',
+  })
+  @IsOptional()
+  @IsEnum(TipoManutencao)
+  tipoManutencao?: TipoManutencao;
 
   @ApiPropertyOptional({ example: 'Exaustor 420 Monofasico' })
   @IsOptional()
@@ -64,6 +73,11 @@ export class CreateManutencaoDto {
   @IsString()
   responsavelManutencao?: string;
 
+  @ApiPropertyOptional({ example: 'Maria Souza' })
+  @IsOptional()
+  @IsString()
+  responsavelRevisao?: string;
+
   @ApiPropertyOptional({
     enum: StatusManutencao,
     example: StatusManutencao.EM_MANUTENCAO,
@@ -81,4 +95,13 @@ export class CreateManutencaoDto {
   @IsOptional()
   @IsBoolean()
   avaliacaoFinalConforme?: boolean;
+
+  @ApiPropertyOptional({
+    example: '2026-12-31',
+    description:
+      'Validade do equipamento após a manutenção. Deve considerar a peça que vence primeiro.',
+  })
+  @IsOptional()
+  @IsDateString()
+  validade?: string;
 }

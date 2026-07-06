@@ -24,6 +24,11 @@ export const getAuthUser = (): AuthUser | null => {
   }
 };
 
+export const getAuthUserDisplayName = (): string => {
+  const user = getAuthUser();
+  return user?.nome?.trim() || user?.email?.trim() || '';
+};
+
 export const isCSafetyUser = (): boolean => Boolean(getAuthUser()?.cSafety);
 
 export const isVerifiedUser = (): boolean => Boolean(getAuthUser()?.verificado);

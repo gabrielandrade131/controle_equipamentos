@@ -11,6 +11,16 @@ import { FilterType } from '../types/filters';
 import { buildSelectOptions } from '../utils/filterOptions';
 import '../pages/Producao.css';
 
+const matchesTextFilter = (
+  value: string | number | null | undefined,
+  filter?: string,
+) => {
+  const normalizedFilter = String(filter ?? '').trim().toLowerCase();
+  if (!normalizedFilter) return true;
+
+  return String(value ?? '').trim().toLowerCase().includes(normalizedFilter);
+};
+
 const HistoricoEquipamento: React.FC = () => {
   const { historicos, loading, salvarHistoricoEquipamento } = useHistorico();
   const [editando, setEditando] = useState(false);
@@ -27,7 +37,7 @@ const HistoricoEquipamento: React.FC = () => {
       return historicos;
     }
     return historicos.filter(
-      (historico) => String(historico.modelo ?? '').trim() === modeloSelecionado,
+      (historico) => matchesTextFilter(historico.modelo, modeloSelecionado),
     );
   }, [draftFilters.modelo, historicos]);
   const numeroSerieOptions = useMemo(
@@ -41,8 +51,8 @@ const HistoricoEquipamento: React.FC = () => {
 
   const filteredHistoricos = useMemo(() => {
     return historicos.filter((h) => {
-      if (filters.modelo && String(h.modelo ?? '').trim() !== filters.modelo) return false;
-      if (filters.numeroSerie && String(h.numeroSerie ?? '').trim() !== filters.numeroSerie) return false;
+      if (!matchesTextFilter(h.modelo, filters.modelo)) return false;
+      if (!matchesTextFilter(h.numeroSerie, filters.numeroSerie)) return false;
       return true;
     });
   }, [historicos, filters]);
@@ -112,8 +122,20 @@ const HistoricoEquipamento: React.FC = () => {
             onFiltersChange={updateFilters}
             onDraftChange={setDraftFilters}
             fields={[
-              { key: 'modelo', label: 'Modelo', type: 'select', options: modeloOptions },
-              { key: 'numeroSerie', label: 'Número de Série', type: 'select', options: numeroSerieOptions },
+              {
+                key: 'modelo',
+                label: 'Modelo',
+                type: 'text',
+                placeholder: 'Digite o modelo',
+                options: modeloOptions,
+              },
+              {
+                key: 'numeroSerie',
+                label: 'Número de Série',
+                type: 'text',
+                placeholder: 'Digite a série',
+                options: numeroSerieOptions,
+              },
             ]}
             titulo="Filtros"
           />

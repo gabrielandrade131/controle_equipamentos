@@ -14,6 +14,7 @@ import Login from './pages/login';
 import CadastroUsuarios from './pages/CadastroUsuarios';
 import ListaUsuarios from './pages/ListaUsuarios';
 import TiposEquipamentoPage from './pages/TiposEquipamento';
+import ValidadeEquipamentos from './pages/ValidadeEquipamentos';
 import { isCSafetyUser } from './utils/auth';
 
 function AppContent() {
@@ -141,6 +142,15 @@ function AppContent() {
           element={
             <GuardedRoute allowCSafety={false}>
               <TiposEquipamentoPage />
+            </GuardedRoute>
+          }
+        />
+
+        <Route
+          path="/validade-equipamentos"
+          element={
+            <GuardedRoute allowCSafety={false}>
+              <ValidadeEquipamentos />
             </GuardedRoute>
           }
         />

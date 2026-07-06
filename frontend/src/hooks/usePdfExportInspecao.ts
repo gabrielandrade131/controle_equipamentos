@@ -117,7 +117,8 @@ export const usePdfExportInspecao = () => {
             addField('Número de Série', inspecao.numeroSerie);
             addField('Modelo', inspecao.modelo);
             addField('Data da Inspeção', inspecao.dataInspecao || inspecao.data || '');
-            addField('Responsável', inspecao.responsavel);
+            addField('Executado por', inspecao.responsavelServico || inspecao.responsavel);
+            addField('Revisado por', inspecao.responsavelRevisao || '');
             if (inspecao.observacoes) {
                 yPosition += 2;
                 addSection('OBSERVAÇÕES');
@@ -352,11 +353,25 @@ export const usePdfExportInspecao = () => {
             pdf.setFont(undefined, 'bold');
             pdf.text(inspecao.resultadoFinal || (inspecao.aprovado ? 'APROVADO' : 'REPROVADO') || '-', marginLeft + 30, yPosition);
             pdf.setFont(undefined, 'normal');
-            yPosition += 8;
+            yPosition += 18;
 
-            // Apenas exibir a linha para assinatura — não mostrar o nome do assinante
-            pdf.text('Assinatura:', marginLeft + 3, yPosition);
-            pdf.line(marginLeft + 35, yPosition + 1, marginLeft + 110, yPosition + 1);
+            const drawCenteredText = (text: string, startX: number, endX: number, currentY: number) => {
+                const textWidth = pdf.getTextWidth(text);
+                const centerX = startX + (endX - startX) / 2;
+                pdf.text(text, centerX - textWidth / 2, currentY);
+            };
+            const assinaturaLineWidth = 78;
+            const assinaturaGap = 24;
+            const assinaturaTotalWidth = assinaturaLineWidth * 2 + assinaturaGap;
+            const assinaturaStartX = marginLeft + (maxWidth - assinaturaTotalWidth) / 2;
+            const linhaExecutanteInicio = assinaturaStartX;
+            const linhaExecutanteFim = linhaExecutanteInicio + assinaturaLineWidth;
+            const linhaRevisaoInicio = linhaExecutanteFim + assinaturaGap;
+            const linhaRevisaoFim = linhaRevisaoInicio + assinaturaLineWidth;
+            pdf.line(linhaExecutanteInicio, yPosition, linhaExecutanteFim, yPosition);
+            drawCenteredText('Assinatura executante', linhaExecutanteInicio, linhaExecutanteFim, yPosition + 5);
+            pdf.line(linhaRevisaoInicio, yPosition, linhaRevisaoFim, yPosition);
+            drawCenteredText('Assinatura revisão', linhaRevisaoInicio, linhaRevisaoFim, yPosition + 5);
             yPosition += 14;
 
             pdf.save(filename);

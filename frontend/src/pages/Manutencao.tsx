@@ -25,6 +25,21 @@ const STATUS_LABELS: Record<string, string> = {
   CONCLUIDA: "Concluída",
 };
 
+const TIPO_MANUTENCAO_LABELS: Record<string, string> = {
+  CORRETIVA: "Corretiva",
+  PREVENTIVA: "Preventiva",
+};
+
+const matchesTextFilter = (
+  value: string | number | null | undefined,
+  filter?: string,
+) => {
+  const normalizedFilter = String(filter ?? "").trim().toLowerCase();
+  if (!normalizedFilter) return true;
+
+  return String(value ?? "").trim().toLowerCase().includes(normalizedFilter);
+};
+
 export const Manutencao: React.FC = () => {
   const [modo, setModo] = useState<
     | "lista"
@@ -54,6 +69,14 @@ export const Manutencao: React.FC = () => {
     () => buildSelectOptions(historico.map((item) => item.tag)),
     [historico],
   );
+  const numeroSerieOptions = useMemo(
+    () => buildSelectOptions(historico.map((item) => item.numeroSerie)),
+    [historico],
+  );
+  const tipoEquipamentoOptions = useMemo(
+    () => buildSelectOptions(historico.map((item) => item.tipoEquipamento)),
+    [historico],
+  );
   const fabricanteOptions = useMemo(
     () => buildSelectOptions(historico.map((item) => item.fabricante)),
     [historico],
@@ -67,18 +90,33 @@ export const Manutencao: React.FC = () => {
     return historico.filter((item) => {
       if (filters.status && item.statusManutencao !== filters.status)
         return false;
-      if (filters.tag && String(item.tag ?? "").trim() !== filters.tag)
-        return false;
       if (
-        filters.fabricante &&
-        String(item.fabricante ?? "").trim() !== filters.fabricante
+        filters.tipoManutencao &&
+        item.tipoManutencao !== filters.tipoManutencao
       )
         return false;
-      if (
-        filters.responsavel &&
-        String(item.responsavel ?? "").trim() !== filters.responsavel
-      )
+      if (!matchesTextFilter(item.tag, filters.tag)) return false;
+      if (!matchesTextFilter(item.numeroSerie, filters.numeroSerie))
         return false;
+      if (!matchesTextFilter(item.tipoEquipamento, filters.tipoEquipamento))
+        return false;
+      if (!matchesTextFilter(item.fabricante, filters.fabricante)) return false;
+      if (!matchesTextFilter(item.responsavel, filters.responsavel))
+        return false;
+      if (filters.dataInicio || filters.dataTermino) {
+        const inicioTrabalho = item.dataInicio;
+
+        if (!inicioTrabalho) return false;
+        const fimTrabalho =
+          item.dataTermino ||
+          (item.statusManutencao === "CONCLUIDA"
+            ? inicioTrabalho
+            : getLocalDateInput());
+
+        if (filters.dataTermino && inicioTrabalho > filters.dataTermino)
+          return false;
+        if (filters.dataInicio && fimTrabalho < filters.dataInicio) return false;
+      }
       return true;
     });
   }, [historico, filters]);
@@ -248,18 +286,59 @@ export const Manutencao: React.FC = () => {
                   { value: "CONCLUIDA", label: "Concluída" },
                 ],
               },
-              { key: "tag", label: "TAG", type: "select", options: tagOptions },
+              {
+                key: "tipoManutencao",
+                label: "Tipo de manutenção",
+                type: "select",
+                options: [
+                  { value: "CORRETIVA", label: "Corretiva" },
+                  { value: "PREVENTIVA", label: "Preventiva" },
+                ],
+              },
+              {
+                key: "tag",
+                label: "TAG",
+                type: "text",
+                placeholder: "Digite a TAG",
+                options: tagOptions,
+              },
+              {
+                key: "numeroSerie",
+                label: "Série",
+                type: "text",
+                placeholder: "Digite a série",
+                options: numeroSerieOptions,
+              },
+              {
+                key: "tipoEquipamento",
+                label: "Tipo de equipamento",
+                type: "text",
+                placeholder: "Digite o tipo",
+                options: tipoEquipamentoOptions,
+              },
               {
                 key: "fabricante",
                 label: "Fabricante",
-                type: "select",
+                type: "text",
+                placeholder: "Digite o fabricante",
                 options: fabricanteOptions,
               },
               {
                 key: "responsavel",
-                label: "Responsável",
-                type: "select",
+                label: "Executado por",
+                type: "text",
+                placeholder: "Digite o responsável",
                 options: responsavelOptions,
+              },
+              {
+                key: "dataInicio",
+                label: "Data início",
+                type: "date",
+              },
+              {
+                key: "dataTermino",
+                label: "Data fim",
+                type: "date",
               },
             ]}
             titulo="Filtros"
@@ -280,6 +359,11 @@ export const Manutencao: React.FC = () => {
                       {(inspecao.numeroOrdemManutencao ?? inspecao.tag) ||
                         "Sem TAG"}
                     </strong>
+                    <small>
+                      {TIPO_MANUTENCAO_LABELS[inspecao.tipoManutencao] ||
+                        inspecao.tipoManutencao ||
+                        "-"}
+                    </small>
                     <small>{inspecao.fabricante || "-"}</small>
                     <small>{inspecao.statusManutencao || "-"}</small>
                   </li>
@@ -312,8 +396,20 @@ export const Manutencao: React.FC = () => {
                   <p>{selectedItem.tag || "-"}</p>
                 </div>
                 <div className="detail-item">
+                  <label>Série:</label>
+                  <p>{selectedItem.numeroSerie || "-"}</p>
+                </div>
+                <div className="detail-item">
                   <label>Tipo de Equipamento:</label>
                   <p>{selectedItem.tipoEquipamento || "-"}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Tipo de Manutenção:</label>
+                  <p>
+                    {TIPO_MANUTENCAO_LABELS[selectedItem.tipoManutencao] ||
+                      selectedItem.tipoManutencao ||
+                      "-"}
+                  </p>
                 </div>
                 <div className="detail-item">
                   <label>Fabricante:</label>
@@ -356,6 +452,14 @@ export const Manutencao: React.FC = () => {
                   </p>
                 </div>
                 <div className="detail-item">
+                  <label>Validade do Equipamento:</label>
+                  <p>
+                    {selectedItem.validade
+                      ? formatDatePtBr(selectedItem.validade)
+                      : "-"}
+                  </p>
+                </div>
+                <div className="detail-item">
                   <label>Data de Paralisação:</label>
                   <p>
                     {selectedItem.dataParalisacao
@@ -364,8 +468,12 @@ export const Manutencao: React.FC = () => {
                   </p>
                 </div>
                 <div className="detail-item">
-                  <label>Responsável:</label>
+                  <label>Executado por:</label>
                   <p>{selectedItem.responsavel || "-"}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Revisado por:</label>
+                  <p>{selectedItem.responsavelRevisao || "-"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>

@@ -52,6 +52,7 @@ export interface CreateProducaoDto {
   };
   numeroSerie: string;
   tag?: string;
+  validade?: string;
   dataSolicitacao: string;
   dataNecessidade?: string;
   dataInicio?: string;

@@ -201,6 +201,30 @@
   margin-bottom: 0;
 }
 
+.validade-manutencao-box {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(260px, 1fr);
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #dfe8a8;
+  border-left: 5px solid #B2CC21;
+  border-radius: 6px;
+  background: #fbfdec;
+}
+
+.validade-manutencao-box .form-group {
+  margin: 0;
+}
+
+.validade-manutencao-box p {
+  margin: 0;
+  color: #52657a;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 /* Observações Gerais */
 .observacoes-gerais {
   background: white;

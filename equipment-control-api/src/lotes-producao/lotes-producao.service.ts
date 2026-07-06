@@ -264,6 +264,7 @@ export class LotesProducaoService {
         const equipamento = await tx.equipment.create({
           data: {
             loteProducaoId: lote.id,
+            validade: data.validade ? this.parseDateInput(data.validade) : null,
 
             listaPecas: null,
             sequenciaMontagem: null,

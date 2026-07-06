@@ -78,6 +78,7 @@ const createEmptyProducao = (): CreateProducaoDto => ({
   dataParalisacao: "",
   dataPrevisao: "",
   dataTermino: "",
+  validade: "",
   statusProducao: "PROGRAMADA",
   tipoEquipamentoId: "",
   tipoEquipamentoNome: "",
@@ -378,6 +379,21 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               }
               disabled={!tagPodeSerEditada}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="validade">Validade do equipamento</label>
+            <input
+              type="date"
+              id="validade"
+              name="validade"
+              value={formData.validade || ""}
+              onChange={handleInputChange}
+            />
+            <small>
+              Informe a data do item, peça, componente ou certificado que vence
+              primeiro.
+            </small>
           </div>
 
           {!isEditing && (

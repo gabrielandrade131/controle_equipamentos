@@ -107,6 +107,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
         : manutencao.origem === "MANUAL"
           ? "Manutenção manual"
           : "",
+    tipoManutencao: manutencao.tipoManutencao ?? "CORRETIVA",
     tipoEquipamentoId:
       manutencao.tipoEquipamentoId ?? manutencao.tipoEquipamento?.id ?? "",
     tipoEquipamento:
@@ -117,12 +118,18 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
       manutencao.fabricanteNome ??
       "",
     modelo: manutencao.modeloEquipamento ?? "",
+    numeroSerie: manutencao.numeroSerie ?? "",
     tag: manutencao.tag ?? "",
     numeroOrdemManutencao: manutencao.numeroOrdemManutencao ?? null,
     destino: manutencao.situacaoEquipamento ?? "",
     responsavel: manutencao.responsavelManutencao ?? "",
+    responsavelRevisao: manutencao.responsavelRevisao ?? "",
     statusManutencao: manutencao.statusManutencao ?? "EM_MANUTENCAO",
     dataTermino: toDateInput(manutencao.dataTermino, false),
+    validade: toDateInput(
+      manutencao.validade ?? manutencao.validadeEquipamento,
+      false,
+    ),
     diasEsperaManutencao: manutencao.diasEsperaManutencao ?? null,
     diasManutencao: manutencao.diasManutencao ?? null,
     diasParalisacao: manutencao.diasParalisacao ?? null,
@@ -137,6 +144,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 
 const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   tipoEquipamentoId: inspecao.tipoEquipamentoId || undefined,
+  tipoManutencao: inspecao.tipoManutencao || "CORRETIVA",
   tipoEquipamentoNome:
     inspecao.tipoEquipamento || inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
@@ -147,12 +155,14 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   previsaoTermino: inspecao.previsaoTermino || undefined,
   dataParalisacao: inspecao.dataParalisacao || undefined,
   dataTermino: inspecao.dataTermino || undefined,
+  validade: inspecao.validade || undefined,
   diagnostico:
     inspecao.observacoes?.trim() ||
     (inspecao.observacoesHistorico?.length
       ? JSON.stringify(inspecao.observacoesHistorico)
       : undefined),
   responsavelManutencao: inspecao.responsavel || undefined,
+  responsavelRevisao: inspecao.responsavelRevisao || undefined,
   statusManutencao: (inspecao.statusManutencao ||
     "EM_MANUTENCAO") as StatusManutencao,
   avaliacaoFinalConforme:
@@ -249,6 +259,9 @@ export const useManutencao = () => {
         inspecao.avaliacaoFinal === ""
           ? undefined
           : inspecao.avaliacaoFinal === "CONFORME",
+      validade: inspecao.validade || undefined,
+      responsavelManutencao: inspecao.responsavel || undefined,
+      responsavelRevisao: inspecao.responsavelRevisao || undefined,
     });
     const inspecaoAtualizada = mapApiToInspecao(response.data);
     setHistorico((prev) =>

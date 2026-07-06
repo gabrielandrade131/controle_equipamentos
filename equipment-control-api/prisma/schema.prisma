@@ -17,6 +17,7 @@ model Equipment {
   numeroOrdem                       Int                                       @unique @default(autoincrement())
   numeroSerie                       String?   
   tag                               String?                                   @unique
+  validade                          DateTime?
 
   descricao                         String?
 
@@ -25,6 +26,8 @@ model Equipment {
   inspecaoMontagem                  String?
   historicoEquipamento              String?
   procedimentoTesteInspecaoMontagem String?
+  responsavelServico                String?
+  responsavelRevisao                String?
 
   criadoEm                          DateTime                                  @default(now())
   atualizadoEm                      DateTime                                  @updatedAt
@@ -139,6 +142,7 @@ model Manutencao {
   tipoEquipamento         TipoEquipamento?      @relation(fields: [tipoEquipamentoId], references: [id])
 
   tipoEquipamentoNome     String?
+  tipoManutencao          TipoManutencao      @default(CORRETIVA)
   modeloEquipamento       String?
   tag                     String?
   situacaoEquipamento     String?
@@ -155,6 +159,7 @@ model Manutencao {
   avaliacaoFinalConforme  Boolean?
   diagnostico             String?
   responsavelManutencao   String?
+  responsavelRevisao      String?
 
   criadoEm                DateTime            @default(now())
   atualizadoEm            DateTime            @updatedAt
@@ -306,6 +311,11 @@ enum StatusManutencao {
   EM_MANUTENCAO
   CONCLUIDA
   PARALISADA
+}
+
+enum TipoManutencao {
+  CORRETIVA
+  PREVENTIVA
 }
 
 enum StatusProducao {

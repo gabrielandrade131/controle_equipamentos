@@ -35,6 +35,10 @@ export const ModalEditarDetalhesManutencao: React.FC<
         changes.dataParalisacao = getLocalDateInput();
       }
 
+      if (statusManutencao === "CONCLUIDA" && !prev.dataTermino) {
+        changes.dataTermino = getLocalDateInput();
+      }
+
       if (statusManutencao !== "PARALISADA") {
         changes.dataParalisacao = "";
       }
@@ -126,6 +130,19 @@ export const ModalEditarDetalhesManutencao: React.FC<
               </select>
             </div>
 
+            <div className="form-group">
+              <label>Tipo de manutenção</label>
+              <select
+                value={formData.tipoManutencao || "CORRETIVA"}
+                onChange={(e) =>
+                  handleInputChange("tipoManutencao", e.target.value)
+                }
+              >
+                <option value="CORRETIVA">Corretiva</option>
+                <option value="PREVENTIVA">Preventiva</option>
+              </select>
+            </div>
+
             <div className={isCreating ? "form-group" : "form-group read-only"}>
               <label>Fabricante</label>
               <input
@@ -207,12 +224,23 @@ export const ModalEditarDetalhesManutencao: React.FC<
             </div>
 
             <div className="form-group">
-              <label>Responsável</label>
+              <label>Executado por</label>
               <input
                 type="text"
                 value={formData.responsavel}
                 onChange={(e) =>
                   handleInputChange("responsavel", e.target.value)
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Revisado por</label>
+              <input
+                type="text"
+                value={formData.responsavelRevisao || ""}
+                onChange={(e) =>
+                  handleInputChange("responsavelRevisao", e.target.value)
                 }
               />
             </div>

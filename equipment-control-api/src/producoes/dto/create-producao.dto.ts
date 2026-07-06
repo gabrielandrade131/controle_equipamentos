@@ -50,6 +50,11 @@ export class CreateProducaoDto {
   @IsDateString()
   dataParalisacao?: string;
 
+  @ApiPropertyOptional({ example: '2026-12-31' })
+  @IsOptional()
+  @IsDateString()
+  validade?: string;
+
   @ApiPropertyOptional({
     example: 'PROGRAMADA',
     description: 'Status: PROGRAMADA, PARALISADA, EM_ANDAMENTO, CONCLUIDA',
@@ -97,6 +102,16 @@ export class CreateProducaoDto {
   @IsOptional()
   @IsString()
   procedimentoTestes?: string;
+
+  @ApiPropertyOptional({ example: 'Joao Silva' })
+  @IsOptional()
+  @IsString()
+  responsavelServico?: string;
+
+  @ApiPropertyOptional({ example: 'Maria Souza' })
+  @IsOptional()
+  @IsString()
+  responsavelRevisao?: string;
 
   @ApiPropertyOptional({
     type: [CreateItemSeriadoDto],

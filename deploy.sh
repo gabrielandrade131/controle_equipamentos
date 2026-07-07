@@ -54,7 +54,10 @@ install_dependencies() {
   [[ -d "$dir" ]] || fail "Diretorio nao encontrado: $dir"
 
   if [[ -f "$dir/package-lock.json" ]]; then
-    (cd "$dir" && npm ci)
+    if ! (cd "$dir" && npm ci); then
+      log "Lockfile fora de sincronia em $dir; tentando npm install"
+      (cd "$dir" && npm install)
+    fi
   else
     (cd "$dir" && npm install)
   fi

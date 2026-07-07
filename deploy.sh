@@ -1,75 +1,161 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -Eeuo pipefail
 
-echo "===================================="
-echo " Iniciando deploy geral do Axis"
-echo "===================================="
+ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+BACKEND_DIR="${BACKEND_DIR:-$ROOT_DIR/equipment-control-api}"
+FRONTEND_DIR="${FRONTEND_DIR:-$ROOT_DIR/frontend}"
+PM2_APP_NAME="${PM2_APP_NAME:-axis-api}"
+FRONTEND_PM2_NAME="${FRONTEND_PM2_NAME:-axis-front}"
+FRONTEND_PORT="${FRONTEND_PORT:-3001}"
+PORT="${PORT:-3000}"
 
-ROOT_DIR="/var/www/html/controle_equipamentos"
+SKIP_INSTALL=0
+SKIP_MIGRATE=0
+SKIP_FRONTEND=0
 
-BACKEND_DIR="$ROOT_DIR/equipment-control-api"
-FRONTEND_DIR="$ROOT_DIR/frontend"
+log() {
+  printf '\n[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1"
+}
 
-BACKEND_PM2_NAME="axis-api"
-FRONTEND_PM2_NAME="axis-front"
+fail() {
+  printf '\n[ERRO] %s\n' "$1" >&2
+  exit 1
+}
 
-echo ""
-echo "===================================="
-echo " Deploy Backend - Axis API"
-echo "===================================="
+usage() {
+  cat <<'EOF'
+Uso: ./deploy.sh [opcoes]
 
-cd "$BACKEND_DIR"
+Opcoes:
+  --skip-install    Pula a instalacao de dependencias
+  --skip-migrate    Pula o prisma migrate deploy
+  --skip-frontend   Pula install/build/restart do frontend
+  -h, --help        Exibe esta ajuda
 
-echo ""
-echo "1. Instalando dependências do backend..."
-npm install
+Variaveis de ambiente:
+  ROOT_DIR          Diretorio raiz do projeto
+  BACKEND_DIR       Diretorio do backend
+  FRONTEND_DIR      Diretorio do frontend
+  PM2_APP_NAME      Nome do processo do backend no PM2
+  FRONTEND_PM2_NAME Nome do processo do frontend no PM2
+  FRONTEND_PORT     Porta do frontend servido pelo PM2
+  PORT              Porta da API
+EOF
+}
 
-echo ""
-echo "2. Gerando Prisma Client..."
-npx prisma generate
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || fail "Comando obrigatorio nao encontrado: $1"
+}
 
-echo ""
-echo "3. Aplicando migrations..."
-npx prisma migrate deploy
+install_dependencies() {
+  local dir="$1"
 
-echo ""
-echo "4. Gerando build do backend..."
-npm run build
+  [[ -d "$dir" ]] || fail "Diretorio nao encontrado: $dir"
 
-echo ""
-echo "5. Reiniciando backend no PM2..."
-pm2 restart "$BACKEND_PM2_NAME" || pm2 start dist/main.js --name "$BACKEND_PM2_NAME"
+  if [[ -f "$dir/package-lock.json" ]]; then
+    (cd "$dir" && npm ci)
+  else
+    (cd "$dir" && npm install)
+  fi
+}
 
-echo ""
-echo "===================================="
-echo " Deploy Frontend - Axis Web"
-echo "===================================="
+restart_backend_pm2() {
+  if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+    pm2 restart "$PM2_APP_NAME" --update-env
+  else
+    (
+      cd "$BACKEND_DIR"
+      pm2 start npm --name "$PM2_APP_NAME" -- run start:prod
+    )
+  fi
+}
 
-cd "$FRONTEND_DIR"
+restart_frontend_pm2() {
+  pm2 delete "$FRONTEND_PM2_NAME" >/dev/null 2>&1 || true
+  pm2 serve "$FRONTEND_DIR/build" "$FRONTEND_PORT" --spa --name "$FRONTEND_PM2_NAME"
+}
 
-echo ""
-echo "6. Instalando dependências do frontend..."
-npm install
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --skip-install)
+      SKIP_INSTALL=1
+      ;;
+    --skip-migrate)
+      SKIP_MIGRATE=1
+      ;;
+    --skip-frontend)
+      SKIP_FRONTEND=1
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "Opcao invalida: $1"
+      ;;
+  esac
+  shift
+done
 
-echo ""
-echo "7. Gerando build do frontend..."
-npm run build
+require_command npm
+require_command npx
+require_command pm2
 
-echo ""
-echo "8. Reiniciando frontend no PM2..."
-pm2 delete "$FRONTEND_PM2_NAME" || true
-pm2 serve "$FRONTEND_DIR/build" 3001 --spa --name "$FRONTEND_PM2_NAME"
+[[ -f "$BACKEND_DIR/package.json" ]] || fail "package.json do backend nao encontrado em $BACKEND_DIR"
+[[ -f "$FRONTEND_DIR/package.json" ]] || fail "package.json do frontend nao encontrado em $FRONTEND_DIR"
 
-echo ""
-echo "9. Salvando estado do PM2..."
+log "Iniciando deploy do CONTROLE_EQUIPAMENTOS"
+log "ROOT_DIR=$ROOT_DIR"
+log "BACKEND_DIR=$BACKEND_DIR"
+log "FRONTEND_DIR=$FRONTEND_DIR"
+log "PM2_APP_NAME=$PM2_APP_NAME"
+log "FRONTEND_PM2_NAME=$FRONTEND_PM2_NAME"
+
+if [[ "$SKIP_FRONTEND" -eq 0 ]]; then
+  log "Frontend: instalando dependencias"
+  if [[ "$SKIP_INSTALL" -eq 0 ]]; then
+    install_dependencies "$FRONTEND_DIR"
+  else
+    log "Frontend: instalacao pulada"
+  fi
+
+  log "Frontend: gerando build"
+  (cd "$FRONTEND_DIR" && npm run build)
+
+  log "Frontend: reiniciando processo no PM2"
+  restart_frontend_pm2
+else
+  log "Frontend: etapa ignorada"
+fi
+
+log "Backend: instalando dependencias"
+if [[ "$SKIP_INSTALL" -eq 0 ]]; then
+  install_dependencies "$BACKEND_DIR"
+else
+  log "Backend: instalacao pulada"
+fi
+
+log "Backend: gerando Prisma Client"
+(cd "$BACKEND_DIR" && npx prisma generate)
+
+if [[ "$SKIP_MIGRATE" -eq 0 ]]; then
+  log "Backend: aplicando migrations"
+  (cd "$BACKEND_DIR" && npx prisma migrate deploy)
+else
+  log "Backend: migrations puladas"
+fi
+
+log "Backend: gerando build"
+(cd "$BACKEND_DIR" && npm run build)
+
+log "Backend: reiniciando processo no PM2"
+restart_backend_pm2
+
+log "PM2: salvando estado"
 pm2 save
 
-echo ""
-echo "10. Status atual:"
+log "PM2: status atual"
 pm2 status
 
-echo ""
-echo "===================================="
-echo " Deploy geral finalizado com sucesso"
-echo "===================================="
+log "Deploy finalizado com sucesso na porta $PORT"

@@ -58,7 +58,8 @@ npm run build
 
 echo ""
 echo "8. Reiniciando frontend no PM2..."
-pm2 restart "$FRONTEND_PM2_NAME" || pm2 start npm --name "$FRONTEND_PM2_NAME" -- run preview -- --host 0.0.0.0
+pm2 delete "$FRONTEND_PM2_NAME" || true
+pm2 serve "$FRONTEND_DIR/build" 3001 --spa --name "$FRONTEND_PM2_NAME"
 
 echo ""
 echo "9. Salvando estado do PM2..."

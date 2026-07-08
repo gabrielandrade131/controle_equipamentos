@@ -190,7 +190,9 @@
 .formulario-inspecao .verificacoes-table td {
   padding: 6px;
   border: 1px solid #ddd;
-  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  vertical-align: middle;
 }
 
 /* Subtítulos na tabela - apenas negrito, sem caixa azul */
@@ -318,6 +320,127 @@
 
 .formulario-inspecao .checkbox-group input[type="radio"] {
   cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .formulario-inspecao {
+    padding: 14px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .formulario-inspecao .form-section {
+    padding: 12px;
+  }
+
+  .formulario-inspecao .verificacoes-table,
+  .formulario-inspecao .verificacoes-table thead,
+  .formulario-inspecao .verificacoes-table tbody,
+  .formulario-inspecao .verificacoes-table tr,
+  .formulario-inspecao .verificacoes-table th,
+  .formulario-inspecao .verificacoes-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .formulario-inspecao .verificacoes-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+    background: transparent;
+  }
+
+  .formulario-inspecao .verificacoes-table thead {
+    display: none;
+  }
+
+  .formulario-inspecao .verificacoes-table tbody tr {
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    overflow: hidden;
+  }
+
+  .formulario-inspecao .verificacoes-table tbody tr:nth-child(odd) {
+    background: white;
+  }
+
+  .formulario-inspecao .verificacoes-table td {
+    display: grid;
+    grid-template-columns: minmax(110px, 34%) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    border: 0;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 10px;
+    overflow: visible;
+  }
+
+  .formulario-inspecao .verificacoes-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .formulario-inspecao .verificacoes-table td::before {
+    content: attr(data-label);
+    color: #555;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .formulario-inspecao .verificacoes-table .verificacoes-section-row {
+    border-radius: 6px;
+  }
+
+  .formulario-inspecao .verificacoes-table .verificacoes-section-cell {
+    display: block;
+    background: #e8e8e8;
+    border-bottom: 0;
+  }
+
+  .formulario-inspecao .verificacoes-table .verificacoes-section-cell::before {
+    content: none;
+  }
+
+  .formulario-inspecao .verificacoes-table input[type="text"],
+  .formulario-inspecao .verificacoes-pm-input {
+    min-width: 0;
+  }
+
+  .formulario-inspecao .checkbox-group {
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    min-width: 0;
+  }
+
+  .formulario-inspecao .checkbox-group label {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 560px) {
+  .formulario-inspecao {
+    padding: 10px;
+  }
+
+  .formulario-inspecao .form-section {
+    padding: 10px;
+  }
+
+  .formulario-inspecao .verificacoes-table td {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .formulario-inspecao .form-actions {
+    flex-direction: column;
+  }
+
+  .formulario-inspecao .form-actions button {
+    width: 100%;
+  }
 }
 
 /* Form Actions */

@@ -431,9 +431,9 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
             }
             return (
               <tr key={item.id}>
-                <td>{item.nome}</td>
+                <td data-label="Item">{item.nome}</td>
                 {mostrarCampos && (
-                  <td>
+                  <td data-label="Valor Observado">
                     <input
                       type="text"
                       value={item.valorObservado || ''}
@@ -445,7 +445,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                   </td>
                 )}
                 {mostrarCampos && (
-                  <td>
+                  <td data-label="Instrumento de Medição">
                     <input
                       type="text"
                       value={item.instrumentoMedicao || ''}
@@ -456,7 +456,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     />
                   </td>
                 )}
-                <td>
+                <td data-label="Conformidades">
                   <div className="checkbox-group">
                     <label>
                       <input
@@ -515,7 +515,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 
             return (
               <tr key={`premontagem-${linha.itemIndex}`}>
-                <td className="verificacoes-pm-item">
+                <td className="verificacoes-pm-item" data-label="Item">
                   <span className="verificacoes-pm-titulo">{linha.titulo}</span>
                   {linha.detalhes.map((detalhe) => (
                     <span key={detalhe} className="verificacoes-pm-detalhe">
@@ -523,7 +523,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     </span>
                   ))}
                 </td>
-                <td>
+                <td data-label="Valor Observado">
                   <input
                     type="text"
                     className="verificacoes-pm-input"
@@ -535,7 +535,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     placeholder="Valor observado"
                   />
                 </td>
-                <td>
+                <td data-label="Instrumento de Medição">
                   {linha.instrumentosMarcaveis ? (
                     <div className="verificacoes-pm-instrumentos-marcaveis">
                       {linha.instrumentosMarcaveis.map((instrumentoMarcavel) => (
@@ -596,7 +596,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     </>
                   )}
                 </td>
-                <td>
+                <td data-label="Conformidades">
                   <div className="checkbox-group">
                     <label>
                       <input
@@ -667,7 +667,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 
             return (
               <tr key={`posmontagem-${linha.itemIndex}`}>
-                <td className="verificacoes-pm-item">
+                <td className="verificacoes-pm-item" data-label="Item">
                   <span className="verificacoes-pm-titulo">{linha.titulo}</span>
                   {linha.detalhes.map((detalhe) => (
                     <span key={detalhe} className="verificacoes-pm-detalhe">
@@ -675,7 +675,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     </span>
                   ))}
                 </td>
-                <td>
+                <td data-label="Valor Observado">
                   <input
                     type="text"
                     className="verificacoes-pm-input"
@@ -687,7 +687,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     placeholder="Valor observado"
                   />
                 </td>
-                <td>
+                <td data-label="Instrumento de Medição">
                   {linha.instrumentosMarcaveis ? (
                     <div className="verificacoes-pm-instrumentos-marcaveis">
                       {linha.instrumentosMarcaveis.map((instrumentoMarcavel) => (
@@ -744,7 +744,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     placeholder="Preencher nº de série"
                   />
                 </td>
-                <td>
+                <td data-label="Conformidades">
                   <div className="checkbox-group">
                     <label>
                       <input

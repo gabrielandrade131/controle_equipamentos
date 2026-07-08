@@ -19,7 +19,8 @@ export const PdfExporterManutencao: React.FC<PdfExporterManutencaoProps> = ({
       const nomeArquivo =
         filename ||
         `inspecao_manutencao_${(inspecao.numeroOrdemManutencao ?? inspecao.tag) || 'equipamento'}_${getLocalDateInput()}.pdf`;
-      await exportInspecaoToPdf(inspecao, nomeArquivo);
+      const logoPath = '/logo.png';
+      await exportInspecaoToPdf(inspecao, nomeArquivo, logoPath);
     } catch (error) {
       alert('Erro ao gerar PDF: ' + error);
     }

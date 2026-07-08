@@ -10,7 +10,8 @@ type ItemChecklist = {
 export const usePdfExportManutencao = () => {
   const exportInspecaoToPdf = async (
     inspecao: InspecaoManutencao,
-    filename: string
+    filename: string,
+    logoPath?: string
   ) => {
     try {
       const pdf = new jsPDF({
@@ -225,11 +226,26 @@ export const usePdfExportManutencao = () => {
         });
       };
 
-      drawText('HISTÓRICO DE INSPEÇÃO DE MANUTENÇÃO', marginX, y, {
-        bold: true,
-        size: 14,
-      });
-      y += 10;
+      if (logoPath) {
+        try {
+          const img = new Image();
+          img.src = logoPath;
+          await new Promise((resolve) => (img.onload = () => resolve(undefined)));
+          pdf.addImage(img, 'PNG', marginX, y + 2, 27, 20);
+          y += 18;
+        } catch (e) {
+          console.error('Erro ao adicionar logo:', e);
+        }
+      }
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('HISTÓRICO DE INSPEÇÃO DE MANUTENÇÃO', pageWidth / 2, y, { align: 'center' });
+      y += 8;
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(marginX, y, pageWidth - marginX, y);
+      y += 7;
 
       sectionHeader('DADOS DA MANUTENÇÃO');
       drawDataGrid();

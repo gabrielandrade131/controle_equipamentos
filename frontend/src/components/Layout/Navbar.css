@@ -1,47 +1,112 @@
-.navbar {
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-  padding: 0;
-  margin: 0;
+.navbar-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  width: min(320px, calc(100vw - 32px));
+  height: 100vh;
+  padding: 18px 0 20px;
+  box-sizing: border-box;
+  background: #ffffff;
+  box-shadow: 12px 0 28px rgba(15, 23, 42, 0.18);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
 }
 
-.navbar ul {
+.navbar-drawer.is-open {
+  transform: translateX(0);
+}
+
+.navbar-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.navbar-drawer-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.navbar-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #374151;
+  cursor: pointer;
+}
+
+.navbar-drawer ul {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 14px 0 0;
   display: flex;
-  gap: 0;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.navbar li {
+.navbar-drawer li {
   margin: 0;
-  padding: 0;
+  padding: 0 12px;
 }
 
 .nav-link {
-  background: none;
+  width: 100%;
   border: none;
-  padding: 16px 24px;
-  font-size: 16px;
-  color: #333;
+  border-left: 4px solid transparent;
+  background: transparent;
+  padding: 14px 16px;
+  font-size: 17px;
+  color: #374151;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  transition: background-color 0.3s ease;
-  border-bottom: 3px solid transparent;
+  gap: 12px;
+  text-align: left;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .nav-link-icon {
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
 }
 
 .nav-link:hover {
-  background-color: #e8e8e8;
-  border-bottom-color: #B2CC21;
+  background: #f3f4f6;
 }
 
-.nav-link:active {
-  border-bottom-color: #B2CC21;
+.nav-link.is-active {
+  border-left-color: #b2cc21;
+  background: #eef6c0;
+  color: #111827;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .navbar-drawer {
+    width: min(300px, calc(100vw - 20px));
+  }
+
+  .navbar-drawer-header {
+    padding: 0 16px 12px;
+  }
+
+  .navbar-drawer li {
+    padding: 0 8px;
+  }
+
+  .nav-link {
+    padding: 13px 14px;
+    font-size: 16px;
+  }
 }

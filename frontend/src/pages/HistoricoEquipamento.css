@@ -261,5 +261,6 @@ h1 {
   .btn-salvar,
   .btn-cancelar {
     width: 100%;
+    text-align: center;
   }
 }

@@ -1,8 +1,10 @@
 .login-container {
   display: grid;
+  min-height: 100vh;
   width: 100%;
-  grid-template-columns: minmax(500px, 1fr) 480px;
-  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 480px);
+  overflow-x: hidden;
+  background: #f3f4f6;
 }
 
 .login-background {
@@ -29,13 +31,17 @@
 .login-card {
   pointer-events: auto;
   position: relative;
-  width: 100%;
+  width: min(100%, 480px);
   padding: 40px 30px;
   max-width: 420px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  justify-self: end;
   border-radius: 0;
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 16px;
   box-shadow: none;
   z-index: 2;
@@ -132,4 +138,86 @@
   padding: 10px;
   border-radius: 6px;
   margin-top: 8px;
+}
+
+/* Tablet */
+@media (max-width: 1280px) {
+  .login-container {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: none;
+    padding: 28px;
+  }
+}
+
+/* Celular */
+@media (max-width: 1080px) {
+  .login-container {
+    grid-template-columns: 1fr;
+    gap: 0;
+    min-height: 100dvh;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .login-background {
+    min-height: 260px;
+    border-radius: 0;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    margin: -36px auto 0;
+    padding: 24px 22px 28px;
+    border-radius: 0;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+  }
+
+  .login-card h1,
+  .login-card h2 {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .login-card input,
+  .login-card button {
+    font-size: 16px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-container {
+    padding: 12px;
+  }
+
+  .login-background {
+    min-height: 220px;
+    border-radius: 0;
+  }
+
+  .login-card {
+    margin-top: -28px;
+    padding: 20px 18px 24px;
+    border-radius: 0;
+  }
+
+  .login-logo {
+    justify-content: center;
+    padding-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .logo-img {
+    width: min(220px, 100%);
+  }
+
+  .login-title {
+    font-size: 26px;
+  }
 }

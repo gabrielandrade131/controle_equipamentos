@@ -10,10 +10,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:axis_check/main.dart';
 
 void main() {
-  testWidgets('Axis Check app renders login screen', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Axis Check app renders login screen', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const AxisCheckApp());
+    await tester.pumpAndSettle();
 
     expect(find.text('Axis Check'), findsOneWidget);
+    expect(find.text('Acessar sistema'), findsOneWidget);
   });
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import './pages/Producao.css';
@@ -19,6 +19,7 @@ import { isCSafetyUser } from './utils/auth';
 
 function AppContent() {
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const isAuthenticated = () => {
   return !!localStorage.getItem("token");
@@ -43,8 +44,20 @@ function AppContent() {
     <div className="App">
       {location.pathname !== "/login" ? (
         <>
-          <Header title="Sistema de Controle de Equipamentos" />
-          <Navbar />
+          <Header
+            title="Sistema de Controle de Equipamentos"
+            isMenuOpen={isMenuOpen}
+            onToggleMenu={() => setIsMenuOpen((current) => !current)}
+          />
+          <Navbar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+          {isMenuOpen ? (
+            <button
+              type="button"
+              className="app-drawer-backdrop"
+              aria-label="Fechar menu"
+              onClick={() => setIsMenuOpen(false)}
+            />
+          ) : null}
         </>
       ) : null}
       <Routes>

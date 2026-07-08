@@ -62,6 +62,11 @@ jest.mock('./pages/TiposEquipamento', () => ({
   default: () => <div>tipos-equipamento-page</div>,
 }));
 
+jest.mock('./pages/ValidadeEquipamentos', () => ({
+  __esModule: true,
+  default: () => <div>validade-equipamentos-page</div>,
+}));
+
 const renderAtPath = (path: string) => {
   window.history.pushState({}, '', path);
   return render(<App />);

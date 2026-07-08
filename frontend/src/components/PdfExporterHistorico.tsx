@@ -182,7 +182,6 @@ export const PdfExporterHistorico: React.FC<PdfExporterHistoricoProps> = ({ hist
     <button 
       onClick={handleExportPDF}
       className="btn-primary"
-      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
     >
       Exportar PDF
     </button>

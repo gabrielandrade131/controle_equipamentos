@@ -1,0 +1,88 @@
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  background: #b2cc21;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
+}
+
+.app-header-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #111827;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.app-header-menu-button:hover {
+  background: rgba(255, 255, 255, 0.34);
+  transform: translateY(-1px);
+}
+
+.app-header-menu-button .material-symbols-outlined {
+  font-size: 30px;
+}
+
+.app-header-brand {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.app-header-logo {
+  width: min(210px, 100%);
+  height: auto;
+}
+
+.app-header-logout {
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #d32f2f;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.app-header-logout:hover {
+  background: #b71c1c;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    min-height: 76px;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .app-header-logo {
+    width: min(170px, 100%);
+  }
+
+  .app-header-menu-button {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+  }
+
+  .app-header-logout {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}

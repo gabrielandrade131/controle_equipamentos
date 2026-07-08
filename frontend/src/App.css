@@ -13,54 +13,11 @@ body {
   background-color: #f5f7fa;
 }
 
-.navbar {
-  background-color: #B2CC21;
-  padding: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.app-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  border: none;
+  background: rgba(15, 23, 42, 0.36);
+  cursor: pointer;
 }
-
-.navbar ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.navbar li {
-  margin: 0;
-}
-
-.navbar a {
-  display: block;
-  padding: 15px 20px;
-  color: #fff;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.navbar a:hover {
-  background-color: #0a3a75;
-  color: #fff;
-}
-
-.navbar a.active {
-  background-color: #0a3a75;
-  border-bottom: 3px solid #00d4ff;
-}
-
-@media (max-width: 768px) {
-  .navbar ul {
-    flex-direction: column;
-  }
-
-  .navbar a {
-    padding: 12px 15px;
-    font-size: 14px;
-  }
-}
-

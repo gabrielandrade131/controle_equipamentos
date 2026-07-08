@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { InspecaoMontagem, CreateInspecaoMontageDto } from '../types/inspecao';
 import { criarFormularioInspecaoMontagemVazio } from '../constants/inspecaoMontagem';
-import { getAuthUserDisplayName } from '../utils/auth';
 import './FormularioInspecao.css';
 
 interface FormularioInspecaoProps {
@@ -28,22 +27,11 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 }) => {
   const formularioPadrao = criarFormularioInspecaoMontagemVazio();
   const PREFIXO_NUMERO_SERIE = 'NºSérie:';
-  const usuarioExecutor = getAuthUserDisplayName();
 
   const [formData, setFormData] = useState<CreateInspecaoMontageDto>(() => ({
     ...criarFormularioInspecaoMontagemVazio(),
     ...inspecaoInicial,
   }));
-
-  useEffect(() => {
-    if (!usuarioExecutor) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      responsavel: usuarioExecutor,
-      responsavelServico: usuarioExecutor,
-    }));
-  }, [usuarioExecutor]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -200,8 +188,8 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 
     const formDataNormalizado: CreateInspecaoMontageDto = {
       ...formData,
-      responsavel: usuarioExecutor || formData.responsavelServico || formData.responsavel,
-      responsavelServico: usuarioExecutor || formData.responsavelServico || formData.responsavel,
+      responsavel: formData.responsavelServico || formData.responsavel,
+      responsavelServico: formData.responsavelServico || formData.responsavel,
       verificacoesGeraisPremontagem: aplicarInstrumentosFixosPremontagem(
         formData.verificacoesGeraisPremontagem,
       ),
@@ -858,8 +846,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
             name="responsavelServico"
             value={formData.responsavelServico || formData.responsavel || ''}
             onChange={handleInputChange}
-            placeholder="Preenchido automaticamente pelo usuário logado"
-            readOnly
+            placeholder="Digite o nome de quem executou"
             required
           />
         </div>

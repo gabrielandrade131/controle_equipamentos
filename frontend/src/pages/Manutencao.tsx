@@ -15,6 +15,7 @@ import { criarInspecaoVazia } from "../constants/inspecaoManutencao";
 import { InspecaoManutencao } from "../types/manutencao";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { buildSelectOptions } from "../utils/filterOptions";
+import { isOperationalUser } from "../utils/auth";
 import "./Manutencao.css";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -52,6 +53,7 @@ export const Manutencao: React.FC = () => {
     isOpen: boolean;
     message: string;
   }>({ isOpen: false, message: "" });
+  const isOperational = isOperationalUser();
   const [fotosRecebimento, setFotosRecebimento] = useState<
     FotoRecebimentoManutencao[]
   >([]);
@@ -263,9 +265,11 @@ export const Manutencao: React.FC = () => {
       <div className="page-header">
         <h2>Manutenção</h2>
         <div className="page-toolbar">
-          <button className="btn-primary" onClick={() => setModo("criar-nova")}>
-            Gerar Ordem de Manutenção
-          </button>
+          {!isOperational ? (
+            <button className="btn-primary" onClick={() => setModo("criar-nova")}>
+              Gerar Ordem de Manutenção
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -565,7 +569,7 @@ export const Manutencao: React.FC = () => {
                           : setAlertModal({
                               isOpen: true,
                               message:
-                                "Não é possível criar inspeção pois a manutenção ainda não foi concluída.",
+                                "A inspeção de manutenção só pode ser preenchida quando a manutenção estiver concluída.",
                             })
                       }
                       className="btn-primary"

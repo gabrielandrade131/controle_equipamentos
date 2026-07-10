@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { InspecaoManutencao, ObservacaoHistorico } from "../types/manutencao";
 import { useTiposEquipamento } from "../hooks/useTiposEquipamento";
+import { aplicarChecklistManutencao } from "../constants/inspecaoManutencao";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import "./ModalEditarDetalhesManutencao.css";
 
@@ -30,6 +31,10 @@ export const ModalEditarDetalhesManutencao: React.FC<
     setFormData((prev) => {
       const statusManutencao = valor as InspecaoManutencao["statusManutencao"];
       const changes: Partial<InspecaoManutencao> = { statusManutencao };
+
+      if (statusManutencao === "EM_MANUTENCAO" && !prev.dataInicio) {
+        changes.dataInicio = getLocalDateInput();
+      }
 
       if (statusManutencao === "PARALISADA" && !prev.dataParalisacao) {
         changes.dataParalisacao = getLocalDateInput();
@@ -114,11 +119,17 @@ export const ModalEditarDetalhesManutencao: React.FC<
                   const tipoSelecionado = tiposEquipamento.find(
                     (tipo) => tipo.id === e.target.value,
                   );
-                  setFormData((prev) => ({
-                    ...prev,
-                    tipoEquipamentoId: e.target.value,
-                    tipoEquipamento: tipoSelecionado?.nome || "",
-                  }));
+                  setFormData((prev) => {
+                    const proximaInspecao = {
+                      ...prev,
+                      tipoEquipamentoId: e.target.value,
+                      tipoEquipamento: tipoSelecionado?.nome || "",
+                    };
+
+                    return aplicarChecklistManutencao(proximaInspecao, {
+                      tipoEquipamento: proximaInspecao.tipoEquipamento,
+                    });
+                  });
                 }}
               >
                 <option value="">Selecione o tipo</option>
@@ -172,9 +183,8 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="date"
                 value={formData.dataInicio}
-                onChange={(e) =>
-                  handleInputChange("dataInicio", e.target.value)
-                }
+                readOnly
+                disabled
               />
             </div>
 
@@ -205,9 +215,8 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="date"
                 value={formData.dataTermino || ""}
-                onChange={(e) =>
-                  handleInputChange("dataTermino", e.target.value)
-                }
+                readOnly
+                disabled
               />
             </div>
 
@@ -216,10 +225,8 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="date"
                 value={formData.dataParalisacao || ""}
-                onChange={(e) =>
-                  handleInputChange("dataParalisacao", e.target.value)
-                }
-                disabled={formData.statusManutencao !== "PARALISADA"}
+                readOnly
+                disabled
               />
             </div>
 
@@ -250,6 +257,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <select
                 value={formData.statusManutencao}
                 onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={formData.statusManutencao === "CONCLUIDA"}
               >
                 <option value="EM_QUARENTENA">Em quarentena</option>
                 <option value="PENDENTE">Pendente</option>

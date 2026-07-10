@@ -29,5 +29,10 @@ export class CreateUserDto {
   @ApiProperty({ example: false, required: false })
   @IsBoolean()
   @IsOptional()
+  operacional?: boolean;
+
+  @ApiProperty({ example: false, required: false })
+  @IsBoolean()
+  @IsOptional()
   verificado?: boolean;
 }

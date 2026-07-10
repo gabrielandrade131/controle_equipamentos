@@ -28,6 +28,11 @@ import { ProducoesService } from './producoes.service';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { Response } from 'express';
+import { CurrentUser } from '../auth/current-user.decorator';
+import {
+  assertNotOperationalUser,
+  type AuthenticatedUser,
+} from '../auth/user-permissions';
 
 @ApiTags('Produções')
 @UseGuards(JwtAuthGuard)
@@ -67,7 +72,12 @@ export class ProducoesController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Exportar produções para Excel' })
-  async exportExcel(@Query() filters: FilterProducaoDto, @Res() res: Response) {
+  async exportExcel(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Query() filters: FilterProducaoDto,
+    @Res() res: Response,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     const buffer = await this.producoesService.exportExcel(filters);
 
     res.setHeader(
@@ -111,9 +121,11 @@ export class ProducoesController {
     summary: 'Adicionar registro manual ao historico do equipamento',
   })
   addHistoricoEquipamento(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
     @Param('id') id: string,
     @Body() body: CreateHistoricoEquipamentoDto,
   ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.producoesService.addHistoricoEquipamento(id, body);
   }
 
@@ -155,7 +167,11 @@ export class ProducoesController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Excluir uma produção' })
-  remove(@Param('id') id: string) {
+  remove(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.producoesService.remove(id);
   }
 }

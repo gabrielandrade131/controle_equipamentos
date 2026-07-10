@@ -636,6 +636,55 @@ export class ManutencoesService {
       data.responsavelManutencao !== undefined
         ? alteradoPor ?? data.responsavelManutencao
         : undefined;
+    const statusMudou =
+      data.statusManutencao !== undefined &&
+      data.statusManutencao !== manutencaoAtual.statusManutencao;
+
+    if (
+      manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA &&
+      statusMudou
+    ) {
+      throw new BadRequestException(
+        'Manutencao concluida nao pode ter o status alterado.',
+      );
+    }
+
+    const dataFoiAlterada = (
+      campo: 'dataInicio' | 'dataTermino',
+      valor: string | undefined,
+    ) => {
+      if (valor === undefined) {
+        return false;
+      }
+
+      return (
+        this.formatarValor(manutencaoAtual[campo]) !==
+        this.formatarValor(this.normalizarData(valor))
+      );
+    };
+
+    if (
+      !statusMudou &&
+      (dataFoiAlterada('dataInicio', data.dataInicio) ||
+        dataFoiAlterada('dataTermino', data.dataTermino))
+    ) {
+      throw new BadRequestException(
+        'Datas da manutencao so podem ser alteradas pela mudanca de status.',
+      );
+    }
+
+    const dataInicioPorStatus =
+      statusMudou && data.statusManutencao === StatusManutencao.EM_MANUTENCAO
+        ? new Date()
+        : undefined;
+    const dataTerminoPorStatus =
+      statusMudou && data.statusManutencao === StatusManutencao.CONCLUIDA
+        ? new Date()
+        : statusMudou &&
+            manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA &&
+            data.statusManutencao !== StatusManutencao.CONCLUIDA
+          ? null
+          : undefined;
 
     if (manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA) {
       const camposPermitidosInspecao = [
@@ -646,12 +695,44 @@ export class ManutencoesService {
         'responsavelRevisao',
       ] as const;
 
-      const camposRecebidos = Object.entries(data)
-        .filter(([, value]) => value !== undefined)
-        .map(([campo]) => campo);
+      const camposData = new Set([
+        'dataRetornoBase',
+        'dataInicio',
+        'dataParalisacao',
+        'previsaoTermino',
+        'dataTermino',
+      ]);
 
-      const possuiCampoNaoPermitido = camposRecebidos.some(
-        (campo) => !camposPermitidosInspecao.includes(campo as (typeof camposPermitidosInspecao)[number]),
+      const possuiCampoNaoPermitido = Object.entries(data).some(
+        ([campo, value]) => {
+          if (value === undefined) {
+            return false;
+          }
+
+          if (
+            (campo === 'dataInicio' || campo === 'dataTermino') &&
+            statusMudou
+          ) {
+            return false;
+          }
+
+          if (
+            camposPermitidosInspecao.includes(
+              campo as (typeof camposPermitidosInspecao)[number],
+            )
+          ) {
+            return false;
+          }
+
+          const valorNovo = camposData.has(campo)
+            ? this.normalizarData(value as string)
+            : value;
+          const valorAnterior = manutencaoAtual[campo];
+
+          return (
+            this.formatarValor(valorAnterior) !== this.formatarValor(valorNovo)
+          );
+        },
       );
 
       if (possuiCampoNaoPermitido) {
@@ -667,6 +748,9 @@ export class ManutencoesService {
           avaliacaoFinalConforme: data.avaliacaoFinalConforme,
           responsavelManutencao: responsavelManutencaoFinal,
           responsavelRevisao: data.responsavelRevisao,
+          statusManutencao: data.statusManutencao,
+          dataInicio: dataInicioPorStatus,
+          dataTermino: dataTerminoPorStatus,
         },
         include: {
           tipoEquipamento: true,
@@ -712,10 +796,7 @@ export class ManutencoesService {
       responsavelRevisao: data.responsavelRevisao,
       statusManutencao: data.statusManutencao,
       avaliacaoFinalConforme: data.avaliacaoFinalConforme,
-      dataInicio:
-        data.dataInicio !== undefined
-          ? this.normalizarData(data.dataInicio)
-          : undefined,
+      dataInicio: dataInicioPorStatus,
       dataParalisacao: this.resolverDataParalisacao(
         manutencaoAtual.statusManutencao,
         data.statusManutencao,
@@ -726,10 +807,7 @@ export class ManutencoesService {
         data.previsaoTermino !== undefined
           ? this.normalizarData(data.previsaoTermino)
           : undefined,
-      dataTermino:
-        data.dataTermino !== undefined
-          ? this.normalizarData(data.dataTermino)
-          : undefined,
+      dataTermino: dataTerminoPorStatus,
     };
 
     const historicoParaCriar: {

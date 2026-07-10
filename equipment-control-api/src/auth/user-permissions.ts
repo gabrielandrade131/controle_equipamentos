@@ -4,6 +4,7 @@ export type AuthenticatedUser = {
   id: string;
   email: string;
   verificado?: boolean;
+  operacional?: boolean;
 };
 
 export const ADMIN_EMAILS = [
@@ -27,6 +28,19 @@ export function canManageUserVerification(
   user?: AuthenticatedUser | null,
 ): boolean {
   return isAdminUser(user) || Boolean(user?.verificado);
+}
+
+export function isOperationalUser(user?: AuthenticatedUser | null): boolean {
+  return Boolean(user?.operacional);
+}
+
+export function assertNotOperationalUser(
+  user?: AuthenticatedUser | null,
+  message = 'Perfil operacional não pode realizar esta ação.',
+): void {
+  if (isOperationalUser(user)) {
+    throw new ForbiddenException(message);
+  }
 }
 
 export function assertAdminUser(user?: AuthenticatedUser | null): void {

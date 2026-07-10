@@ -23,6 +23,13 @@ describe('ProducoesService', () => {
     registroInspecaoMontagem: {
       upsert: jest.Mock;
     };
+    loteProducao: {
+      update: jest.Mock;
+    };
+    historicoProducao: {
+      createMany: jest.Mock;
+    };
+    $transaction: jest.Mock;
   };
 
   beforeEach(() => {
@@ -41,6 +48,13 @@ describe('ProducoesService', () => {
       registroInspecaoMontagem: {
         upsert: jest.fn(),
       },
+      loteProducao: {
+        update: jest.fn(),
+      },
+      historicoProducao: {
+        createMany: jest.fn(),
+      },
+      $transaction: jest.fn((callback) => callback(prisma)),
     };
 
     service = new ProducoesService(prisma as unknown as PrismaService);
@@ -129,6 +143,62 @@ describe('ProducoesService', () => {
     await expect(
       service.updateTag('prod-1', { tag: 'TAG-1' }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects data update on concluded production', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'prod-1',
+      loteProducaoId: 'lote-1',
+      modelo: 'MX',
+      loteProducao: {
+        id: 'lote-1',
+        modelo: 'MX',
+        statusProducao: 'CONCLUIDA',
+      },
+    } as any);
+
+    await expect(
+      service.update('prod-1', { modelo: 'MY' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects work date update without production status change', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'prod-1',
+      loteProducaoId: 'lote-1',
+      loteProducao: {
+        id: 'lote-1',
+        statusProducao: 'CONCLUIDA',
+        dataTermino: new Date('2024-01-10T12:00:00.000Z'),
+      },
+    } as any);
+
+    await expect(
+      service.update('prod-1', { dataTermino: '2024-01-11' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects status update on concluded production', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'prod-1',
+      loteProducaoId: 'lote-1',
+      numeroOrdem: 10,
+      loteProducao: {
+        id: 'lote-1',
+        numeroLote: 1,
+        modelo: 'MX',
+        statusProducao: 'CONCLUIDA',
+        dataInicio: new Date('2024-01-01T12:00:00.000Z'),
+        dataTermino: new Date('2024-01-10T12:00:00.000Z'),
+      },
+    } as any);
+
+    await expect(
+      service.update('prod-1', {
+        statusProducao: 'EM_ANDAMENTO',
+      } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.loteProducao.update).not.toHaveBeenCalled();
   });
 
   it('updates registro de inspeção via upsert', async () => {

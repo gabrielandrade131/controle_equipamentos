@@ -17,6 +17,9 @@ describe('ManutencoesService', () => {
       createMany: jest.Mock;
       findMany: jest.Mock;
     };
+    equipment: {
+      findFirst: jest.Mock;
+    };
   };
 
   beforeEach(() => {
@@ -32,6 +35,9 @@ describe('ManutencoesService', () => {
       historicoManutencao: {
         createMany: jest.fn(),
         findMany: jest.fn(),
+      },
+      equipment: {
+        findFirst: jest.fn().mockResolvedValue(null),
       },
     };
 
@@ -122,7 +128,7 @@ describe('ManutencoesService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('rejects update on concluded maintenance', async () => {
+  it('rejects data update on concluded maintenance', async () => {
     prisma.manutencao.findUnique.mockResolvedValue({
       id: 'man-1',
       statusManutencao: 'CONCLUIDA',
@@ -131,6 +137,34 @@ describe('ManutencoesService', () => {
     await expect(
       service.update('man-1', { tag: 'TAG-2' } as any),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects work date update without maintenance status change', async () => {
+    prisma.manutencao.findUnique.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'CONCLUIDA',
+      dataTermino: new Date('2024-01-10T00:00:00.000Z'),
+    });
+
+    await expect(
+      service.update('man-1', { dataTermino: '2024-01-11' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects status update on concluded maintenance', async () => {
+    prisma.manutencao.findUnique.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'CONCLUIDA',
+      tipoEquipamentoId: 'tipo-1',
+    });
+
+    await expect(
+      service.update('man-1', {
+        statusManutencao: 'EM_MANUTENCAO',
+        tipoEquipamentoId: 'tipo-1',
+      } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.manutencao.update).not.toHaveBeenCalled();
   });
 
   it('creates history records when updating monitored fields', async () => {

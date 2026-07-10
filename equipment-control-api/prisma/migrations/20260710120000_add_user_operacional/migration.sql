@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "operacional" BOOLEAN NOT NULL DEFAULT false;

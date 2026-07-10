@@ -26,6 +26,11 @@ import { SynchroIntegrationGuard } from '../auth/synchro-integration.guard';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { Response } from 'express';
+import { CurrentUser } from '../auth/current-user.decorator';
+import {
+  assertNotOperationalUser,
+  type AuthenticatedUser,
+} from '../auth/user-permissions';
 
 @ApiTags('Manutenções')
 @Controller('manutencoes')
@@ -62,7 +67,11 @@ export class ManutencoesController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar manutencao manualmente' })
-  create(@Body() body: CreateManutencaoDto) {
+  create(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Body() body: CreateManutencaoDto,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.manutencoesService.create(body);
   }
 
@@ -79,9 +88,11 @@ export class ManutencoesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Exportar manutenções para Excel' })
   async exportExcel(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
     @Query() filters: FilterManutencaoDto,
     @Res() res: Response,
   ) {
+    assertNotOperationalUser(usuarioAtual);
     const buffer = await this.manutencoesService.exportExcel(filters);
 
     res.setHeader(
@@ -134,7 +145,11 @@ export class ManutencoesController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Excluir manutenção' })
-  remove(@Param('id') id: string) {
+  remove(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.manutencoesService.remove(id);
   }
 }

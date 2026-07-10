@@ -487,6 +487,149 @@ export class ProducoesService {
       data.responsavelServico !== undefined
         ? alteradoPor ?? data.responsavelServico
         : undefined;
+    const statusAtual = producaoAtual.loteProducao?.statusProducao;
+    const statusMudou =
+      data.statusProducao !== undefined && data.statusProducao !== statusAtual;
+
+    if (statusAtual === PrismaStatusProducao.CONCLUIDA && statusMudou) {
+      throw new BadRequestException(
+        'Producao concluida nao pode ter o status alterado.',
+      );
+    }
+
+    const dataFoiAlterada = (
+      campo: 'dataInicio' | 'dataTermino',
+      valor: string | undefined,
+    ) => {
+      if (!valor) {
+        return false;
+      }
+
+      return (
+        this.formartarValor(producaoAtual.loteProducao?.[campo]) !==
+        this.formartarValor(this.parseDateInput(valor))
+      );
+    };
+
+    if (
+      !statusMudou &&
+      (dataFoiAlterada('dataInicio', data.dataInicio) ||
+        dataFoiAlterada('dataTermino', data.dataTermino))
+    ) {
+      throw new BadRequestException(
+        'Datas da producao so podem ser alteradas pela mudanca de status.',
+      );
+    }
+
+    const dataInicioPorStatus =
+      statusMudou && data.statusProducao === PrismaStatusProducao.EM_ANDAMENTO
+        ? new Date()
+        : undefined;
+    const dataTerminoPorStatus =
+      statusMudou && data.statusProducao === PrismaStatusProducao.CONCLUIDA
+        ? new Date()
+        : statusMudou &&
+            statusAtual === PrismaStatusProducao.CONCLUIDA &&
+            data.statusProducao !== PrismaStatusProducao.CONCLUIDA
+          ? null
+          : undefined;
+
+    if (producaoAtual.loteProducao?.statusProducao === 'CONCLUIDA') {
+      const camposPermitidosConcluida = [] as const;
+
+      const valoresAtuais: Record<string, unknown> = {
+        statusProducao: producaoAtual.loteProducao?.statusProducao,
+        dataInicio: producaoAtual.loteProducao?.dataInicio,
+        dataTermino: producaoAtual.loteProducao?.dataTermino,
+      };
+
+      const valoresNovos: Record<string, unknown> = {
+        tipoEquipamentoId: data.tipoEquipamentoId,
+        modelo: data.modelo,
+        descricao: data.descricaoComplemento,
+        statusProducao: data.statusProducao,
+        dataSolicitacao: data.dataSolicitacao
+          ? this.parseDateInput(data.dataSolicitacao)
+          : undefined,
+        dataNecessidade: data.dataNecessidade
+          ? this.parseDateInput(data.dataNecessidade)
+          : undefined,
+        solicitante: data.solicitante,
+        dataInicio: data.dataInicio
+          ? this.parseDateInput(data.dataInicio)
+          : undefined,
+        dataParalisacao: data.dataParalisacao
+          ? this.parseDateInput(data.dataParalisacao)
+          : undefined,
+        previsaoTermino: this.obterPrevisaoTermino(data)
+          ? this.parseDateInput(this.obterPrevisaoTermino(data))
+          : undefined,
+        dataTermino: data.dataTermino
+          ? this.parseDateInput(data.dataTermino)
+          : undefined,
+        validade:
+          data.validade !== undefined
+            ? this.parseDateInput(data.validade)
+            : undefined,
+        listaPecas: data.listaPecas,
+        sequenciaMontagem: data.sequencialMontagem,
+        inspecaoMontagem: data.inspecaoMontagem,
+        historicoEquipamento: data.historicoEquipamento,
+        procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
+        responsavelServico: responsavelServicoFinal,
+        responsavelRevisao: data.responsavelRevisao,
+      };
+
+      const obterValorAtual = (campo: string) => {
+        if (campo in valoresAtuais) {
+          return valoresAtuais[campo];
+        }
+
+        if (campo === 'descricao') {
+          return producaoAtual.loteProducao?.descricao;
+        }
+
+        if (campo in (producaoAtual.loteProducao ?? {})) {
+          return (producaoAtual.loteProducao as any)[campo];
+        }
+
+        return (producaoAtual as any)[campo];
+      };
+
+      const possuiCampoNaoPermitidoAlterado = Object.entries(valoresNovos).some(
+        ([campo, novoValor]) => {
+          if (novoValor === undefined) {
+            return false;
+          }
+
+          if (
+            (campo === 'dataInicio' || campo === 'dataTermino') &&
+            statusMudou
+          ) {
+            return false;
+          }
+
+          if (
+            camposPermitidosConcluida.includes(
+              campo as (typeof camposPermitidosConcluida)[number],
+            )
+          ) {
+            return false;
+          }
+
+          const valorAnterior = obterValorAtual(campo);
+          return (
+            this.formartarValor(valorAnterior) !== this.formartarValor(novoValor)
+          );
+        },
+      );
+
+      if (possuiCampoNaoPermitidoAlterado) {
+        throw new BadRequestException(
+          'Producao concluida nao pode ter seus dados editados.',
+        );
+      }
+    }
 
     const historicoParaCriar: {
       campo: string;
@@ -509,18 +652,14 @@ export class ProducoesService {
         ? this.parseDateInput(data.dataNecessidade)
         : undefined,
       solicitante: data.solicitante,
-      dataInicio: data.dataInicio
-        ? this.parseDateInput(data.dataInicio)
-        : undefined,
+      dataInicio: dataInicioPorStatus,
       dataParalisacao: data.dataParalisacao
         ? this.parseDateInput(data.dataParalisacao)
         : undefined,
       previsaoTermino: previsaoTermino
         ? this.parseDateInput(previsaoTermino)
         : undefined,
-      dataTermino: data.dataTermino
-        ? this.parseDateInput(data.dataTermino)
-        : undefined,
+      dataTermino: dataTerminoPorStatus,
       validade:
         data.validade !== undefined ? this.parseDateInput(data.validade) : undefined,
       listaPecas: data.listaPecas,
@@ -606,16 +745,12 @@ export class ProducoesService {
               ? this.parseDateInput(data.dataNecessidade)
               : undefined,
             solicitante: data.solicitante,
-            dataInicio: data.dataInicio
-              ? this.parseDateInput(data.dataInicio)
-              : undefined,
+            dataInicio: dataInicioPorStatus,
             dataParalisacao,
             previsaoTermino: previsaoTermino
               ? this.parseDateInput(previsaoTermino)
               : undefined,
-            dataTermino: data.dataTermino
-              ? this.parseDateInput(data.dataTermino)
-              : undefined,
+            dataTermino: dataTerminoPorStatus,
             statusProducao: data.statusProducao as
               | PrismaStatusProducao
               | undefined,

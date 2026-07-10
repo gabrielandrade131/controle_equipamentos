@@ -9,6 +9,7 @@ interface CreateUserDto {
   email: string;
   senha: string;
   cSafety: boolean;
+  operacional: boolean;
   verificado: boolean;
 }
 
@@ -26,6 +27,7 @@ const CadastroUsuarios: React.FC = () => {
     email: '',
     senha: '',
     cSafety: false,
+    operacional: false,
     verificado: false,
   });
 
@@ -129,6 +131,7 @@ const CadastroUsuarios: React.FC = () => {
         email: formData.email,
         senha: formData.senha,
         cSafety: formData.cSafety,
+        operacional: formData.operacional,
         verificado: formData.verificado,
       });
 
@@ -139,6 +142,7 @@ const CadastroUsuarios: React.FC = () => {
         email: '',
         senha: '',
         cSafety: false,
+        operacional: false,
         verificado: false,
       });
       setConfirmPassword('');
@@ -232,6 +236,18 @@ const CadastroUsuarios: React.FC = () => {
               disabled={loading || !usuarioAdmin}
             />
             <label htmlFor="cSafety">C-Safety (acesso restrito)</label>
+          </div>
+
+          <div className="form-group checkbox">
+            <input
+              type="checkbox"
+              id="operacional"
+              name="operacional"
+              checked={formData.operacional}
+              onChange={handleCheckboxChange}
+              disabled={loading || !usuarioAdmin}
+            />
+            <label htmlFor="operacional">Operacional</label>
           </div>
 
           <div className="form-group checkbox">

@@ -7,6 +7,7 @@ interface Usuario {
   email: string;
   ativo: boolean;
   cSafety: boolean;
+  operacional: boolean;
   verificado: boolean;
 }
 
@@ -33,6 +34,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
   const [email, setEmail] = useState('');
   const [ativo, setAtivo] = useState(true);
   const [cSafety, setCSafety] = useState(false);
+  const [operacional, setOperacional] = useState(false);
   const [verificado, setVerificado] = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
       setEmail(usuario.email);
       setAtivo(usuario.ativo);
       setCSafety(Boolean(usuario.cSafety));
+      setOperacional(Boolean(usuario.operacional));
       setVerificado(Boolean(usuario.verificado));
     }
   }, [usuario]);
@@ -55,6 +58,7 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
       email,
       ativo,
       cSafety,
+      operacional,
       verificado,
     });
   };
@@ -120,6 +124,17 @@ const ModalEditarUsuario: React.FC<ModalEditarUsuarioProps> = ({
               disabled={loading || !canEditAll}
             />
             <label htmlFor="cSafety">C-Safety (acesso restrito)</label>
+          </div>
+
+          <div className="form-group checkbox">
+            <input
+              type="checkbox"
+              id="operacional"
+              checked={operacional}
+              onChange={(e) => setOperacional(e.target.checked)}
+              disabled={loading || !canEditAll}
+            />
+            <label htmlFor="operacional">Operacional</label>
           </div>
 
           <div className="form-group checkbox">

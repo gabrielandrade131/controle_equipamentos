@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../services/axiosConfig";
-import { criarInspecaoVazia } from "../constants/inspecaoManutencao";
+import {
+  aplicarChecklistManutencao,
+  criarInspecaoVazia,
+} from "../constants/inspecaoManutencao";
 import { InspecaoManutencao, StatusManutencao } from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
 
@@ -94,7 +97,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
       : manutencao.imagensAnexadas
     : [];
 
-  return {
+  const inspecaoMapeada: InspecaoManutencao = {
     ...base,
     id: manutencao.id,
     dataInicio: toDateInput(manutencao.dataInicio, false),
@@ -140,6 +143,10 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
   };
+
+  return aplicarChecklistManutencao(inspecaoMapeada, {
+    tipoEquipamento: inspecaoMapeada.tipoEquipamento,
+  });
 };
 
 const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({

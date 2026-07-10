@@ -15,7 +15,7 @@ import CadastroUsuarios from './pages/CadastroUsuarios';
 import ListaUsuarios from './pages/ListaUsuarios';
 import TiposEquipamentoPage from './pages/TiposEquipamento';
 import ValidadeEquipamentos from './pages/ValidadeEquipamentos';
-import { isCSafetyUser } from './utils/auth';
+import { isCSafetyUser, isOperationalUser } from './utils/auth';
 
 function AppContent() {
   const location = useLocation();
@@ -27,14 +27,19 @@ function AppContent() {
   const GuardedRoute = ({
     children,
     allowCSafety = true,
+    allowOperational = false,
   }: {
     children: React.ReactElement;
     allowCSafety?: boolean;
+    allowOperational?: boolean;
   }) => {
     if (!isAuthenticated()) {
       return <Navigate to="/login" replace />;
     }
     if (!allowCSafety && isCSafetyUser()) {
+      return <Navigate to="/producao/ordem" replace />;
+    }
+    if (!allowOperational && isOperationalUser()) {
       return <Navigate to="/producao/ordem" replace />;
     }
     return children;
@@ -69,7 +74,7 @@ function AppContent() {
         <Route
           path="/producao"
           element={
-            <GuardedRoute>
+            <GuardedRoute allowOperational>
               <Producao>
                 <Outlet />
               </Producao>
@@ -80,7 +85,7 @@ function AppContent() {
           <Route
             path="inspecao"
             element={
-              <GuardedRoute allowCSafety={false}>
+              <GuardedRoute allowCSafety={false} allowOperational>
                 <InspecaoMontagem />
               </GuardedRoute>
             }
@@ -101,7 +106,7 @@ function AppContent() {
         <Route
           path="/"
           element={
-            <GuardedRoute>
+            <GuardedRoute allowOperational>
               <Producao>
                 <Outlet />
               </Producao>
@@ -115,7 +120,7 @@ function AppContent() {
         <Route
           path="/manutencao"
           element={
-            <GuardedRoute allowCSafety={false}>
+            <GuardedRoute allowCSafety={false} allowOperational>
               <Manutencao />
             </GuardedRoute>
           }

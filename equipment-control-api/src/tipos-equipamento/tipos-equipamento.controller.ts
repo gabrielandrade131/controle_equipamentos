@@ -14,6 +14,11 @@ import { CreateTipoEquipamentoDto } from './dto/create-tipo-equipamento.dto';
 import { UpdateTipoEquipamentoDto } from './dto/update-tipo-equipamento.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VerifiedUserGuard } from '../auth/verified-user.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import {
+  assertNotOperationalUser,
+  type AuthenticatedUser,
+} from '../auth/user-permissions';
 
 @ApiTags('Tipos de Equipamento')
 @UseGuards(JwtAuthGuard)
@@ -27,7 +32,11 @@ export class TiposEquipamentoController {
   @Post()
   @UseGuards(JwtAuthGuard, VerifiedUserGuard)
   @ApiOperation({ summary: 'Cadastrar tipo de equipamento' })
-  create(@Body() dto: CreateTipoEquipamentoDto) {
+  create(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Body() dto: CreateTipoEquipamentoDto,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.tiposEquipamentoService.create(dto);
   }
 
@@ -45,19 +54,32 @@ export class TiposEquipamentoController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Editar tipo de equipamento' })
-  update(@Param('id') id: string, @Body() body: UpdateTipoEquipamentoDto) {
+  update(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() body: UpdateTipoEquipamentoDto,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.tiposEquipamentoService.update(id, body);
   }
 
   @Patch(':id/inativar')
   @ApiOperation({ summary: 'Inativar tipo de equipamento' })
-  inactivate(@Param('id') id: string) {
+  inactivate(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.tiposEquipamentoService.inativar(id);
   }
 
   @Patch(':id/ativar')
   @ApiOperation({ summary: 'Ativar tipo de equipamento' })
-  activate(@Param('id') id: string) {
+  activate(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
     return this.tiposEquipamentoService.ativar(id);
   }
 }

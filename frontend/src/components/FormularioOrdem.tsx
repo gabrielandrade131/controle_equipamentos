@@ -357,6 +357,7 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               name="statusProducao"
               value={formData.statusProducao || "PROGRAMADA"}
               onChange={handleStatusChange}
+              disabled={isEditing && formData.statusProducao === "CONCLUIDA"}
             >
               {STATUS_OPTIONS.map((status) => (
                 <option key={status.value} value={status.value}>
@@ -431,7 +432,8 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
                   id="dataInicio"
                   name="dataInicio"
                   value={formData.dataInicio || ""}
-                  onChange={handleInputChange}
+                  readOnly
+                  disabled
                 />
               </div>
 
@@ -453,8 +455,8 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
                   id="dataParalisacao"
                   name="dataParalisacao"
                   value={formData.dataParalisacao || ""}
-                  onChange={handleInputChange}
-                  disabled={formData.statusProducao !== "PARALISADA"}
+                  readOnly
+                  disabled
                 />
               </div>
 
@@ -465,7 +467,8 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
                   id="dataTermino"
                   name="dataTermino"
                   value={formData.dataTermino || ""}
-                  onChange={handleInputChange}
+                  readOnly
+                  disabled
                 />
               </div>
             </>

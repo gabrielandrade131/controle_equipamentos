@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css';
-import { isCSafetyUser } from '../../utils/auth';
+import { isCSafetyUser, isOperationalUser } from '../../utils/auth';
 
 interface NavbarProps {
   isOpen: boolean;
@@ -12,12 +12,13 @@ const Navbar: React.FC<NavbarProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isCSafety = isCSafetyUser();
+  const isOperational = isOperationalUser();
   const menuItems = [
-    { label: 'Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false },
-    { label: 'Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true },
-    { label: 'Validades', path: '/validade-equipamentos', icon: 'event_upcoming', hiddenForCSafety: true },
-    { label: 'Usuários', path: '/usuarios', icon: 'group', hiddenForCSafety: true },
-    { label: 'Tipos de Equipamento', path: '/tipos-equipamento', icon: 'category', hiddenForCSafety: true },
+    { label: 'Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false, hiddenForOperational: false },
+    { label: 'Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true, hiddenForOperational: false },
+    { label: 'Validades', path: '/validade-equipamentos', icon: 'event_upcoming', hiddenForCSafety: true, hiddenForOperational: true },
+    { label: 'Usuários', path: '/usuarios', icon: 'group', hiddenForCSafety: true, hiddenForOperational: true },
+    { label: 'Tipos de Equipamento', path: '/tipos-equipamento', icon: 'category', hiddenForCSafety: true, hiddenForOperational: true },
   ];
 
   const handleNavigate = (path: string) => {
@@ -38,6 +39,7 @@ const Navbar: React.FC<NavbarProps> = ({ isOpen, onClose }) => {
       <ul>
         {menuItems
           .filter((item) => !(isCSafety && item.hiddenForCSafety))
+          .filter((item) => !(isOperational && item.hiddenForOperational))
           .map((item) => (
             <li key={item.path}>
               <button

@@ -13,6 +13,7 @@ interface Usuario {
   ativo: boolean;
   precisaTrocarSenha: boolean;
   cSafety: boolean;
+  operacional: boolean;
   verificado: boolean;
   criadoEm: string;
 }
@@ -82,6 +83,7 @@ const ListaUsuarios: React.FC = () => {
             email: usuarioAtualizado.email,
             ativo: usuarioAtualizado.ativo,
             cSafety: usuarioAtualizado.cSafety,
+            operacional: usuarioAtualizado.operacional,
             verificado: usuarioAtualizado.verificado,
           };
 
@@ -135,6 +137,7 @@ const ListaUsuarios: React.FC = () => {
           ativo: usuarioAtualizado.ativo,
           precisaTrocarSenha: usuarioAtualizado.precisaTrocarSenha,
           cSafety: usuarioAtualizado.cSafety,
+          operacional: usuarioAtualizado.operacional,
           verificado: usuarioAtualizado.verificado,
         }
         : {
@@ -226,6 +229,7 @@ const ListaUsuarios: React.FC = () => {
                 <th>Email</th>
                 <th>Status</th>
                 <th>C-Safety</th>
+                <th>Operacional</th>
                 <th>Master</th>
                 <th>Data Cadastro</th>
                 {podeEditarVerificacao || usuarioAdmin ? <th>Ações</th> : null}
@@ -242,6 +246,7 @@ const ListaUsuarios: React.FC = () => {
                     </span>
                   </td>
                   <td>{usuario.cSafety ? 'Sim' : 'Não'}</td>
+                  <td>{usuario.operacional ? 'Sim' : 'Não'}</td>
                   <td>{usuario.verificado ? 'Sim' : 'Não'}</td>
                   <td>{formatarData(usuario.criadoEm)}</td>
                   {podeEditarVerificacao || usuarioAdmin ? (

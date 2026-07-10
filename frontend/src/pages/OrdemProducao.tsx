@@ -9,7 +9,7 @@ import { PdfExporter } from "../components/PdfExporter";
 import { FormularioOrdem } from "../components/FormularioOrdem";
 import { buildSelectOptions } from "../utils/filterOptions";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
-import { isCSafetyUser } from "../utils/auth";
+import { isCSafetyUser, isOperationalUser } from "../utils/auth";
 import "../pages/Producao.css";
 
 const formatarRotulo = (valor?: string | null) => {
@@ -34,6 +34,7 @@ const OrdemProducao: React.FC = () => {
   const [modo, setModo] = useState<"lista" | "criar" | "editar">("lista");
   const { filters, updateFilters } = useFilters("ordem-filters", {});
   const isCSafety = isCSafetyUser();
+  const isOperational = isOperationalUser();
   const loteOptions = useMemo(
     () => buildSelectOptions(producoes.map((producao) => producao.numeroLote)),
     [producoes],
@@ -179,9 +180,11 @@ const OrdemProducao: React.FC = () => {
       <h2>Ordem de Produção</h2>
 
       <div className="page-toolbar">
-        <button onClick={() => setModo("criar")} className="btn-primary">
-          Gerar Ordem de Produção
-        </button>
+        {!isOperational ? (
+          <button onClick={() => setModo("criar")} className="btn-primary">
+            Gerar Ordem de Produção
+          </button>
+        ) : null}
       </div>
 
       <div className="page-content">

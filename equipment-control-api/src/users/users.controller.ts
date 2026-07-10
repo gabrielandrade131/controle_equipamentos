@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import {
   assertAdminUser,
+  assertNotOperationalUser,
   assertCanManageUserVerification,
   isAdminUser,
 } from '../auth/user-permissions';
@@ -28,7 +29,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar todos os usuários' })
-  async findAll() {
+  async findAll(@CurrentUser() usuarioAtual: AuthenticatedUser) {
+    assertNotOperationalUser(usuarioAtual);
     return this.usersService.findAll();
   }
 
@@ -46,9 +48,12 @@ export class UsersController {
       ativo?: boolean;
       precisaTrocarSenha?: boolean;
       cSafety?: boolean;
+      operacional?: boolean;
       verificado?: boolean;
     },
   ) {
+    assertNotOperationalUser(usuarioAtual);
+
     if (isAdminUser(usuarioAtual)) {
       return this.usersService.update(id, body);
     }

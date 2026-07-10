@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateLoteProducaoDto } from './dto/create-lote-producao.dto';
 import { UpdateLoteProducaoDto } from './dto/update-lote-producao.dto';
 import { LotesProducaoService } from './lotes-producao.service';
+import { assertNotOperationalUser } from '../auth/user-permissions';
 
 @ApiTags('Lotes de Produção')
 @ApiBearerAuth()
@@ -23,7 +25,8 @@ export class LotesProducaoController {
 
   @Post()
   @ApiOperation({ summary: 'Criar lote de produção e gerar equipamentos' })
-  create(@Body() body: CreateLoteProducaoDto) {
+  create(@Body() body: CreateLoteProducaoDto, @Req() req: any) {
+    assertNotOperationalUser(req.user);
     return this.lotesProducaoService.create(body);
   }
 
@@ -47,13 +50,19 @@ export class LotesProducaoController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Atualizar lote de produção' })
-  update(@Param('id') id: string, @Body() body: UpdateLoteProducaoDto) {
+  update(
+    @Param('id') id: string,
+    @Body() body: UpdateLoteProducaoDto,
+    @Req() req: any,
+  ) {
+    assertNotOperationalUser(req.user);
     return this.lotesProducaoService.update(id, body);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Excluir lote de produção' })
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string, @Req() req: any) {
+    assertNotOperationalUser(req.user);
     return this.lotesProducaoService.remove(id);
   }
 }

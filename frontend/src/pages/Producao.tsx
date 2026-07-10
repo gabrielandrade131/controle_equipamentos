@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Producao.css';
-import { isCSafetyUser } from '../utils/auth';
+import { isCSafetyUser, isOperationalUser } from '../utils/auth';
 
 interface ProdutoItem {
   id: string;
@@ -13,6 +13,7 @@ const Producao: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isCSafety = isCSafetyUser();
+  const isOperational = isOperationalUser();
 
   const subitems: ProdutoItem[] = [
     { id: 'ordem', label: 'Ordem de Produção', route: '/producao/ordem' },
@@ -20,7 +21,12 @@ const Producao: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { id: 'historico', label: 'Histórico do Equipamento', route: '/producao/historico' }
   ];
 
-  const visibleItems = isCSafety ? subitems.filter((item) => item.id === 'ordem') : subitems;
+  const visibleItems =
+    isCSafety || isOperational
+      ? subitems.filter((item) =>
+          isOperational ? item.id !== 'historico' : item.id === 'ordem',
+        )
+      : subitems;
 
   const getCurrentSubpage = () => {
     const path = location.pathname;

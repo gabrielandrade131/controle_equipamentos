@@ -101,6 +101,7 @@ model User {
   ativo                   Boolean                           @default(true)
   precisaTrocarSenha      Boolean                           @default(true)
   cSafety                 Boolean                           @default(false)
+  operacional             Boolean                           @default(false)
   verificado              Boolean                           @default(false)
   criadoEm                DateTime                          @default(now())   
 }

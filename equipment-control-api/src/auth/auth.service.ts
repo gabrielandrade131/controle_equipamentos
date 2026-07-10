@@ -32,6 +32,7 @@ export class AuthService {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: data.cSafety ?? false,
+      operacional: data.operacional ?? false,
       verificado: data.verificado ?? false,
     });
 
@@ -42,6 +43,7 @@ export class AuthService {
       ativo: usuario.ativo,
       precisaTrocarSenha: usuario.precisaTrocarSenha,
       cSafety: usuario.cSafety,
+      operacional: usuario.operacional,
       verificado: usuario.verificado,
       criadoEm: usuario.criadoEm,
     };
@@ -81,6 +83,7 @@ export class AuthService {
         ativo: usuario.ativo,
         precisaTrocarSenha: usuario.precisaTrocarSenha,
         cSafety: usuario.cSafety,
+        operacional: usuario.operacional,
         verificado: usuario.verificado,
       },
     };

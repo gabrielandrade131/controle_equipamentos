@@ -5,6 +5,7 @@ export type AuthUser = {
   ativo: boolean;
   precisaTrocarSenha: boolean;
   cSafety?: boolean;
+  operacional?: boolean;
   verificado?: boolean;
 };
 
@@ -30,6 +31,9 @@ export const getAuthUserDisplayName = (): string => {
 };
 
 export const isCSafetyUser = (): boolean => Boolean(getAuthUser()?.cSafety);
+
+export const isOperationalUser = (): boolean =>
+  Boolean(getAuthUser()?.operacional);
 
 export const isVerifiedUser = (): boolean => Boolean(getAuthUser()?.verificado);
 

@@ -52,6 +52,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: false,
+      operacional: false,
       verificado: false,
       criadoEm: createdAt,
     });
@@ -69,6 +70,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: false,
+      operacional: false,
       verificado: false,
     });
     expect(result).toEqual({
@@ -78,6 +80,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: true,
       cSafety: false,
+      operacional: false,
       verificado: false,
       criadoEm: createdAt,
     });
@@ -127,6 +130,7 @@ describe('AuthService', () => {
       ativo: true,
       precisaTrocarSenha: false,
       cSafety: true,
+      operacional: true,
       verificado: true,
     });
     bcryptMock.compare.mockResolvedValue(true);
@@ -151,6 +155,7 @@ describe('AuthService', () => {
         ativo: true,
         precisaTrocarSenha: false,
         cSafety: true,
+        operacional: true,
         verificado: true,
       },
     });

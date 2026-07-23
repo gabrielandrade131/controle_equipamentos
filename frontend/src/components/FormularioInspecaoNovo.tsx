@@ -908,19 +908,35 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
        <h3>Fotos/Imagens da Montagem (Máx. 5)</h3>
         
        <div className="upload-imagens">
-         <label className="upload-label">
-           <input
-             type="file"
-             multiple
-             accept="image/*"
-             onChange={handleImagensChange}
-             disabled={(formData.imagensAnexadas || []).length >= 5}
-             className="file-input"
-           />
-           <span className="upload-text">
-             Clique ou arraste imagens ({(formData.imagensAnexadas || []).length}/5)
-           </span>
-         </label>
+         <div className="upload-acoes">
+           <label className="upload-label">
+             <input
+               type="file"
+               multiple
+               accept="image/*"
+               capture="environment"
+               onChange={handleImagensChange}
+               disabled={(formData.imagensAnexadas || []).length >= 5}
+               className="file-input"
+             />
+             <span className="upload-text">
+               Abrir câmera ({(formData.imagensAnexadas || []).length}/5)
+             </span>
+           </label>
+           <label className="upload-label">
+             <input
+               type="file"
+               multiple
+               accept="image/*"
+               onChange={handleImagensChange}
+               disabled={(formData.imagensAnexadas || []).length >= 5}
+               className="file-input"
+             />
+             <span className="upload-text">
+               Escolher da galeria ({(formData.imagensAnexadas || []).length}/5)
+             </span>
+           </label>
+         </div>
        </div>
 
        {(formData.imagensAnexadas || []).length > 0 && (

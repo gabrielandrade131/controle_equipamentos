@@ -657,9 +657,9 @@ export class ManutencoesService {
         return false;
       }
 
-      return (
-        this.formatarValor(manutencaoAtual[campo]) !==
-        this.formatarValor(this.normalizarData(valor))
+      return !this.mesmaData(
+        manutencaoAtual[campo],
+        this.normalizarData(valor),
       );
     };
 
@@ -674,7 +674,9 @@ export class ManutencoesService {
     }
 
     const dataInicioPorStatus =
-      statusMudou && data.statusManutencao === StatusManutencao.EM_MANUTENCAO
+      statusMudou &&
+      !manutencaoAtual.dataInicio &&
+      data.statusManutencao === StatusManutencao.EM_MANUTENCAO
         ? new Date()
         : undefined;
     const dataTerminoPorStatus =
@@ -687,12 +689,18 @@ export class ManutencoesService {
           : undefined;
 
     if (manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA) {
+      const tipoEquipamento = await this.resolverTipoEquipamento(
+        data.tipoEquipamentoId ?? manutencaoAtual.tipoEquipamentoId,
+        data.tipoEquipamentoNome ?? manutencaoAtual.tipoEquipamentoNome,
+      );
       const camposPermitidosInspecao = [
         'diagnostico',
         'avaliacaoFinalConforme',
         'validade',
         'responsavelManutencao',
         'responsavelRevisao',
+        'tipoEquipamentoId',
+        'tipoEquipamentoNome',
       ] as const;
 
       const camposData = new Set([
@@ -744,6 +752,15 @@ export class ManutencoesService {
       const manutencaoAtualizadaConcluida = await this.prisma.manutencao.update({
         where: { id },
         data: {
+          tipoEquipamentoId:
+            data.tipoEquipamentoId !== undefined
+              ? tipoEquipamento.tipoEquipamentoId
+              : undefined,
+          tipoEquipamentoNome:
+            data.tipoEquipamentoId !== undefined ||
+            data.tipoEquipamentoNome !== undefined
+              ? tipoEquipamento.tipoEquipamentoNome
+              : undefined,
           diagnostico: data.diagnostico,
           avaliacaoFinalConforme: data.avaliacaoFinalConforme,
           responsavelManutencao: responsavelManutencaoFinal,

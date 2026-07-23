@@ -34,11 +34,12 @@ class _EquipamentoChecklistScreenState
   int get fotosAvaria => fotos.where((foto) => foto.tipo == 'AVARIA').length;
 
   bool get podeSalvar {
+    final tagOk = widget.equipamento.tag.trim().isNotEmpty;
     final checklistOk = retornouFisicamente && equipamentoConferido;
     final fotosObrigatoriasOk = fotosGerais > 0 && fotosIdentificacao > 0;
     final avariaOk = !possuiAvaria || fotosAvaria > 0;
 
-    return checklistOk && fotosObrigatoriasOk && avariaOk;
+    return tagOk && checklistOk && fotosObrigatoriasOk && avariaOk;
   }
 
   @override
@@ -83,7 +84,7 @@ class _EquipamentoChecklistScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Confirme o checklist e adicione as fotos obrigatórias.',
+            'Informe a TAG, confirme o checklist e adicione as fotos obrigatórias.',
           ),
         ),
       );
@@ -159,8 +160,14 @@ class _EquipamentoChecklistScreenState
 
                 _SectionTitle(title: 'Equipamento'),
                 const SizedBox(height: 10),
-                _InfoLine(label: 'Modelo', value: equipamento.modelo),
-                _InfoLine(label: 'Série', value: equipamento.numeroSerie),
+                _InfoLine(
+                  label: 'Modelo (opcional)',
+                  value: equipamento.modelo,
+                ),
+                _InfoLine(
+                  label: 'Série (opcional)',
+                  value: equipamento.numeroSerie,
+                ),
                 _InfoLine(
                   label: 'Situação',
                   value: equipamento.situacaoAtual,
@@ -183,7 +190,7 @@ class _EquipamentoChecklistScreenState
                 ),
                 _SwitchLine(
                   title: 'Equipamento conferido',
-                  subtitle: 'TAG, série e modelo foram verificados.',
+                  subtitle: 'A TAG foi verificada.',
                   value: equipamentoConferido,
                   onChanged: (value) {
                     setState(() {
@@ -254,7 +261,7 @@ class _EquipamentoChecklistScreenState
                 if (!podeSalvar) ...[
                   const SizedBox(height: 18),
                   const Text(
-                    'Para salvar, confirme o checklist e adicione as fotos obrigatórias.',
+                    'Para salvar, informe a TAG, confirme o checklist e adicione as fotos obrigatórias.',
                     style: TextStyle(
                       color: AppColors.mutedText,
                       fontWeight: FontWeight.w600,

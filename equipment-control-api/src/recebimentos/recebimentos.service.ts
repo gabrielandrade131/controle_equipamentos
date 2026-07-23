@@ -54,11 +54,11 @@ export class RecebimentosService {
     arquivos: Express.Multer.File[],
   ) {
     for (const equipamento of equipamentos) {
-      const identificador = equipamento.tag ?? equipamento.numeroSerie;
+      const identificador = equipamento.tag;
 
       if (!identificador) {
         throw new BadRequestException(
-          'Todo equipamento precisa ter TAG ou número de série.',
+          'Todo equipamento precisa ter TAG.',
         );
       }
 
@@ -75,7 +75,9 @@ export class RecebimentosService {
       }
 
       const fotosDoEquipamento = arquivos.filter((arquivo) => {
-        return arquivo.originalname.includes(identificador);
+        return arquivo.originalname
+          .toLocaleUpperCase()
+          .includes(identificador.toLocaleUpperCase());
       });
 
       const temFotoGeral = fotosDoEquipamento.some((arquivo) =>
@@ -108,17 +110,6 @@ export class RecebimentosService {
         );
       }
 
-      if (!equipamento.tipoEquipamento) {
-        throw new BadRequestException(
-          `O equipamento ${identificador} precisa informar o tipo de equipamento.`,
-        );
-      }
-
-      if (!equipamento.modelo) {
-        throw new BadRequestException(
-          `O equipamento ${identificador} precisa informar o modelo.`,
-        );
-      }
     }
   }
 
@@ -267,7 +258,12 @@ export class RecebimentosService {
         });
 
         const fotosDoEquipamento = arquivos.filter((arquivo) => {
-          return arquivo.originalname.includes(equipamento.tag);
+          const identificador = equipamento.tag ?? equipamento.numeroSerie;
+          return identificador
+            ? arquivo.originalname
+                .toLocaleUpperCase()
+                .includes(identificador.toLocaleUpperCase())
+            : false;
         });
 
         for (const foto of fotosDoEquipamento) {

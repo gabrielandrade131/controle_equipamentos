@@ -12,7 +12,8 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { mkdirSync } from 'fs';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RecebimentosService } from './recebimentos.service';
 
@@ -46,7 +47,16 @@ export class RecebimentosController {
   @UseInterceptors(
     FilesInterceptor('fotos', 50, {
       storage: diskStorage({
-        destination: './uploads/recebimentos',
+        destination: (() => {
+          const destination = join(
+            process.cwd(),
+            '..',
+            'uploads',
+            'recebimentos',
+          );
+          mkdirSync(destination, { recursive: true });
+          return destination;
+        })(),
         filename: (req, file, callback) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);

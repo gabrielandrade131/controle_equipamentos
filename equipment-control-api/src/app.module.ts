@@ -4,6 +4,7 @@ import type { Response } from 'express';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MobileAppController } from './mobile-app/mobile-app.controller';
 import { ProducoesModule } from './producoes/producoes.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
@@ -47,11 +48,11 @@ const serveStaticModules = [
     LotesProducaoModule,
     RecebimentosModule,
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
+      rootPath: join(process.cwd(), '..', 'uploads'),
       serveRoot: '/uploads',
     }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, MobileAppController],
   providers: [AppService],
 })
 export class AppModule {}

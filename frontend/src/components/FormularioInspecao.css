@@ -441,6 +441,10 @@
   .formulario-inspecao .form-actions button {
     width: 100%;
   }
+
+  .formulario-inspecao .upload-acoes {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Form Actions */
@@ -481,6 +485,12 @@
 /* Upload de Imagens */
 .formulario-inspecao .upload-imagens {
   margin-bottom: 15px;
+}
+
+.formulario-inspecao .upload-acoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .formulario-inspecao .upload-label {

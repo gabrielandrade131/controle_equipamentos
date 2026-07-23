@@ -150,15 +150,22 @@ class RecebimentoService {
         .toList();
 
     for (final checklist in checklistsRecebidos) {
+      final identificador = checklist.tag.isNotEmpty
+          ? checklist.tag
+          : checklist.numeroSerie;
+
       for (int i = 0; i < checklist.fotos.length; i++) {
         final foto = checklist.fotos[i];
+        final nomeIdentificador = identificador.isEmpty
+            ? 'equipamento'
+            : identificador.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
 
         formData.files.add(
           MapEntry(
             'fotos',
             await MultipartFile.fromFile(
               foto.path,
-              filename: '${checklist.tag}_${foto.tipo}_${i + 1}.jpg',
+              filename: '${nomeIdentificador}_${foto.tipo}_${i + 1}.jpg',
             ),
           ),
         );

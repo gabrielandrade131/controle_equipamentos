@@ -394,19 +394,35 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
         <h3>Fotos/Imagens da Manutenção (Máx. 5)</h3>
         
         <div className="upload-imagens">
-          <label className="upload-label">
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImagensChange}
-              disabled={documentoBloqueado || (inspecao.imagensAnexadas || []).length >= 5}
-              className="file-input"
-            />
-            <span className="upload-text">
-              Clique ou arraste imagens ({(inspecao.imagensAnexadas || []).length}/5)
-            </span>
-          </label>
+          <div className="upload-acoes">
+            <label className={`upload-label${documentoBloqueado || (inspecao.imagensAnexadas || []).length >= 5 ? ' disabled' : ''}`}>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                capture="environment"
+                onChange={handleImagensChange}
+                disabled={documentoBloqueado || (inspecao.imagensAnexadas || []).length >= 5}
+                className="file-input"
+              />
+              <span className="upload-text">
+                Abrir câmera ({(inspecao.imagensAnexadas || []).length}/5)
+              </span>
+            </label>
+            <label className={`upload-label${documentoBloqueado || (inspecao.imagensAnexadas || []).length >= 5 ? ' disabled' : ''}`}>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImagensChange}
+                disabled={documentoBloqueado || (inspecao.imagensAnexadas || []).length >= 5}
+                className="file-input"
+              />
+              <span className="upload-text">
+                Escolher da galeria ({(inspecao.imagensAnexadas || []).length}/5)
+              </span>
+            </label>
+          </div>
         </div>
 
         {(inspecao.imagensAnexadas || []).length > 0 && (

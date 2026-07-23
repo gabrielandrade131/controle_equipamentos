@@ -120,29 +120,43 @@ describe('RecebimentosService', () => {
     });
   });
 
-  it('rejeita recebimento sem tipo de equipamento', async () => {
-    await expect(
-      service.criarRecebimento(
-        JSON.stringify({
-          numeroOs: '6337',
-          equipamentos: [
-            {
-              equipamentoId: '1226',
-              tag: 'TAG-001',
-              numeroSerie: 'SER-001',
-              modelo: 'BP-200',
-              retornouFisicamente: true,
-              equipamentoConferido: true,
-              possuiAvaria: false,
-            },
-          ],
-        }),
+  it('aceita TAG sem modelo, serie ou tipo de equipamento', () => {
+    expect(() =>
+      (service as any).validarEquipamentosRecebidos(
+        [
+          {
+            tag: 'TAG-001',
+            numeroSerie: null,
+            tipoEquipamento: null,
+            modelo: null,
+            retornouFisicamente: true,
+            equipamentoConferido: true,
+            possuiAvaria: false,
+          },
+        ],
         arquivos,
       ),
-    ).rejects.toThrow(
-      new BadRequestException(
-        'O equipamento TAG-001 precisa informar o tipo de equipamento.',
+    ).not.toThrow();
+  });
+
+  it('rejeita recebimento sem TAG', () => {
+    expect(() =>
+      (service as any).validarEquipamentosRecebidos(
+        [
+          {
+            tag: null,
+            numeroSerie: null,
+            tipoEquipamento: null,
+            modelo: null,
+            retornouFisicamente: true,
+            equipamentoConferido: true,
+            possuiAvaria: false,
+          },
+        ],
+        arquivos,
       ),
+    ).toThrow(
+      new BadRequestException('Todo equipamento precisa ter TAG.'),
     );
   });
 });

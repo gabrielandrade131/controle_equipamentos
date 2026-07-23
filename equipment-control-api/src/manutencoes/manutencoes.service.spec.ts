@@ -17,6 +17,9 @@ describe('ManutencoesService', () => {
       createMany: jest.Mock;
       findMany: jest.Mock;
     };
+    tipoEquipamento: {
+      findFirst: jest.Mock;
+    };
     equipment: {
       findFirst: jest.Mock;
     };
@@ -35,6 +38,9 @@ describe('ManutencoesService', () => {
       historicoManutencao: {
         createMany: jest.fn(),
         findMany: jest.fn(),
+      },
+      tipoEquipamento: {
+        findFirst: jest.fn(),
       },
       equipment: {
         findFirst: jest.fn().mockResolvedValue(null),
@@ -128,7 +134,7 @@ describe('ManutencoesService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('rejects data update on concluded maintenance', async () => {
+  it('rejects non-permitted field update on concluded maintenance', async () => {
     prisma.manutencao.findUnique.mockResolvedValue({
       id: 'man-1',
       statusManutencao: 'CONCLUIDA',
@@ -137,6 +143,50 @@ describe('ManutencoesService', () => {
     await expect(
       service.update('man-1', { tag: 'TAG-2' } as any),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('allows changing equipment type on concluded maintenance', async () => {
+    prisma.manutencao.findUnique
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'CONCLUIDA',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: new Date('2024-01-10T12:00:00.000Z'),
+        dataTermino: new Date('2024-01-11T12:00:00.000Z'),
+      })
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'CONCLUIDA',
+        tipoEquipamentoId: 'tipo-2',
+        tipoEquipamentoNome: 'Bomba',
+        dataInicio: new Date('2024-01-10T12:00:00.000Z'),
+        dataTermino: new Date('2024-01-11T12:00:00.000Z'),
+        historicoAlteracoes: [],
+      });
+    prisma.tipoEquipamento.findFirst.mockResolvedValue({
+      id: 'tipo-2',
+      nome: 'Bomba',
+      ativo: true,
+    });
+    prisma.manutencao.update.mockResolvedValue({ id: 'man-1' });
+
+    await expect(
+      service.update(
+        'man-1',
+        { tipoEquipamentoId: 'tipo-2', dataInicio: '2024-01-10' } as any,
+        { nome: 'Gabriel' },
+      ),
+    ).resolves.toEqual(expect.objectContaining({ id: 'man-1' }));
+
+    expect(prisma.manutencao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tipoEquipamentoId: 'tipo-2',
+          tipoEquipamentoNome: 'Bomba',
+        }),
+      }),
+    );
   });
 
   it('rejects work date update without maintenance status change', async () => {
@@ -196,6 +246,165 @@ describe('ManutencoesService', () => {
         },
       ],
     });
+  });
+
+  it('allows changing equipment type without failing when work dates keep the same day', async () => {
+    prisma.manutencao.findUnique
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'EM_MANUTENCAO',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: new Date('2024-01-10T03:42:00.000Z'),
+        historicoAlteracoes: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'EM_MANUTENCAO',
+        tipoEquipamentoId: 'tipo-2',
+        tipoEquipamentoNome: 'Bomba',
+        dataInicio: new Date('2024-01-10T12:00:00.000Z'),
+        historicoAlteracoes: [],
+      });
+    prisma.tipoEquipamento.findFirst.mockResolvedValue({
+      id: 'tipo-2',
+      nome: 'Bomba',
+      ativo: true,
+    });
+    prisma.manutencao.update.mockResolvedValue({ id: 'man-1' });
+    prisma.historicoManutencao.createMany.mockResolvedValue({ count: 1 });
+
+    await expect(
+      service.update(
+        'man-1',
+        {
+          tipoEquipamentoId: 'tipo-2',
+          dataInicio: '2024-01-10',
+        } as any,
+        { nome: 'Gabriel' },
+      ),
+    ).resolves.toEqual(expect.objectContaining({ id: 'man-1' }));
+
+    expect(prisma.manutencao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tipoEquipamentoId: 'tipo-2',
+          tipoEquipamentoNome: 'Bomba',
+        }),
+      }),
+    );
+  });
+
+  it('sets dataInicio only on the first transition to in progress', async () => {
+    prisma.tipoEquipamento.findFirst.mockResolvedValue({
+      id: 'tipo-1',
+      nome: 'Motor',
+      ativo: true,
+    });
+
+    prisma.manutencao.findUnique
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'PENDENTE',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: null,
+        historicoAlteracoes: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'EM_MANUTENCAO',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: new Date('2024-01-10T12:00:00.000Z'),
+        historicoAlteracoes: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'man-2',
+        statusManutencao: 'EM_MANUTENCAO',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: new Date('2024-01-10T12:00:00.000Z'),
+        historicoAlteracoes: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'man-2',
+        statusManutencao: 'CONCLUIDA',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: new Date('2024-01-10T12:00:00.000Z'),
+        dataTermino: new Date('2024-01-11T12:00:00.000Z'),
+        historicoAlteracoes: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'man-3',
+        statusManutencao: 'PENDENTE',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: null,
+        historicoAlteracoes: [],
+      })
+      .mockResolvedValueOnce({
+        id: 'man-3',
+        statusManutencao: 'CONCLUIDA',
+        tipoEquipamentoId: 'tipo-1',
+        tipoEquipamentoNome: 'Motor',
+        dataInicio: null,
+        dataTermino: new Date('2024-01-11T12:00:00.000Z'),
+        historicoAlteracoes: [],
+      });
+
+    prisma.manutencao.update
+      .mockResolvedValueOnce({ id: 'man-1' })
+      .mockResolvedValueOnce({ id: 'man-2' })
+      .mockResolvedValueOnce({ id: 'man-3' });
+    prisma.historicoManutencao.createMany.mockResolvedValue({ count: 1 });
+
+    await service.update(
+      'man-1',
+      { statusManutencao: 'EM_MANUTENCAO' } as any,
+      { nome: 'Gabriel' },
+    );
+    await service.update(
+      'man-2',
+      { statusManutencao: 'CONCLUIDA' } as any,
+      { nome: 'Gabriel' },
+    );
+    await service.update(
+      'man-3',
+      { statusManutencao: 'CONCLUIDA' } as any,
+      { nome: 'Gabriel' },
+    );
+
+    expect(prisma.manutencao.update).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          dataInicio: expect.any(Date),
+          statusManutencao: 'EM_MANUTENCAO',
+        }),
+      }),
+    );
+    expect(prisma.manutencao.update).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          dataInicio: undefined,
+          dataTermino: expect.any(Date),
+          statusManutencao: 'CONCLUIDA',
+        }),
+      }),
+    );
+    expect(prisma.manutencao.update).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          dataInicio: undefined,
+          dataTermino: expect.any(Date),
+          statusManutencao: 'CONCLUIDA',
+        }),
+      }),
+    );
   });
 
   it('sets dataParalisacao when updating status to PARALISADA', async () => {

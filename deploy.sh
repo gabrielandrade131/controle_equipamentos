@@ -69,7 +69,7 @@ restart_backend_pm2() {
   else
     (
       cd "$BACKEND_DIR"
-      pm2 start npm --name "$PM2_APP_NAME" -- run start:prod
+      pm2 start dist/src/main.js --name "$PM2_APP_NAME"
     )
   fi
 }

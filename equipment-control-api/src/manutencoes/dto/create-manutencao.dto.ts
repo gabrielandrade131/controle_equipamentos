@@ -101,6 +101,11 @@ export class CreateManutencaoDto {
   @IsBoolean()
   avaliacaoFinalConforme?: boolean;
 
+  @ApiPropertyOptional({ example: '2026-04-25' })
+  @IsOptional()
+  @IsDateString()
+  dataTermino?: string;
+
   @ApiPropertyOptional({
     example: '2026-12-31',
     description:

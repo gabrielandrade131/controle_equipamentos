@@ -272,6 +272,7 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   tipoEquipamentoNome:
     inspecao.tipoEquipamento || inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
+  fabricante: inspecao.fabricante || undefined,
   numeroSerie: inspecao.numeroSerie || undefined,
   tag: inspecao.tag || undefined,
   situacaoEquipamento: inspecao.destino || "Manutenção manual",
@@ -401,6 +402,7 @@ export const useManutencao = () => {
           ? undefined
           : inspecao.avaliacaoFinal === "CONFORME",
       validade: inspecao.validade || undefined,
+      fabricante: inspecao.fabricante || undefined,
       responsavelManutencao: inspecao.responsavel || undefined,
       responsavelRevisao: inspecao.responsavelRevisao || undefined,
       imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),

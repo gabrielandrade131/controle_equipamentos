@@ -20,6 +20,11 @@ export class UpdateManutencaoDto {
   @IsString()
   tipoEquipamentoNome?: string;
 
+  @ApiPropertyOptional({ example: 'Fabricante Exemplo' })
+  @IsOptional()
+  @IsString()
+  fabricante?: string;
+
   @ApiPropertyOptional({
     enum: TipoManutencao,
     example: TipoManutencao.CORRETIVA,

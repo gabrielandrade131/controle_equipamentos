@@ -533,6 +533,7 @@ export class ManutencoesService {
         tipoManutencao: data.tipoManutencao ?? TipoManutencao.CORRETIVA,
         fabricanteEquipamento: data.fabricanteEquipamento,
         modeloEquipamento: data.modeloEquipamento,
+        fabricante: data.fabricante,
         numeroSerie: data.numeroSerie,
         tag: data.tag,
         situacaoEquipamento: data.situacaoEquipamento,
@@ -676,7 +677,11 @@ export class ManutencoesService {
     const alteradoPor = user?.nome || user?.email || user?.username || null;
     const responsavelManutencaoFinal =
       data.responsavelManutencao !== undefined
+<<<<<<< HEAD
+        ? (data.responsavelManutencao || alteradoPor)
+=======
         ? data.responsavelManutencao
+>>>>>>> 7f4dc8c9957f1bed059a74b5ce5c19892ed6d7f2
         : undefined;
     const statusMudou =
       data.statusManutencao !== undefined &&
@@ -750,6 +755,7 @@ export class ManutencoesService {
         'responsavelRevisao',
         'tipoEquipamentoId',
         'tipoEquipamentoNome',
+        'fabricante',
       ] as const;
 
       const camposData = new Set([
@@ -817,10 +823,14 @@ export class ManutencoesService {
                 ? tipoEquipamento?.tipoEquipamentoNome
                 : undefined,
             diagnostico: data.diagnostico,
+<<<<<<< HEAD
+            fabricante: data.fabricante,
+=======
             dadosInspecao: data.dadosInspecao as
               | Prisma.InputJsonValue
               | undefined,
             imagensAnexadas: data.imagensAnexadas,
+>>>>>>> 7f4dc8c9957f1bed059a74b5ce5c19892ed6d7f2
             avaliacaoFinalConforme: data.avaliacaoFinalConforme,
             responsavelManutencao: responsavelManutencaoFinal,
             responsavelRevisao: data.responsavelRevisao,
@@ -863,6 +873,7 @@ export class ManutencoesService {
       tipoManutencao: data.tipoManutencao,
       fabricanteEquipamento: data.fabricanteEquipamento,
       modeloEquipamento: data.modeloEquipamento,
+      fabricante: data.fabricante,
       numeroSerie: data.numeroSerie,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
@@ -905,6 +916,7 @@ export class ManutencoesService {
       'tipoManutencao',
       'fabricanteEquipamento',
       'modeloEquipamento',
+      'fabricante',
       'numeroSerie',
       'tag',
       'situacaoEquipamento',

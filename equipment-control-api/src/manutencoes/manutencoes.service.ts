@@ -542,6 +542,11 @@ export class ManutencoesService {
           data.dataParalisacao,
         ),
         previsaoTermino: this.normalizarData(data.previsaoTermino),
+        dataTermino: data.dataTermino
+          ? this.normalizarData(data.dataTermino)
+          : data.statusManutencao === StatusManutencao.CONCLUIDA
+            ? new Date()
+            : null,
         diagnostico: data.diagnostico,
         responsavelManutencao: data.responsavelManutencao,
         responsavelRevisao: data.responsavelRevisao,

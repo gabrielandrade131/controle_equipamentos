@@ -102,6 +102,11 @@ export class CreateManutencaoDto {
   @IsBoolean()
   avaliacaoFinalConforme?: boolean;
 
+  @ApiPropertyOptional({ example: '2026-04-25' })
+  @IsOptional()
+  @IsDateString()
+  dataTermino?: string;
+
   @ApiPropertyOptional({
     description: 'Respostas do checklist e imagens registradas na inspeção',
   })

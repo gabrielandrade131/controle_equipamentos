@@ -10,6 +10,7 @@ export type AuthenticatedUser = {
 export const ADMIN_EMAILS = [
   'lohran.victor@ambipar.com',
   'gabriel.roza@ambipar.com',
+  'teste@ambipar.com',
 ];
 
 export function isAdminEmail(email?: string | null): boolean {

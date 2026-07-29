@@ -12,12 +12,12 @@ export type AuthUser = {
 const ADMIN_EMAILS = [
   'lohran.victor@ambipar.com',
   'gabriel.roza@ambipar.com',
+  'teste@ambipar.com',
 ];
 
 export const getAuthUser = (): AuthUser | null => {
   const storedUser = sessionStorage.getItem('authUser');
   if (!storedUser) return null;
-
   try {
     return JSON.parse(storedUser) as AuthUser;
   } catch {

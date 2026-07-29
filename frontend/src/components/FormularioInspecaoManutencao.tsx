@@ -36,7 +36,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
 
     setInspecao((prev) => ({
       ...prev,
-      responsavel: usuarioExecutor,
+      responsavel: prev.responsavel || usuarioExecutor,
     }));
   }, [usuarioExecutor]);
 
@@ -162,7 +162,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleSalvar = () => {
-    const executor = usuarioExecutor || inspecao.responsavel;
+    const executor = inspecao.responsavel.trim() || usuarioExecutor;
 
     if (!executor) {
       alert('Por favor, preencha o campo obrigatório: Executado por');

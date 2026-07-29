@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsObject,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -27,6 +28,11 @@ export class UpdateManutencaoDto {
   @IsOptional()
   @IsEnum(TipoManutencao)
   tipoManutencao?: TipoManutencao;
+
+  @ApiPropertyOptional({ example: 'WEG' })
+  @IsOptional()
+  @IsString()
+  fabricanteEquipamento?: string;
 
   @ApiPropertyOptional({ example: 'Exaustor 420 Monofasico' })
   @IsOptional()
@@ -59,6 +65,16 @@ export class UpdateManutencaoDto {
   @IsOptional()
   @IsString()
   diagnostico?: string;
+
+  @ApiPropertyOptional({ description: 'Respostas preenchidas na inspeção.' })
+  @IsOptional()
+  @IsObject()
+  dadosInspecao?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ description: 'Imagens da inspeção serializadas em JSON.' })
+  @IsOptional()
+  @IsString()
+  imagensAnexadas?: string;
 
   @ApiPropertyOptional({ example: 'Joao da Silva' })
   @IsOptional()

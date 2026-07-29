@@ -531,7 +531,6 @@ export class ManutencoesService {
         tipoEquipamentoId: tipoEquipamento.tipoEquipamentoId,
         tipoEquipamentoNome: tipoEquipamento.tipoEquipamentoNome,
         tipoManutencao: data.tipoManutencao ?? TipoManutencao.CORRETIVA,
-        fabricanteEquipamento: data.fabricanteEquipamento,
         modeloEquipamento: data.modeloEquipamento,
         fabricante: data.fabricante,
         numeroSerie: data.numeroSerie,
@@ -552,10 +551,6 @@ export class ManutencoesService {
             ? new Date()
             : null,
         diagnostico: data.diagnostico,
-        dadosInspecao: data.dadosInspecao as
-          | Prisma.InputJsonValue
-          | undefined,
-        imagensAnexadas: data.imagensAnexadas,
         responsavelManutencao: data.responsavelManutencao,
         responsavelRevisao: data.responsavelRevisao,
         statusManutencao:
@@ -677,11 +672,7 @@ export class ManutencoesService {
     const alteradoPor = user?.nome || user?.email || user?.username || null;
     const responsavelManutencaoFinal =
       data.responsavelManutencao !== undefined
-<<<<<<< HEAD
         ? (data.responsavelManutencao || alteradoPor)
-=======
-        ? data.responsavelManutencao
->>>>>>> 7f4dc8c9957f1bed059a74b5ce5c19892ed6d7f2
         : undefined;
     const statusMudou =
       data.statusManutencao !== undefined &&
@@ -813,14 +804,7 @@ export class ManutencoesService {
                 ? tipoEquipamento.tipoEquipamentoNome
                 : undefined,
             diagnostico: data.diagnostico,
-<<<<<<< HEAD
             fabricante: data.fabricante,
-=======
-            dadosInspecao: data.dadosInspecao as
-              | Prisma.InputJsonValue
-              | undefined,
-            imagensAnexadas: data.imagensAnexadas,
->>>>>>> 7f4dc8c9957f1bed059a74b5ce5c19892ed6d7f2
             avaliacaoFinalConforme: data.avaliacaoFinalConforme,
             responsavelManutencao: responsavelManutencaoFinal,
             responsavelRevisao: data.responsavelRevisao,

@@ -7,6 +7,7 @@ import {
 } from "../types/producao";
 import { useTiposEquipamento } from "../hooks/useTiposEquipamento";
 import { getLocalDateInput } from "../utils/date";
+import { isAdminUser, isVerifiedUser } from "../utils/auth";
 import "./FormularioOrdem.css";
 
 interface FormularioOrdemProps {
@@ -128,7 +129,8 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     procedimentoTestes: parseAnexos(producao?.procedimentoTestes),
   });
 
-  const tagPodeSerEditada = formData.statusProducao === "CONCLUIDA";
+  const isMasterUser = isAdminUser() || isVerifiedUser();
+  const tagPodeSerEditada = formData.statusProducao === "CONCLUIDA" || isMasterUser;
 
   const tipoSelecionado = useMemo(
     () =>

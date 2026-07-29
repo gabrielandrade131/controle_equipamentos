@@ -145,8 +145,12 @@ export class ProducoesController {
 
   @Patch(':id/tag')
   @ApiOperation({ summary: 'Cadastrar ou atualizar a TAG do equipamento' })
-  updateTag(@Param('id') id: string, @Body() body: UpdateTagDto) {
-    return this.producoesService.updateTag(id, body);
+  updateTag(
+    @Param('id') id: string,
+    @Body() body: UpdateTagDto,
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+  ) {
+    return this.producoesService.updateTag(id, body, usuarioAtual);
   }
 
   @Patch(':id/inspecao-montagem/:ordem')

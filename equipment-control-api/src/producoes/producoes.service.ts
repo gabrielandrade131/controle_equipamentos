@@ -14,6 +14,7 @@ import { UpdateRegistroInspecaoDto } from './dto/update-registro-inspecao.dto';
 import { Prisma, StatusProducao as PrismaStatusProducao } from '@prisma/client';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
 import * as ExcelJS from 'exceljs';
+import { isAdminUser, AuthenticatedUser } from '../auth/user-permissions';
 
 @Injectable()
 export class ProducoesService {
@@ -848,10 +849,12 @@ export class ProducoesService {
     });
   }
 
-  async updateTag(id: string, data: UpdateTagDto) {
+  async updateTag(id: string, data: UpdateTagDto, user?: AuthenticatedUser) {
     const equipment = await this.findOne(id);
 
-    if (equipment.loteProducao?.statusProducao !== 'CONCLUIDA') {
+    const isMaster = user && (isAdminUser(user) || Boolean(user.verificado));
+
+    if (!isMaster && equipment.loteProducao?.statusProducao !== 'CONCLUIDA') {
       throw new BadRequestException(
         'A TAG só pode ser cadastrada quando a produção estiver concluida',
       );

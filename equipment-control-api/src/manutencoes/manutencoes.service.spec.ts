@@ -357,6 +357,7 @@ describe('ManutencoesService', () => {
         id: 'man-1',
         statusManutencao: 'CONCLUIDA',
         responsavelManutencao: 'Executor informado',
+        responsavelRevisao: 'Revisor informado',
         historicoAlteracoes: [],
       });
     prisma.manutencao.update.mockResolvedValue({
@@ -371,6 +372,7 @@ describe('ManutencoesService', () => {
       {
         statusManutencao: 'CONCLUIDA',
         responsavelManutencao: 'Executor informado',
+        responsavelRevisao: 'Revisor informado',
       } as any,
       { nome: 'Usuario autenticado' },
     );
@@ -512,12 +514,12 @@ describe('ManutencoesService', () => {
     );
     await service.update(
       'man-2',
-      { statusManutencao: 'CONCLUIDA' } as any,
+      { statusManutencao: 'CONCLUIDA', responsavelRevisao: 'Revisor' } as any,
       { nome: 'Gabriel' },
     );
     await service.update(
       'man-3',
-      { statusManutencao: 'CONCLUIDA' } as any,
+      { statusManutencao: 'CONCLUIDA', responsavelRevisao: 'Revisor' } as any,
       { nome: 'Gabriel' },
     );
 

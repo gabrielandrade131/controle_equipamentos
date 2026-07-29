@@ -525,6 +525,15 @@ export class ManutencoesService {
       data.tipoEquipamentoNome,
     );
 
+    if (
+      data.statusManutencao === StatusManutencao.CONCLUIDA &&
+      !data.responsavelRevisao?.trim()
+    ) {
+      throw new BadRequestException(
+        'Informe o campo Revisado por antes de concluir a manutencao.',
+      );
+    }
+
     const manutencao = await this.prisma.manutencao.create({
       data: {
         origem: OrigemManutencao.MANUAL,
@@ -677,15 +686,27 @@ export class ManutencoesService {
     const alteradoPor = user?.nome || user?.email || user?.username || null;
     const responsavelManutencaoFinal =
       data.responsavelManutencao !== undefined
-<<<<<<< HEAD
-        ? (data.responsavelManutencao || alteradoPor)
-=======
         ? data.responsavelManutencao
->>>>>>> 7f4dc8c9957f1bed059a74b5ce5c19892ed6d7f2
         : undefined;
     const statusMudou =
       data.statusManutencao !== undefined &&
       data.statusManutencao !== manutencaoAtual.statusManutencao;
+    const statusFinal =
+      data.statusManutencao ?? manutencaoAtual.statusManutencao;
+    const responsavelRevisaoFinal =
+      data.responsavelRevisao !== undefined
+        ? data.responsavelRevisao
+        : manutencaoAtual.responsavelRevisao;
+
+    if (
+      statusFinal === StatusManutencao.CONCLUIDA &&
+      (statusMudou || data.statusManutencao === StatusManutencao.CONCLUIDA) &&
+      !responsavelRevisaoFinal?.trim()
+    ) {
+      throw new BadRequestException(
+        'Informe o campo Revisado por antes de concluir a manutencao.',
+      );
+    }
 
     if (
       manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA &&
@@ -823,14 +844,11 @@ export class ManutencoesService {
                 ? tipoEquipamento?.tipoEquipamentoNome
                 : undefined,
             diagnostico: data.diagnostico,
-<<<<<<< HEAD
             fabricante: data.fabricante,
-=======
             dadosInspecao: data.dadosInspecao as
               | Prisma.InputJsonValue
               | undefined,
             imagensAnexadas: data.imagensAnexadas,
->>>>>>> 7f4dc8c9957f1bed059a74b5ce5c19892ed6d7f2
             avaliacaoFinalConforme: data.avaliacaoFinalConforme,
             responsavelManutencao: responsavelManutencaoFinal,
             responsavelRevisao: data.responsavelRevisao,

@@ -525,12 +525,22 @@ export class ManutencoesService {
       data.tipoEquipamentoNome,
     );
 
+    if (
+      data.statusManutencao === StatusManutencao.CONCLUIDA &&
+      !data.responsavelRevisao?.trim()
+    ) {
+      throw new BadRequestException(
+        'Informe o campo Revisado por antes de concluir a manutencao.',
+      );
+    }
+
     const manutencao = await this.prisma.manutencao.create({
       data: {
         origem: OrigemManutencao.MANUAL,
         tipoEquipamentoId: tipoEquipamento.tipoEquipamentoId,
         tipoEquipamentoNome: tipoEquipamento.tipoEquipamentoNome,
         tipoManutencao: data.tipoManutencao ?? TipoManutencao.CORRETIVA,
+        fabricanteEquipamento: data.fabricanteEquipamento,
         modeloEquipamento: data.modeloEquipamento,
         fabricante: data.fabricante,
         numeroSerie: data.numeroSerie,
@@ -551,6 +561,10 @@ export class ManutencoesService {
             ? new Date()
             : null,
         diagnostico: data.diagnostico,
+        dadosInspecao: data.dadosInspecao as
+          | Prisma.InputJsonValue
+          | undefined,
+        imagensAnexadas: data.imagensAnexadas,
         responsavelManutencao: data.responsavelManutencao,
         responsavelRevisao: data.responsavelRevisao,
         statusManutencao:
@@ -672,11 +686,27 @@ export class ManutencoesService {
     const alteradoPor = user?.nome || user?.email || user?.username || null;
     const responsavelManutencaoFinal =
       data.responsavelManutencao !== undefined
-        ? (data.responsavelManutencao || alteradoPor)
+        ? data.responsavelManutencao
         : undefined;
     const statusMudou =
       data.statusManutencao !== undefined &&
       data.statusManutencao !== manutencaoAtual.statusManutencao;
+    const statusFinal =
+      data.statusManutencao ?? manutencaoAtual.statusManutencao;
+    const responsavelRevisaoFinal =
+      data.responsavelRevisao !== undefined
+        ? data.responsavelRevisao
+        : manutencaoAtual.responsavelRevisao;
+
+    if (
+      statusFinal === StatusManutencao.CONCLUIDA &&
+      (statusMudou || data.statusManutencao === StatusManutencao.CONCLUIDA) &&
+      !responsavelRevisaoFinal?.trim()
+    ) {
+      throw new BadRequestException(
+        'Informe o campo Revisado por antes de concluir a manutencao.',
+      );
+    }
 
     if (
       manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA &&
@@ -815,6 +845,10 @@ export class ManutencoesService {
                 : undefined,
             diagnostico: data.diagnostico,
             fabricante: data.fabricante,
+            dadosInspecao: data.dadosInspecao as
+              | Prisma.InputJsonValue
+              | undefined,
+            imagensAnexadas: data.imagensAnexadas,
             avaliacaoFinalConforme: data.avaliacaoFinalConforme,
             responsavelManutencao: responsavelManutencaoFinal,
             responsavelRevisao: data.responsavelRevisao,

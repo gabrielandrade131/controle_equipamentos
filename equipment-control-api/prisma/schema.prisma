@@ -138,6 +138,7 @@ model Manutencao {
   synchroId             String?          @unique
   origem                OrigemManutencao @default(SYNCHRO)
 
+<<<<<<< HEAD
   tipoEquipamentoId       String?
   tipoEquipamento         TipoEquipamento?      @relation(fields: [tipoEquipamentoId], references: [id])
   tipoEquipamentoNome     String?
@@ -147,6 +148,19 @@ model Manutencao {
   numeroSerie             String?
   tag                     String?
   situacaoEquipamento     String?
+=======
+  tipoEquipamentoId String?
+  tipoEquipamento   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
+
+  tipoEquipamentoNome   String?
+  tipoManutencao        TipoManutencao @default(CORRETIVA)
+  fabricanteEquipamento String?
+  fabricante            String?
+  modeloEquipamento     String?
+  numeroSerie           String?
+  tag                   String?
+  situacaoEquipamento   String?
+>>>>>>> ce30379ff80dc57e54feb4062a26cfe78e6fd91e
 
   dataRetornoBase DateTime?
   dataInicio      DateTime?

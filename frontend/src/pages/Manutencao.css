@@ -419,6 +419,51 @@
   color: #333;
 }
 
+.status-choice {
+  width: auto;
+  min-width: 145px;
+  padding: 3px 24px 3px 0;
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%237fa000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  color: #6f8f00;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.status-choice:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: #b2cc21;
+}
+
+.status-confirmacao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.status-confirmacao label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #555;
+  font-size: 12px;
+}
+
+.status-confirmacao .btn-primary {
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
 @media (max-width: 768px) {
   .page-content {
     grid-template-columns: 1fr;

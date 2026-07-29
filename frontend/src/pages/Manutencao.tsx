@@ -64,6 +64,9 @@ export const Manutencao: React.FC = () => {
   >([]);
   const [carregandoFotos, setCarregandoFotos] = useState(false);
   const [enviandoAnexoPdf, setEnviandoAnexoPdf] = useState(false);
+  const [statusEscolhido, setStatusEscolhido] = useState<string | null>(null);
+  const [confirmandoStatus, setConfirmandoStatus] = useState(false);
+  const [salvandoStatus, setSalvandoStatus] = useState(false);
   const {
     historico,
     adicionarInspecao,
@@ -251,6 +254,55 @@ export const Manutencao: React.FC = () => {
             "Não foi possível atualizar os detalhes.",
         );
       });
+  };
+
+  const handleStatusSelecionado = (status: string) => {
+    if (!selectedItem || status === selectedItem.statusManutencao) {
+      setStatusEscolhido(null);
+      setConfirmandoStatus(false);
+      return;
+    }
+    setStatusEscolhido(status);
+    setConfirmandoStatus(false);
+  };
+
+  const confirmarAlteracaoStatus = async () => {
+    if (!selectedItem || !statusEscolhido || !confirmandoStatus) return;
+    if (statusEscolhido === "CONCLUIDA" && !selectedItem.responsavelRevisao?.trim()) {
+      setAlertModal({
+        isOpen: true,
+        message: "Informe o campo Revisado por antes de concluir a manutenção.",
+      });
+      return;
+    }
+
+    const hoje = getLocalDateInput();
+    const atualizacao: InspecaoManutencao = {
+      ...selectedItem,
+      statusManutencao: statusEscolhido as InspecaoManutencao["statusManutencao"],
+      dataInicio:
+        statusEscolhido === "EM_MANUTENCAO" && !selectedItem.dataInicio
+          ? hoje
+          : selectedItem.dataInicio,
+      dataTermino:
+        statusEscolhido === "CONCLUIDA" ? selectedItem.dataTermino || hoje : selectedItem.dataTermino,
+      dataParalisacao:
+        statusEscolhido === "PARALISADA" ? selectedItem.dataParalisacao || hoje : "",
+    };
+
+    try {
+      setSalvandoStatus(true);
+      await atualizarInspecao(selectedItem.id!, atualizacao);
+      setStatusEscolhido(null);
+      setConfirmandoStatus(false);
+    } catch (error: any) {
+      setAlertModal({
+        isOpen: true,
+        message: error.response?.data?.message || "Não foi possível alterar o status.",
+      });
+    } finally {
+      setSalvandoStatus(false);
+    }
   };
 
   const handleCriarNova = (inspecao: InspecaoManutencao) => {
@@ -532,11 +584,38 @@ export const Manutencao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
-                  <p>
-                    {STATUS_LABELS[selectedItem.statusManutencao || ""] ||
-                      selectedItem.statusManutencao ||
-                      "-"}
-                  </p>
+                  <select
+                    className="status-choice"
+                    value={statusEscolhido ?? selectedItem.statusManutencao ?? ""}
+                    disabled={selectedItem.statusManutencao === "CONCLUIDA" || salvandoStatus}
+                    onChange={(event) => handleStatusSelecionado(event.target.value)}
+                  >
+                    <option value="EM_QUARENTENA">Em quarentena</option>
+                    <option value="PENDENTE">Pendente</option>
+                    <option value="EM_MANUTENCAO">Em manutenção</option>
+                    <option value="PARALISADA">Paralisada</option>
+                    <option value="CONCLUIDA">Concluída</option>
+                  </select>
+                  {statusEscolhido && (
+                    <div className="status-confirmacao">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={confirmandoStatus}
+                          onChange={(event) => setConfirmandoStatus(event.target.checked)}
+                        />
+                        Confirmo que desejo alterar o status
+                      </label>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        disabled={!confirmandoStatus || salvandoStatus}
+                        onClick={() => void confirmarAlteracaoStatus()}
+                      >
+                        {salvandoStatus ? "Salvando..." : "Confirmar status"}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="detail-item">
                   <label>Dias em quarentena:</label>

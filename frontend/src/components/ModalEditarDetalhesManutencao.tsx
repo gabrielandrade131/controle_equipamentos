@@ -84,6 +84,14 @@ export const ModalEditarDetalhesManutencao: React.FC<
   };
 
   const handleSalvar = () => {
+    if (
+      formData.statusManutencao === "CONCLUIDA" &&
+      !formData.responsavelRevisao?.trim()
+    ) {
+      alert("Informe o campo Revisado por antes de concluir a manutenção.");
+      return;
+    }
+
     if (conclusaoPendente && !confirmouConclusao) {
       alert(
         "Confirme que deseja concluir a manutenção. Essa ação não poderá ser desfeita.",

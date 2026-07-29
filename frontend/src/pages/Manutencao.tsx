@@ -578,6 +578,36 @@ export const Manutencao: React.FC = () => {
                 )}
               </div>
 
+              {selectedItem.statusManutencao === "CONCLUIDA" && (
+                <div className="documents-section">
+                  <h3>Fotos da Inspeção de Manutenção</h3>
+                  {selectedItem.imagensAnexadas &&
+                  selectedItem.imagensAnexadas.length > 0 ? (
+                    <div className="fotos-recebimento-grid">
+                      {selectedItem.imagensAnexadas.map((imagem, index) => (
+                        <figure
+                          key={`${selectedItem.id}-inspecao-${index}`}
+                          className="foto-recebimento-item"
+                        >
+                          <img
+                            src={imagem}
+                            alt={`Foto ${index + 1} da inspeção - ${selectedItem.tag || "equipamento"}`}
+                            loading="lazy"
+                          />
+                          <figcaption>
+                            <span>Foto {index + 1}</span>
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="sem-observacoes">
+                      Nenhuma foto foi adicionada à inspeção.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="documents-section">
                 <h3>Observações</h3>
                 <div className="observacoes-historico-view">

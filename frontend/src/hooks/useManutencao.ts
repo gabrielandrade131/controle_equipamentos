@@ -7,6 +7,21 @@ import {
 import { InspecaoManutencao, StatusManutencao } from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
 
+const SECOES_INSPECAO = [
+  "certificacoes",
+  "estruturaMecanica",
+  "sistemaHidraulico",
+  "sistemaPneumatico",
+  "sistemaEletrico",
+  "dispositivoSeguranca",
+  "componentesOperacionais",
+  "acessorios",
+  "testesOperacionais",
+] as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 type ApiListResponse<T> = {
   data: T[];
 };
@@ -27,18 +42,6 @@ export type FotoRecebimentoManutencao = {
   url: string;
 };
 
-const CHECKLIST_KEYS = [
-  "certificacoes",
-  "estruturaMecanica",
-  "sistemaHidraulico",
-  "sistemaPneumatico",
-  "sistemaEletrico",
-  "dispositivoSeguranca",
-  "componentesOperacionais",
-  "acessorios",
-  "testesOperacionais",
-] as const;
-
 const parseJson = (value: unknown): unknown => {
   if (typeof value !== "string") return value;
 
@@ -49,15 +52,19 @@ const parseJson = (value: unknown): unknown => {
   }
 };
 
+const parseDadosInspecaoRecord = (value: unknown): Record<string, unknown> => {
+  const parsed = parseJson(value);
+  return isRecord(parsed) ? parsed : {};
+};
+
 const parseDadosInspecao = (
   value: unknown,
 ): Partial<InspecaoManutencao> => {
-  const parsed = parseJson(value);
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  const parsed = parseDadosInspecaoRecord(value);
 
-  return CHECKLIST_KEYS.reduce<Partial<InspecaoManutencao>>(
+  return SECOES_INSPECAO.reduce<Partial<InspecaoManutencao>>(
     (dados, key) => {
-      const itens = (parsed as Record<string, unknown>)[key];
+      const itens = parsed[key];
       if (Array.isArray(itens)) dados[key] = itens;
       return dados;
     },
@@ -66,10 +73,13 @@ const parseDadosInspecao = (
 };
 
 const mapDadosInspecao = (inspecao: InspecaoManutencao) =>
-  CHECKLIST_KEYS.reduce<Record<string, unknown>>((dados, key) => {
-    dados[key] = inspecao[key];
-    return dados;
-  }, {});
+  SECOES_INSPECAO.reduce<Record<string, unknown>>(
+    (dados, key) => {
+      dados[key] = inspecao[key];
+      return dados;
+    },
+    { imagensAnexadas: inspecao.imagensAnexadas || [] },
+  );
 
 const serializarDiagnostico = (inspecao: InspecaoManutencao) => {
   const textoAtual = inspecao.observacoes?.trim();
@@ -148,7 +158,10 @@ const extrairObservacaoTexto = (diagnostico: any): string => {
 
 const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   const base = criarInspecaoVazia();
-  const dadosInspecao = parseDadosInspecao(manutencao.dadosInspecao);
+  const dadosInspecaoBrutos = parseDadosInspecaoRecord(
+    manutencao.dadosInspecao,
+  );
+  const dadosInspecao = parseDadosInspecao(dadosInspecaoBrutos);
   const avaliacaoFinal =
     manutencao.avaliacaoFinalConforme === true
       ? "CONFORME"
@@ -157,7 +170,20 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
         : "";
 
   const imagensSalvas = parseJson(manutencao.imagensAnexadas);
-  const imagensAnexadas = Array.isArray(imagensSalvas) ? imagensSalvas : [];
+  const imagensCampoSeparado = Array.isArray(imagensSalvas)
+    ? imagensSalvas.filter(
+        (imagem): imagem is string => typeof imagem === "string",
+      )
+    : [];
+  const imagensNoChecklist = Array.isArray(dadosInspecaoBrutos.imagensAnexadas)
+    ? dadosInspecaoBrutos.imagensAnexadas.filter(
+        (imagem): imagem is string => typeof imagem === "string",
+      )
+    : [];
+  const imagensAnexadas =
+    imagensCampoSeparado.length > 0
+      ? imagensCampoSeparado
+      : imagensNoChecklist;
 
   const inspecaoMapeada: InspecaoManutencao = {
     ...base,
@@ -209,6 +235,12 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
   };
+
+  SECOES_INSPECAO.forEach((secao) => {
+    if (Array.isArray(dadosInspecao[secao])) {
+      inspecaoMapeada[secao] = dadosInspecao[secao] as InspecaoManutencao[typeof secao];
+    }
+  });
 
   return aplicarChecklistManutencao(inspecaoMapeada, {
     tipoEquipamento: inspecaoMapeada.tipoEquipamento,

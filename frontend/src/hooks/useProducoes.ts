@@ -7,6 +7,7 @@ import {
   Producao,
 } from "../types/producao";
 import { extractDateInput } from "../utils/date";
+import { isAdminUser, isVerifiedUser } from "../utils/auth";
 
 type ApiListResponse<T> = {
   data: T[];
@@ -211,7 +212,7 @@ export const mapProducaoToApi = (producao: CreateProducaoDto | Producao) => ({
   dataParalisacao: producao.dataParalisacao || undefined,
   previsaoTermino: producao.dataPrevisao || undefined,
   dataTermino: producao.dataTermino || undefined,
-  validade: producao.validade ?? undefined,
+  validade: producao.validade || undefined,
   statusProducao: producao.statusProducao || undefined,
   tipoEquipamentoId: producao.tipoEquipamentoId || undefined,
   modelo: producao.modelo || undefined,
@@ -332,7 +333,8 @@ export const useProducoes = () => {
       producao = mapApiToProducao(refreshed.data);
     }
 
-    if (producaoAtualizada.tag && producao.statusProducao === "CONCLUIDA") {
+    const isMasterUser = isAdminUser() || isVerifiedUser();
+    if (producaoAtualizada.tag && (producao.statusProducao === "CONCLUIDA" || isMasterUser) && producaoAtualizada.tag !== producao.tag) {
       const tagResponse = await axiosInstance.patch(`/producoes/${id}/tag`, {
         tag: producaoAtualizada.tag,
       });

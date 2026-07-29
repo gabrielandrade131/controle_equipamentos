@@ -231,6 +231,40 @@ describe('ManutencoesService', () => {
     );
   });
 
+  it('saves inspection without revalidating an unchanged equipment type', async () => {
+    prisma.manutencao.findUnique.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'CONCLUIDA',
+      tipoEquipamentoId: 'tipo-inativo',
+      tipoEquipamentoNome: 'Tipo legado',
+    });
+    prisma.manutencao.update.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'CONCLUIDA',
+      tipoEquipamentoId: 'tipo-inativo',
+      dadosInspecao: { certificacoes: [] },
+    });
+
+    await expect(
+      service.update(
+        'man-1',
+        { dadosInspecao: { certificacoes: [] } } as any,
+        { nome: 'Gabriel' },
+      ),
+    ).resolves.toEqual(expect.objectContaining({ id: 'man-1' }));
+
+    expect(prisma.tipoEquipamento.findFirst).not.toHaveBeenCalled();
+    expect(prisma.manutencao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tipoEquipamentoId: undefined,
+          tipoEquipamentoNome: undefined,
+          dadosInspecao: { certificacoes: [] },
+        }),
+      }),
+    );
+  });
+
   it('rejects work date update without maintenance status change', async () => {
     prisma.manutencao.findUnique.mockResolvedValue({
       id: 'man-1',
@@ -241,6 +275,28 @@ describe('ManutencoesService', () => {
     await expect(
       service.update('man-1', { dataTermino: '2024-01-11' } as any),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('accepts the same concluded maintenance dates without comparing their time', async () => {
+    prisma.manutencao.findUnique.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'CONCLUIDA',
+      dataInicio: new Date('2024-01-10T15:30:00.000Z'),
+      dataTermino: new Date('2024-01-11T18:45:00.000Z'),
+    });
+    prisma.manutencao.update.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'CONCLUIDA',
+      dataInicio: new Date('2024-01-10T15:30:00.000Z'),
+      dataTermino: new Date('2024-01-11T18:45:00.000Z'),
+    });
+
+    await expect(
+      service.update('man-1', {
+        dataInicio: '2024-01-10',
+        dataTermino: '2024-01-11',
+      } as any),
+    ).resolves.toEqual(expect.objectContaining({ id: 'man-1' }));
   });
 
   it('rejects status update on concluded maintenance', async () => {

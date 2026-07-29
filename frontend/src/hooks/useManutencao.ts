@@ -98,6 +98,23 @@ const serializarDiagnostico = (inspecao: InspecaoManutencao) => {
     : textoAtual || undefined;
 };
 
+const patchManutencao = async <T>(url: string, payload: unknown) => {
+  try {
+    return await axiosInstance.patch<T>(url, payload);
+  } catch (error: any) {
+    const mensagem = String(error.response?.data?.message || "");
+    const rotaIndisponivel =
+      error.response?.status === 404 && mensagem.includes("Cannot PATCH");
+
+    if (!rotaIndisponivel) {
+      throw error;
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 700));
+    return axiosInstance.patch<T>(url, payload);
+  }
+};
+
 const toDateInput = (value?: string | null, fallbackToday = true) =>
   extractDateInput(value, fallbackToday);
 
@@ -342,7 +359,7 @@ export const useManutencao = () => {
     id: string,
     inspecao: InspecaoManutencao,
   ) => {
-    const response = await axiosInstance.patch(
+    const response = await patchManutencao(
       `/manutencoes/${id}`,
       mapInspecaoToApi(inspecao),
     );
@@ -360,6 +377,11 @@ export const useManutencao = () => {
     const response = await axiosInstance.post(
       `/manutencoes/${id}/anexo-pdf`,
       dados,
+      {
+        // Override the JSON default so Axios builds the multipart boundary
+        // and Multer can actually receive the file field.
+        headers: { "Content-Type": "multipart/form-data" },
+      },
     );
     const inspecaoAtualizada = mapApiToInspecao(response.data);
     setHistorico((prev) =>
@@ -372,7 +394,7 @@ export const useManutencao = () => {
     id: string,
     inspecao: InspecaoManutencao,
   ) => {
-    const response = await axiosInstance.patch(`/manutencoes/${id}`, {
+    const response = await patchManutencao(`/manutencoes/${id}`, {
       diagnostico: serializarDiagnostico(inspecao),
       dadosInspecao: mapDadosInspecao(inspecao),
       avaliacaoFinalConforme:

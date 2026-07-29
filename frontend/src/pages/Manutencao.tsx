@@ -186,10 +186,10 @@ export const Manutencao: React.FC = () => {
   const handleAnexarPdf = async (arquivo?: File) => {
     if (!arquivo || !selectedItem?.id) return;
 
-    if (
-      arquivo.type !== "application/pdf" ||
-      !arquivo.name.toLowerCase().endsWith(".pdf")
-    ) {
+    const extensaoPdf = arquivo.name.toLowerCase().endsWith(".pdf");
+
+    // The browser MIME is not reliable for PDFs (it may be empty or custom).
+    if (!extensaoPdf) {
       setAlertModal({
         isOpen: true,
         message: "Selecione um arquivo no formato PDF.",

@@ -164,9 +164,10 @@ export class ManutencoesController {
       }),
       limits: { fileSize: 10 * 1024 * 1024 },
       fileFilter: (req, file, callback) => {
-        const isPdf =
-          file.mimetype === 'application/pdf' &&
-          extname(file.originalname).toLowerCase() === '.pdf';
+        // Browsers/Windows can send arbitrary or empty MIME values for PDFs.
+        // The filename extension is the stable signal available to Multer;
+        // requiring an exact MIME value was causing valid PDFs to return 400.
+        const isPdf = extname(file.originalname).toLowerCase() === '.pdf';
         callback(
           isPdf ? null : new Error('Apenas arquivos PDF são permitidos.'),
           isPdf,

@@ -18,7 +18,14 @@ export const ModalEditarDetalhesManutencao: React.FC<
 > = ({ inspecao, onSalvar, onCancelar, titulo, isCreating }) => {
   const [formData, setFormData] = useState<InspecaoManutencao>(inspecao);
   const [novaObservacao, setNovaObservacao] = useState("");
+  const [confirmouConclusao, setConfirmouConclusao] = useState(false);
   const { tiposEquipamento } = useTiposEquipamento();
+  const statusInicial = inspecao.statusManutencao;
+  const statusBloqueado =
+    !isCreating && statusInicial === "CONCLUIDA";
+  const conclusaoPendente =
+    formData.statusManutencao === "CONCLUIDA" &&
+    statusInicial !== "CONCLUIDA";
 
   const handleInputChange = (campo: keyof InspecaoManutencao, valor: any) => {
     setFormData((prev) => ({
@@ -31,6 +38,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
     setFormData((prev) => {
       const statusManutencao = valor as InspecaoManutencao["statusManutencao"];
       const changes: Partial<InspecaoManutencao> = { statusManutencao };
+      setConfirmouConclusao(false);
 
       if (statusManutencao === "EM_MANUTENCAO" && !prev.dataInicio) {
         changes.dataInicio = getLocalDateInput();
@@ -76,6 +84,13 @@ export const ModalEditarDetalhesManutencao: React.FC<
   };
 
   const handleSalvar = () => {
+    if (conclusaoPendente && !confirmouConclusao) {
+      alert(
+        "Confirme que deseja concluir a manutenção. Essa ação não poderá ser desfeita.",
+      );
+      return;
+    }
+
     onSalvar?.(formData);
   };
 
@@ -96,7 +111,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="text"
                 value={formData.numeroOrdemManutencao ?? "-"}
-                readOnly={!isCreating}
+                readOnly
               />
             </div>
 
@@ -279,7 +294,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <select
                 value={formData.statusManutencao}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                disabled={formData.statusManutencao === "CONCLUIDA"}
+                disabled={statusBloqueado}
               >
                 <option value="EM_QUARENTENA">Em quarentena</option>
                 <option value="PENDENTE">Pendente</option>
@@ -287,6 +302,23 @@ export const ModalEditarDetalhesManutencao: React.FC<
                 <option value="PARALISADA">Paralisada</option>
                 <option value="CONCLUIDA">Concluída</option>
               </select>
+              {conclusaoPendente && (
+                <div className="confirmacao-conclusao">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={confirmouConclusao}
+                      onChange={(e) =>
+                        setConfirmouConclusao(e.target.checked)
+                      }
+                    />
+                    Confirmo que desejo concluir esta manutenção
+                  </label>
+                  <small>
+                    Depois de salva como concluída, essa ação não poderá ser desfeita.
+                  </small>
+                </div>
+              )}
             </div>
 
             <div className="form-group read-only">

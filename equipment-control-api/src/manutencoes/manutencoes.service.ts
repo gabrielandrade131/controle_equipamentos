@@ -731,10 +731,15 @@ export class ManutencoesService {
           : undefined;
 
     if (manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA) {
-      const tipoEquipamento = await this.resolverTipoEquipamento(
-        data.tipoEquipamentoId ?? manutencaoAtual.tipoEquipamentoId,
-        data.tipoEquipamentoNome ?? manutencaoAtual.tipoEquipamentoNome,
-      );
+      const tipoEquipamentoFoiInformado =
+        data.tipoEquipamentoId !== undefined ||
+        data.tipoEquipamentoNome !== undefined;
+      const tipoEquipamento = tipoEquipamentoFoiInformado
+        ? await this.resolverTipoEquipamento(
+            data.tipoEquipamentoId,
+            data.tipoEquipamentoNome,
+          )
+        : null;
       const camposPermitidosInspecao = [
         'diagnostico',
         'dadosInspecao',
@@ -755,7 +760,7 @@ export class ManutencoesService {
         'dataTermino',
       ]);
 
-      const possuiCampoNaoPermitido = Object.entries(data).some(
+      const camposNaoPermitidos = Object.entries(data).filter(
         ([campo, value]) => {
           if (value === undefined) {
             return false;
@@ -776,20 +781,26 @@ export class ManutencoesService {
             return false;
           }
 
-          const valorNovo = camposData.has(campo)
-            ? this.normalizarData(value as string)
-            : value;
           const valorAnterior = manutencaoAtual[campo];
 
+          if (camposData.has(campo)) {
+            return !this.mesmaData(
+              valorAnterior as Date | null | undefined,
+              this.normalizarData(value as string),
+            );
+          }
+
           return (
-            this.formatarValor(valorAnterior) !== this.formatarValor(valorNovo)
+            this.formatarValor(valorAnterior) !== this.formatarValor(value)
           );
         },
       );
 
-      if (possuiCampoNaoPermitido) {
+      if (camposNaoPermitidos.length > 0) {
         throw new BadRequestException(
-          'Manutencao concluida nao pode ter seus dados editados.',
+          `Manutencao concluida nao pode ter seus dados editados. Campos divergentes: ${camposNaoPermitidos
+            .map(([campo]) => campo)
+            .join(', ')}.`,
         );
       }
 
@@ -798,13 +809,12 @@ export class ManutencoesService {
           where: { id },
           data: {
             tipoEquipamentoId:
-              data.tipoEquipamentoId !== undefined
-                ? tipoEquipamento.tipoEquipamentoId
+              tipoEquipamentoFoiInformado
+                ? tipoEquipamento?.tipoEquipamentoId
                 : undefined,
             tipoEquipamentoNome:
-              data.tipoEquipamentoId !== undefined ||
-              data.tipoEquipamentoNome !== undefined
-                ? tipoEquipamento.tipoEquipamentoNome
+              tipoEquipamentoFoiInformado
+                ? tipoEquipamento?.tipoEquipamentoNome
                 : undefined,
             diagnostico: data.diagnostico,
             dadosInspecao: data.dadosInspecao as

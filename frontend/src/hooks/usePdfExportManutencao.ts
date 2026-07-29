@@ -335,10 +335,21 @@ export const usePdfExportManutencao = () => {
       if (inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0) {
         sectionHeader("FOTOS DA MANUTENÇÃO");
 
-        const imagensPerPage = 2;
-        const imageWidth = 85;
-        const imageHeight = 85;
+        const colunas = 3;
+        const imagensPerPage = colunas * 2;
+        const espacamentoHorizontal = 7;
+        const imageWidth =
+          (contentWidth - espacamentoHorizontal * (colunas - 1)) / colunas;
+        const imageHeight = 52;
+        const alturaLegenda = 6;
+        const espacamentoVertical = 8;
+        const alturaLinha = imageHeight + alturaLegenda + espacamentoVertical;
         const pageMargin = marginX;
+
+        const linhasNaPagina = Math.ceil(
+          Math.min(inspecao.imagensAnexadas.length, imagensPerPage) / colunas,
+        );
+        ensureSpace(linhasNaPagina * alturaLinha);
 
         for (let i = 0; i < inspecao.imagensAnexadas.length; i++) {
           const indexInPage = i % imagensPerPage;
@@ -349,10 +360,11 @@ export const usePdfExportManutencao = () => {
             sectionHeader("FOTOS DA MANUTENÇÃO (Continuação)");
           }
 
-          ensureSpace(imageHeight + 10);
-
-          const imageX = pageMargin + (i % 2) * (imageWidth + 10);
-          const imageY = y;
+          const colunaAtual = indexInPage % colunas;
+          const linhaAtual = Math.floor(indexInPage / colunas);
+          const imageX =
+            pageMargin + colunaAtual * (imageWidth + espacamentoHorizontal);
+          const imageY = y + linhaAtual * alturaLinha;
           const formatoImagem = inspecao.imagensAnexadas[i].startsWith(
             "data:image/png",
           )
@@ -377,10 +389,10 @@ export const usePdfExportManutencao = () => {
             });
 
             if (
-              (i + 1) % imagensPerPage === 0 ||
+              (i + 1) % colunas === 0 ||
               i === inspecao.imagensAnexadas.length - 1
             ) {
-              y += imageHeight + 10;
+              y += alturaLinha;
             }
           } catch (error) {
             console.error(`Erro ao adicionar imagem ${i + 1}:`, error);

@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsObject,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -100,6 +101,13 @@ export class CreateManutencaoDto {
   @IsOptional()
   @IsBoolean()
   avaliacaoFinalConforme?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Respostas do checklist e imagens registradas na inspeção',
+  })
+  @IsOptional()
+  @IsObject()
+  dadosInspecao?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     example: '2026-12-31',

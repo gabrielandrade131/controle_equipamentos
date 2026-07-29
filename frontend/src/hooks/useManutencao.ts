@@ -7,6 +7,24 @@ import {
 import { InspecaoManutencao, StatusManutencao } from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
 
+const SECOES_INSPECAO = [
+  "certificacoes",
+  "estruturaMecanica",
+  "sistemaHidraulico",
+  "sistemaPneumatico",
+  "sistemaEletrico",
+  "dispositivoSeguranca",
+  "componentesOperacionais",
+  "acessorios",
+  "testesOperacionais",
+] as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const extrairDadosInspecao = (value: unknown) =>
+  isRecord(value) ? value : {};
+
 type ApiListResponse<T> = {
   data: T[];
 };
@@ -87,6 +105,7 @@ const extrairObservacaoTexto = (diagnostico: any): string => {
 
 const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   const base = criarInspecaoVazia();
+  const dadosInspecao = extrairDadosInspecao(manutencao.dadosInspecao);
   const avaliacaoFinal =
     manutencao.avaliacaoFinalConforme === true
       ? "CONFORME"
@@ -94,10 +113,10 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
         ? "NÃO CONFORME"
         : "";
 
-  const imagensAnexadas = manutencao.imagensAnexadas
-    ? typeof manutencao.imagensAnexadas === "string"
-      ? JSON.parse(manutencao.imagensAnexadas)
-      : manutencao.imagensAnexadas
+  const imagensAnexadas = Array.isArray(dadosInspecao.imagensAnexadas)
+    ? dadosInspecao.imagensAnexadas.filter(
+        (imagem): imagem is string => typeof imagem === "string",
+      )
     : [];
 
   const inspecaoMapeada: InspecaoManutencao = {
@@ -148,6 +167,12 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     atualizadoEm: manutencao.atualizadoEm,
   };
 
+  SECOES_INSPECAO.forEach((secao) => {
+    if (Array.isArray(dadosInspecao[secao])) {
+      inspecaoMapeada[secao] = dadosInspecao[secao] as InspecaoManutencao[typeof secao];
+    }
+  });
+
   return aplicarChecklistManutencao(inspecaoMapeada, {
     tipoEquipamento: inspecaoMapeada.tipoEquipamento,
     modeloEquipamento: inspecaoMapeada.modelo,
@@ -185,6 +210,12 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   imagensAnexadas: inspecao.imagensAnexadas?.length
     ? JSON.stringify(inspecao.imagensAnexadas)
     : undefined,
+  dadosInspecao: {
+    ...Object.fromEntries(
+      SECOES_INSPECAO.map((secao) => [secao, inspecao[secao]]),
+    ),
+    imagensAnexadas: inspecao.imagensAnexadas || [],
+  },
 });
 
 export const useManutencao = () => {
@@ -290,6 +321,12 @@ export const useManutencao = () => {
       validade: inspecao.validade || undefined,
       responsavelManutencao: inspecao.responsavel || undefined,
       responsavelRevisao: inspecao.responsavelRevisao || undefined,
+      dadosInspecao: {
+        ...Object.fromEntries(
+          SECOES_INSPECAO.map((secao) => [secao, inspecao[secao]]),
+        ),
+        imagensAnexadas: inspecao.imagensAnexadas || [],
+      },
     });
     const inspecaoAtualizada = mapApiToInspecao(response.data);
     setHistorico((prev) =>

@@ -548,6 +548,7 @@ export class ManutencoesService {
         statusManutencao:
           data.statusManutencao ?? StatusManutencao.EM_MANUTENCAO,
         avaliacaoFinalConforme: data.avaliacaoFinalConforme,
+        dadosInspecao: data.dadosInspecao as Prisma.InputJsonValue | undefined,
       },
       include: {
         tipoEquipamento: true,
@@ -726,6 +727,7 @@ export class ManutencoesService {
       const camposPermitidosInspecao = [
         'diagnostico',
         'avaliacaoFinalConforme',
+        'dadosInspecao',
         'validade',
         'responsavelManutencao',
         'responsavelRevisao',
@@ -794,6 +796,8 @@ export class ManutencoesService {
                 : undefined,
             diagnostico: data.diagnostico,
             avaliacaoFinalConforme: data.avaliacaoFinalConforme,
+            dadosInspecao:
+              data.dadosInspecao as Prisma.InputJsonValue | undefined,
             responsavelManutencao: responsavelManutencaoFinal,
             responsavelRevisao: data.responsavelRevisao,
             statusManutencao: data.statusManutencao,
@@ -846,6 +850,7 @@ export class ManutencoesService {
       responsavelRevisao: data.responsavelRevisao,
       statusManutencao: data.statusManutencao,
       avaliacaoFinalConforme: data.avaliacaoFinalConforme,
+      dadosInspecao: data.dadosInspecao as Prisma.InputJsonValue | undefined,
       dataInicio: dataInicioPorStatus,
       dataParalisacao: this.resolverDataParalisacao(
         manutencaoAtual.statusManutencao,
@@ -880,6 +885,7 @@ export class ManutencoesService {
       'responsavelRevisao',
       'statusManutencao',
       'avaliacaoFinalConforme',
+      'dadosInspecao',
       'dataInicio',
       'dataParalisacao',
       'previsaoTermino',

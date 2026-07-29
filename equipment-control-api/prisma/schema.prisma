@@ -159,6 +159,7 @@ model Manutencao {
 
   statusManutencao        StatusManutencao    @default(EM_QUARENTENA)
   avaliacaoFinalConforme  Boolean?
+  dadosInspecao          Json?
   anexoPdf                String?
   diagnostico             String?
   responsavelManutencao   String?

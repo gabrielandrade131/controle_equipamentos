@@ -265,7 +265,8 @@ const OrdemProducao: React.FC = () => {
                     onClick={() => selectItem(producao)}
                   >
                     <strong>{producao.numeroOrdem}</strong>
-                    <small>{producao.modelo}</small>
+                    <small>{producao.tipoEquipamentoNome || "-"}</small>
+                    <small>{producao.tag || "-"}</small>
                     <small>{producao.statusProducao}</small>
                   </li>
                 ))}

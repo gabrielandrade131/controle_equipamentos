@@ -3,11 +3,7 @@
 export type RespostaBinaria = "SIM" | "NÃO" | "N/A" | "";
 
 export type StatusManutencao =
-  | "EM_QUARENTENA"
-  | "PENDENTE"
-  | "EM_MANUTENCAO"
-  | "CONCLUIDA"
-  | "PARALISADA";
+  "EM_QUARENTENA" | "PENDENTE" | "EM_MANUTENCAO" | "CONCLUIDA" | "PARALISADA";
 
 export type TipoManutencao = "CORRETIVA" | "PREVENTIVA";
 
@@ -91,6 +87,7 @@ export interface InspecaoManutencao {
 
   // Imagens/Fotos
   imagensAnexadas?: string[];
+  anexoPdf?: string;
 
   criadoEm?: string;
   atualizadoEm?: string;

@@ -42,6 +42,7 @@ type ChecklistTemplate = {
 
 export type ChecklistManutencaoParams = {
   tipoEquipamento?: string;
+  modeloEquipamento?: string;
   checklistId?: string;
 };
 
@@ -1515,6 +1516,90 @@ const CHECKLIST_SOPRADOR_PNEUMATICO: ChecklistTemplate = {
   ],
 };
 
+const CHECKLIST_EXAUSTOR_VENTILADOR_420_550: ChecklistTemplate = {
+  id: "exaustor-ventilador-420-550",
+  label: "Exaustor/Ventilador 420-550",
+  secoes: [
+    {
+      secao: "certificacoes",
+      itens: [
+        {
+          id: "exa_placa_tag",
+          titulo: "A placa de identificação e TAG estão legíveis?",
+        },
+        {
+          id: "exa_certificacoes",
+          titulo: "Todas as certificações encontram-se dentro do prazo de validade?",
+        },
+      ],
+    },
+    {
+      secao: "estruturaMecanica",
+      itens: [
+        {
+          id: "exa_estrutura",
+          titulo: "A estrutura do equipamento encontra-se em boas condições de uso?",
+        },
+        {
+          id: "exa_grade_protecao",
+          titulo: "A grade de proteção está íntegra?",
+        },
+        {
+          id: "exa_helice",
+          titulo: "A hélice do equipamento está íntegra?",
+        },
+        {
+          id: "exa_parafusos",
+          titulo: "Todos os parafusos estão bem fixados?",
+        },
+        {
+          id: "exa_conduto_flexivel",
+          titulo: "O conduto flexível está operacional, sem danos e contém ponto de aterramento?",
+        },
+      ],
+    },
+    {
+      secao: "sistemaEletrico",
+      itens: [
+        {
+          id: "exa_chave_comutadora",
+          titulo: "A chave comutadora liga/desliga está íntegra?",
+        },
+        {
+          id: "exa_plugue",
+          titulo: "O plugue elétrico é para área classificada (ATEX) e está íntegro?",
+        },
+        {
+          id: "exa_terra",
+          titulo: "O ponto de equipotencialização (terra) está visível e bem fixado?",
+        },
+        {
+          id: "exa_cabo_eletrico",
+          titulo: "O cabo elétrico está íntegro?",
+        },
+        {
+          id: "exa_motor_explosao",
+          titulo: "O motor elétrico é à prova de explosão?",
+        },
+        {
+          id: "exa_megagem_motor",
+          titulo: "A megagem do motor está dentro do valor especificado?",
+        },
+      ],
+    },
+    {
+      secao: "testesOperacionais",
+      itens: [
+        {
+          id: "exa_condicoes_funcionamento",
+          titulo: "O equipamento encontra-se em perfeitas condições de funcionamento?",
+        },
+        { id: "exa_operacional", titulo: "O equipamento está operacional?" },
+      ],
+    },
+  ],
+};
+
 const CHECKLIST_WPU_UNIDADE_LAVADORA: ChecklistTemplate = {
   id: "wpu-unidade-lavadora",
   label: "WPU - Unidade lavadora",
@@ -1678,6 +1763,10 @@ const CHECKLISTS_POR_EQUIPAMENTO: Record<string, ChecklistTemplate> = {
   [normalizarChave("Robô Lombrico ROV")]: CHECKLIST_ROBO_LOMBRICO_ROV,
   [normalizarChave("Shaker")]: CHECKLIST_SHAKER,
   [normalizarChave("Soprador pneumático")]: CHECKLIST_SOPRADOR_PNEUMATICO,
+  [normalizarChave("Exaustor 420")]: CHECKLIST_EXAUSTOR_VENTILADOR_420_550,
+  [normalizarChave("Exaustor 550")]: CHECKLIST_EXAUSTOR_VENTILADOR_420_550,
+  [normalizarChave("Ventilador 420")]: CHECKLIST_EXAUSTOR_VENTILADOR_420_550,
+  [normalizarChave("Ventilador 550")]: CHECKLIST_EXAUSTOR_VENTILADOR_420_550,
   [normalizarChave("WPU - Unidade lavadora")]: CHECKLIST_WPU_UNIDADE_LAVADORA,
   [normalizarChave("WPU")]: CHECKLIST_WPU_UNIDADE_LAVADORA,
   [normalizarChave("Unidade lavadora")]: CHECKLIST_WPU_UNIDADE_LAVADORA,
@@ -1710,6 +1799,7 @@ export const obterChecklistManutencao = (
 ) => {
   return (
     buscarChecklistPorValor(params.checklistId) ||
+    buscarChecklistPorValor(params.modeloEquipamento) ||
     buscarChecklistPorValor(params.tipoEquipamento) ||
     CHECKLIST_PADRAO
   );

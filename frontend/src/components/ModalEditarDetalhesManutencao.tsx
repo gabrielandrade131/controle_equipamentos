@@ -128,6 +128,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
 
                     return aplicarChecklistManutencao(proximaInspecao, {
                       tipoEquipamento: proximaInspecao.tipoEquipamento,
+                      modeloEquipamento: proximaInspecao.modelo,
                     });
                   });
                 }}
@@ -172,9 +173,30 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="text"
                 value={formData.modelo || ""}
-                onChange={(e) => handleInputChange("modelo", e.target.value)}
+                onChange={(e) =>
+                  setFormData((prev) => {
+                    const proximaInspecao = { ...prev, modelo: e.target.value };
+                    return aplicarChecklistManutencao(proximaInspecao, {
+                      tipoEquipamento: proximaInspecao.tipoEquipamento,
+                      modeloEquipamento: proximaInspecao.modelo,
+                    });
+                  })
+                }
                 readOnly={!isCreating}
                 placeholder={isCreating ? "Digite o modelo" : "-"}
+              />
+            </div>
+
+            <div className={isCreating ? "form-group" : "form-group read-only"}>
+              <label>Número de Série</label>
+              <input
+                type="text"
+                value={formData.numeroSerie || ""}
+                onChange={(e) =>
+                  handleInputChange("numeroSerie", e.target.value)
+                }
+                readOnly={!isCreating}
+                placeholder={isCreating ? "Digite o número de série" : "-"}
               />
             </div>
 

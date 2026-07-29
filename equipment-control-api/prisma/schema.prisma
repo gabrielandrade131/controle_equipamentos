@@ -145,6 +145,7 @@ model Manutencao {
   tipoEquipamentoNome     String?
   tipoManutencao          TipoManutencao      @default(CORRETIVA)
   modeloEquipamento       String?
+  numeroSerie             String?
   tag                     String?
   situacaoEquipamento     String?
   
@@ -158,6 +159,7 @@ model Manutencao {
 
   statusManutencao        StatusManutencao    @default(EM_QUARENTENA)
   avaliacaoFinalConforme  Boolean?
+  anexoPdf                String?
   diagnostico             String?
   responsavelManutencao   String?
   responsavelRevisao      String?
@@ -172,6 +174,7 @@ model Manutencao {
   excluidoEm              DateTime?         
 
   @@index([tag])
+  @@index([numeroSerie])
 
 }
 

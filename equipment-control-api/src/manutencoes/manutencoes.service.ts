@@ -530,6 +530,7 @@ export class ManutencoesService {
         tipoEquipamentoNome: tipoEquipamento.tipoEquipamentoNome,
         tipoManutencao: data.tipoManutencao ?? TipoManutencao.CORRETIVA,
         modeloEquipamento: data.modeloEquipamento,
+        numeroSerie: data.numeroSerie,
         tag: data.tag,
         situacaoEquipamento: data.situacaoEquipamento,
         dataRetornoBase: this.normalizarData(data.dataRetornoBase),
@@ -622,6 +623,35 @@ export class ManutencoesService {
     );
   }
 
+  async atualizarAnexoPdf(
+    id: string,
+    anexoPdf: string,
+    user?: UsuarioHistorico,
+  ) {
+    const manutencao = await this.findOne(id);
+    const alteradoPor = user?.nome || user?.email || user?.username || null;
+
+    const atualizada = await this.prisma.manutencao.update({
+      where: { id },
+      data: { anexoPdf },
+      include: { tipoEquipamento: true },
+    });
+
+    await this.prisma.historicoManutencao.create({
+      data: {
+        manutencaoId: id,
+        campo: 'anexoPdf',
+        valorAnterior: this.formatarValor(manutencao.anexoPdf),
+        valorNovo: this.formatarValor(anexoPdf),
+        alteradoPor,
+      },
+    });
+
+    return this.adicionarValidadeEquipamento(
+      this.adicionarDiasManutencao(atualizada),
+    );
+  }
+
   async update(id: string, data: UpdateManutencaoDto, user?: UsuarioHistorico) {
     const manutencaoAtual = await this.prisma.manutencao.findUnique({
       where: { id },
@@ -634,7 +664,7 @@ export class ManutencoesService {
     const alteradoPor = user?.nome || user?.email || user?.username || null;
     const responsavelManutencaoFinal =
       data.responsavelManutencao !== undefined
-        ? alteradoPor ?? data.responsavelManutencao
+        ? (alteradoPor ?? data.responsavelManutencao)
         : undefined;
     const statusMudou =
       data.statusManutencao !== undefined &&
@@ -749,30 +779,32 @@ export class ManutencoesService {
         );
       }
 
-      const manutencaoAtualizadaConcluida = await this.prisma.manutencao.update({
-        where: { id },
-        data: {
-          tipoEquipamentoId:
-            data.tipoEquipamentoId !== undefined
-              ? tipoEquipamento.tipoEquipamentoId
-              : undefined,
-          tipoEquipamentoNome:
-            data.tipoEquipamentoId !== undefined ||
-            data.tipoEquipamentoNome !== undefined
-              ? tipoEquipamento.tipoEquipamentoNome
-              : undefined,
-          diagnostico: data.diagnostico,
-          avaliacaoFinalConforme: data.avaliacaoFinalConforme,
-          responsavelManutencao: responsavelManutencaoFinal,
-          responsavelRevisao: data.responsavelRevisao,
-          statusManutencao: data.statusManutencao,
-          dataInicio: dataInicioPorStatus,
-          dataTermino: dataTerminoPorStatus,
+      const manutencaoAtualizadaConcluida = await this.prisma.manutencao.update(
+        {
+          where: { id },
+          data: {
+            tipoEquipamentoId:
+              data.tipoEquipamentoId !== undefined
+                ? tipoEquipamento.tipoEquipamentoId
+                : undefined,
+            tipoEquipamentoNome:
+              data.tipoEquipamentoId !== undefined ||
+              data.tipoEquipamentoNome !== undefined
+                ? tipoEquipamento.tipoEquipamentoNome
+                : undefined,
+            diagnostico: data.diagnostico,
+            avaliacaoFinalConforme: data.avaliacaoFinalConforme,
+            responsavelManutencao: responsavelManutencaoFinal,
+            responsavelRevisao: data.responsavelRevisao,
+            statusManutencao: data.statusManutencao,
+            dataInicio: dataInicioPorStatus,
+            dataTermino: dataTerminoPorStatus,
+          },
+          include: {
+            tipoEquipamento: true,
+          },
         },
-        include: {
-          tipoEquipamento: true,
-        },
-      });
+      );
 
       await this.atualizarValidadeEquipamentoPorTag(
         manutencaoAtualizadaConcluida.tag,
@@ -802,6 +834,7 @@ export class ManutencoesService {
           : undefined,
       tipoManutencao: data.tipoManutencao,
       modeloEquipamento: data.modeloEquipamento,
+      numeroSerie: data.numeroSerie,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
       dataRetornoBase:
@@ -838,6 +871,7 @@ export class ManutencoesService {
       'tipoEquipamentoNome',
       'tipoManutencao',
       'modeloEquipamento',
+      'numeroSerie',
       'tag',
       'situacaoEquipamento',
       'dataRetornoBase',

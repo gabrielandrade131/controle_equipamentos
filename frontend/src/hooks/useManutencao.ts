@@ -74,7 +74,10 @@ const extrairObservacaoTexto = (diagnostico: any): string => {
 
     const ultimaObservacao = [...parsed]
       .reverse()
-      .find((item) => typeof item?.texto === "string" && item.texto.trim().length > 0);
+      .find(
+        (item) =>
+          typeof item?.texto === "string" && item.texto.trim().length > 0,
+      );
 
     return ultimaObservacao?.texto ?? "";
   } catch {
@@ -140,12 +143,14 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     observacoes: extrairObservacaoTexto(manutencao.diagnostico),
     observacoesHistorico: parseObservacoesDiarias(manutencao.diagnostico),
     imagensAnexadas,
+    anexoPdf: manutencao.anexoPdf ? toAssetUrl(manutencao.anexoPdf) : "",
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
   };
 
   return aplicarChecklistManutencao(inspecaoMapeada, {
     tipoEquipamento: inspecaoMapeada.tipoEquipamento,
+    modeloEquipamento: inspecaoMapeada.modelo,
   });
 };
 
@@ -155,6 +160,7 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   tipoEquipamentoNome:
     inspecao.tipoEquipamento || inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
+  numeroSerie: inspecao.numeroSerie || undefined,
   tag: inspecao.tag || undefined,
   situacaoEquipamento: inspecao.destino || "Manutenção manual",
   dataRetornoBase: inspecao.dataRetornoBase || undefined,
@@ -256,6 +262,21 @@ export const useManutencao = () => {
     return inspecaoAtualizada;
   };
 
+  const anexarPdf = async (id: string, arquivo: File) => {
+    const dados = new FormData();
+    dados.append("arquivo", arquivo);
+
+    const response = await axiosInstance.post(
+      `/manutencoes/${id}/anexo-pdf`,
+      dados,
+    );
+    const inspecaoAtualizada = mapApiToInspecao(response.data);
+    setHistorico((prev) =>
+      prev.map((item) => (item.id === id ? inspecaoAtualizada : item)),
+    );
+    return inspecaoAtualizada;
+  };
+
   const atualizarInspecaoConcluida = async (
     id: string,
     inspecao: InspecaoManutencao,
@@ -288,6 +309,7 @@ export const useManutencao = () => {
     error,
     adicionarInspecao,
     atualizarInspecao,
+    anexarPdf,
     atualizarInspecaoConcluida,
     removerInspecao,
     buscarFotosRecebimento,

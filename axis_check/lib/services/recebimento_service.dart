@@ -221,6 +221,14 @@ class RecebimentoService {
       }
 
       return [];
+    } on DioException catch (e) {
+      debugPrint('ERRO AO LISTAR EQUIPAMENTOS RECEBIDOS: $e');
+
+      if (e.response?.statusCode == 401) {
+        rethrow;
+      }
+
+      throw Exception('Erro ao buscar equipamentos já recebidos.');
     } catch (e) {
       debugPrint('ERRO AO LISTAR EQUIPAMENTOS RECEBIDOS: $e');
       throw Exception('Erro ao buscar equipamentos já recebidos.');

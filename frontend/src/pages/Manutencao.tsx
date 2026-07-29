@@ -35,10 +35,15 @@ const matchesTextFilter = (
   value: string | number | null | undefined,
   filter?: string,
 ) => {
-  const normalizedFilter = String(filter ?? "").trim().toLowerCase();
+  const normalizedFilter = String(filter ?? "")
+    .trim()
+    .toLowerCase();
   if (!normalizedFilter) return true;
 
-  return String(value ?? "").trim().toLowerCase().includes(normalizedFilter);
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .includes(normalizedFilter);
 };
 
 export const Manutencao: React.FC = () => {
@@ -58,12 +63,14 @@ export const Manutencao: React.FC = () => {
     FotoRecebimentoManutencao[]
   >([]);
   const [carregandoFotos, setCarregandoFotos] = useState(false);
+  const [enviandoAnexoPdf, setEnviandoAnexoPdf] = useState(false);
   const {
     historico,
     adicionarInspecao,
     atualizarInspecao,
     atualizarInspecaoConcluida,
     buscarFotosRecebimento,
+    anexarPdf,
   } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
   const { filters, updateFilters } = useFilters("manutencao-filters", {});
@@ -117,7 +124,8 @@ export const Manutencao: React.FC = () => {
 
         if (filters.dataTermino && inicioTrabalho > filters.dataTermino)
           return false;
-        if (filters.dataInicio && fimTrabalho < filters.dataInicio) return false;
+        if (filters.dataInicio && fimTrabalho < filters.dataInicio)
+          return false;
       }
       return true;
     });
@@ -172,6 +180,42 @@ export const Manutencao: React.FC = () => {
       await exportInspecaoToPdf(inspecao, nomeArquivo, logoPath);
     } catch (error) {
       alert("Erro ao gerar PDF: " + error);
+    }
+  };
+
+  const handleAnexarPdf = async (arquivo?: File) => {
+    if (!arquivo || !selectedItem?.id) return;
+
+    if (
+      arquivo.type !== "application/pdf" ||
+      !arquivo.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setAlertModal({
+        isOpen: true,
+        message: "Selecione um arquivo no formato PDF.",
+      });
+      return;
+    }
+
+    if (arquivo.size > 10 * 1024 * 1024) {
+      setAlertModal({
+        isOpen: true,
+        message: "O PDF deve ter no máximo 10 MB.",
+      });
+      return;
+    }
+
+    try {
+      setEnviandoAnexoPdf(true);
+      await anexarPdf(selectedItem.id, arquivo);
+    } catch (error: any) {
+      setAlertModal({
+        isOpen: true,
+        message:
+          error.response?.data?.message || "Não foi possível anexar o PDF.",
+      });
+    } finally {
+      setEnviandoAnexoPdf(false);
     }
   };
 
@@ -266,7 +310,10 @@ export const Manutencao: React.FC = () => {
         <h2>Manutenção</h2>
         <div className="page-toolbar">
           {!isOperational ? (
-            <button className="btn-primary" onClick={() => setModo("criar-nova")}>
+            <button
+              className="btn-primary"
+              onClick={() => setModo("criar-nova")}
+            >
               Gerar Ordem de Manutenção
             </button>
           ) : null}
@@ -360,17 +407,20 @@ export const Manutencao: React.FC = () => {
                     className={selectedId === inspecao.id ? "active" : ""}
                     onClick={() => selectItem(inspecao)}
                   >
-                    <strong>
-                      {(inspecao.numeroOrdemManutencao ?? inspecao.tag) ||
-                        "Sem TAG"}
+                    <strong className="equipamento-tipo-card">
+                      {inspecao.tipoEquipamento || "Tipo não informado"}
                     </strong>
-                    <small>
-                      {TIPO_MANUTENCAO_LABELS[inspecao.tipoManutencao] ||
-                        inspecao.tipoManutencao ||
+                    <small className="equipamento-tag-card">
+                      {inspecao.tag || "TAG não informada"}
+                    </small>
+                    <small className="equipamento-status-card">
+                      {STATUS_LABELS[inspecao.statusManutencao] ||
+                        inspecao.statusManutencao ||
                         "-"}
                     </small>
-                    <small>{inspecao.fabricante || "-"}</small>
-                    <small>{inspecao.statusManutencao || "-"}</small>
+                    <small className="equipamento-ordem-card">
+                      OM #{inspecao.numeroOrdemManutencao ?? "-"}
+                    </small>
                   </li>
                 ))}
               </ul>
@@ -548,6 +598,41 @@ export const Manutencao: React.FC = () => {
                     </p>
                   )}
                 </div>
+              </div>
+
+              <div className="documents-section">
+                <h3>Anexo PDF da Ordem de Manutenção</h3>
+                {selectedItem.anexoPdf ? (
+                  <a
+                    className="anexo-pdf-link"
+                    href={selectedItem.anexoPdf}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Abrir PDF anexado
+                  </a>
+                ) : (
+                  <p className="sem-observacoes">Nenhum PDF anexado.</p>
+                )}
+                <label className="anexo-pdf-upload">
+                  <span>
+                    {enviandoAnexoPdf
+                      ? "Enviando PDF..."
+                      : "Anexar ou substituir PDF"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    disabled={enviandoAnexoPdf}
+                    onChange={(event) => {
+                      void handleAnexarPdf(event.target.files?.[0]);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                <small className="anexo-pdf-hint">
+                  Somente PDF, até 10 MB.
+                </small>
               </div>
 
               <div className="inspecao-mini-tab">

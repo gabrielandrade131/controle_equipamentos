@@ -1,16 +1,21 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
   Param,
   Patch,
   Post,
+  UploadedFile,
   Query,
   Req,
   Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import {
   ApiBearerAuth,
   ApiHeader,
@@ -26,6 +31,8 @@ import { SynchroIntegrationGuard } from '../auth/synchro-integration.guard';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { Response } from 'express';
+import { extname, join } from 'path';
+import { mkdirSync } from 'fs';
 import { CurrentUser } from '../auth/current-user.decorator';
 import {
   assertNotOperationalUser,
@@ -127,6 +134,60 @@ export class ManutencoesController {
   @ApiOperation({ summary: 'Listar histórico de alterações da manutenção' })
   listHistorico(@Param('id') id: string) {
     return this.manutencoesService.listHistorico(id);
+  }
+
+  @Post(':id/anexo-pdf')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Anexar PDF à ordem de manutenção' })
+  @UseInterceptors(
+    FileInterceptor('arquivo', {
+      storage: diskStorage({
+        destination: (() => {
+          const destination = join(
+            process.cwd(),
+            '..',
+            'uploads',
+            'manutencoes',
+          );
+          mkdirSync(destination, { recursive: true });
+          return destination;
+        })(),
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          callback(
+            null,
+            `${uniqueSuffix}${extname(file.originalname).toLowerCase()}`,
+          );
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, callback) => {
+        const isPdf =
+          file.mimetype === 'application/pdf' &&
+          extname(file.originalname).toLowerCase() === '.pdf';
+        callback(
+          isPdf ? null : new Error('Apenas arquivos PDF são permitidos.'),
+          isPdf,
+        );
+      },
+    }),
+  )
+  anexarPdf(
+    @Param('id') id: string,
+    @UploadedFile() arquivo: Express.Multer.File | undefined,
+    @Req() req: any,
+  ) {
+    if (!arquivo) {
+      throw new BadRequestException('Selecione um arquivo PDF para anexar.');
+    }
+
+    return this.manutencoesService.atualizarAnexoPdf(
+      id,
+      `/uploads/manutencoes/${arquivo.filename}`,
+      req.user,
+    );
   }
 
   @Patch(':id')

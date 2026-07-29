@@ -1,6 +1,5 @@
-import jsPDF from 'jspdf';
-import { aplicarChecklistManutencao } from '../constants/inspecaoManutencao';
-import { InspecaoManutencao } from '../types/manutencao';
+import jsPDF from "jspdf";
+import { InspecaoManutencao } from "../types/manutencao";
 
 type ItemChecklist = {
   titulo: string;
@@ -11,17 +10,18 @@ export const usePdfExportManutencao = () => {
   const exportInspecaoToPdf = async (
     inspecao: InspecaoManutencao,
     filename: string,
-    logoPath?: string
+    logoPath?: string,
   ) => {
     try {
       const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       });
-      const inspecaoChecklist = aplicarChecklistManutencao(inspecao, {
-        tipoEquipamento: inspecao.tipoEquipamento,
-      });
+      // O formulário já contém apenas os itens do checklist aplicável ao tipo
+      // de equipamento. Reaplicar o template aqui poderia substituir esse
+      // conjunto e fazer o PDF exibir perguntas que não pertencem à inspeção.
+      const inspecaoChecklist = inspecao;
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -34,16 +34,18 @@ export const usePdfExportManutencao = () => {
       let y = 14;
 
       const formatDate = (value?: string) => {
-        if (!value) return '-';
+        if (!value) return "-";
 
         const date = new Date(`${value}T00:00:00`);
-        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
+        return Number.isNaN(date.getTime())
+          ? value
+          : date.toLocaleDateString("pt-BR");
       };
 
       const normalizeResposta = (value?: string) =>
-        String(value ?? '')
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
+        String(value ?? "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
           .toUpperCase();
 
       const ensureSpace = (height: number) => {
@@ -57,9 +59,9 @@ export const usePdfExportManutencao = () => {
         ensureSpace(12);
         y += 4;
         pdf.setFillColor(green.r, green.g, green.b);
-        pdf.rect(marginX, y, contentWidth, 8, 'F');
+        pdf.rect(marginX, y, contentWidth, 8, "F");
         pdf.setTextColor(0, 0, 0);
-        pdf.setFont('helvetica', 'bold');
+        pdf.setFont("helvetica", "bold");
         pdf.setFontSize(10);
         pdf.text(title, marginX + 2, y + 5.5);
         y += 12;
@@ -69,9 +71,9 @@ export const usePdfExportManutencao = () => {
         text: string,
         x: number,
         currentY: number,
-        options?: { bold?: boolean; size?: number }
+        options?: { bold?: boolean; size?: number },
       ) => {
-        pdf.setFont('helvetica', options?.bold ? 'bold' : 'normal');
+        pdf.setFont("helvetica", options?.bold ? "bold" : "normal");
         pdf.setFontSize(options?.size ?? 9);
         pdf.setTextColor(0, 0, 0);
         pdf.text(text, x, currentY);
@@ -82,9 +84,9 @@ export const usePdfExportManutencao = () => {
         startX: number,
         endX: number,
         currentY: number,
-        options?: { bold?: boolean; size?: number }
+        options?: { bold?: boolean; size?: number },
       ) => {
-        pdf.setFont('helvetica', options?.bold ? 'bold' : 'normal');
+        pdf.setFont("helvetica", options?.bold ? "bold" : "normal");
         pdf.setFontSize(options?.size ?? 9);
         pdf.setTextColor(0, 0, 0);
         const textWidth = pdf.getTextWidth(text);
@@ -95,39 +97,63 @@ export const usePdfExportManutencao = () => {
       const drawDataGrid = () => {
         const rows = [
           [
-            { label: 'Data de retorno à base', value: formatDate(inspecao.dataRetornoBase) },
-            { label: 'Data de início', value: formatDate(inspecao.dataInicio) },
-          ],
-          [
-            { label: 'Previsão de término', value: formatDate(inspecao.previsaoTermino) },
-            { label: 'Data de término', value: formatDate(inspecao.dataTermino) },
-          ],
-          [
-            { label: 'Status', value: inspecao.statusManutencao || '-' },
-            { label: 'Executado por', value: inspecao.responsavel || '-' },
-          ],
-          [
-            { label: 'Revisado por', value: inspecao.responsavelRevisao || '-' },
-            { label: 'Validade', value: formatDate(inspecao.validade) },
-          ],
-          [
-            { label: 'Fabricante', value: inspecao.fabricante || '-' },
-            { label: 'Modelo', value: inspecao.modelo || '-' },
-          ],
-          [
-            { label: 'Ordem de Manutenção', value: String(inspecao.numeroOrdemManutencao ?? '-') },
-            { label: 'TAG', value: inspecao.tag || '-' },
+            {
+              label: "Data de retorno à base",
+              value: formatDate(inspecao.dataRetornoBase),
+            },
+            { label: "Data de início", value: formatDate(inspecao.dataInicio) },
           ],
           [
             {
-              label: 'Tipo de manutenção',
-              value: inspecao.tipoManutencao === 'PREVENTIVA' ? 'Preventiva' : 'Corretiva',
+              label: "Previsão de término",
+              value: formatDate(inspecao.previsaoTermino),
             },
-            { label: 'Tipo de equipamento', value: inspecao.tipoEquipamento || '-' },
+            {
+              label: "Data de término",
+              value: formatDate(inspecao.dataTermino),
+            },
           ],
           [
-            { label: 'Destino', value: inspecao.destino || '-' },
-            { label: 'Local da manutenção', value: inspecao.localManutencao || '-' },
+            { label: "Status", value: inspecao.statusManutencao || "-" },
+            { label: "Executado por", value: inspecao.responsavel || "-" },
+          ],
+          [
+            {
+              label: "Revisado por",
+              value: inspecao.responsavelRevisao || "-",
+            },
+            { label: "Validade", value: formatDate(inspecao.validade) },
+          ],
+          [
+            { label: "Fabricante", value: inspecao.fabricante || "-" },
+            { label: "Modelo", value: inspecao.modelo || "-" },
+          ],
+          [
+            {
+              label: "Ordem de Manutenção",
+              value: String(inspecao.numeroOrdemManutencao ?? "-"),
+            },
+            { label: "TAG", value: inspecao.tag || "-" },
+          ],
+          [
+            {
+              label: "Tipo de manutenção",
+              value:
+                inspecao.tipoManutencao === "PREVENTIVA"
+                  ? "Preventiva"
+                  : "Corretiva",
+            },
+            {
+              label: "Tipo de equipamento",
+              value: inspecao.tipoEquipamento || "-",
+            },
+          ],
+          [
+            { label: "Destino", value: inspecao.destino || "-" },
+            {
+              label: "Local da manutenção",
+              value: inspecao.localManutencao || "-",
+            },
           ],
         ];
 
@@ -147,22 +173,27 @@ export const usePdfExportManutencao = () => {
             drawText(cell.label, x + 2, rowY + 4, { bold: true, size: 7.5 });
 
             const valueLines = pdf.splitTextToSize(cell.value, colWidth - 4);
-            drawText(valueLines[0] || '-', x + 2, rowY + 8.5, { size: 8.5 });
+            drawText(valueLines[0] || "-", x + 2, rowY + 8.5, { size: 8.5 });
           });
         });
 
         y += gridHeight + 4;
       };
 
-      const drawCheckbox = (x: number, currentY: number, selected: boolean, label: string) => {
+      const drawCheckbox = (
+        x: number,
+        currentY: number,
+        selected: boolean,
+        label: string,
+      ) => {
         const size = 3.2;
         pdf.setDrawColor(0, 0, 0);
         pdf.rect(x, currentY - 2.6, size, size);
 
         if (selected) {
-          pdf.setFont('helvetica', 'bold');
+          pdf.setFont("helvetica", "bold");
           pdf.setFontSize(8);
-          pdf.text('X', x + 0.6, currentY);
+          pdf.text("X", x + 0.6, currentY);
         }
 
         drawText(label, x + 5, currentY, { size: 8.5 });
@@ -182,7 +213,12 @@ export const usePdfExportManutencao = () => {
 
           const rowTop = y;
           pdf.setDrawColor(238, 238, 238);
-          pdf.line(marginX, rowTop + rowHeight, marginX + contentWidth, rowTop + rowHeight);
+          pdf.line(
+            marginX,
+            rowTop + rowHeight,
+            marginX + contentWidth,
+            rowTop + rowHeight,
+          );
 
           drawText(lines[0], marginX, y + 4, { size: 8.5 });
           lines.slice(1).forEach((line: string, index: number) => {
@@ -191,9 +227,9 @@ export const usePdfExportManutencao = () => {
 
           const answer = normalizeResposta(item.resposta);
           const optionY = y + 4;
-          drawCheckbox(optionStartX, optionY, answer === 'SIM', 'SIM');
-          drawCheckbox(optionStartX + 20, optionY, answer === 'NAO', 'NÃO');
-          drawCheckbox(optionStartX + 40, optionY, answer === 'N/A', 'N/A');
+          drawCheckbox(optionStartX, optionY, answer === "SIM", "SIM");
+          drawCheckbox(optionStartX + 20, optionY, answer === "NAO", "NÃO");
+          drawCheckbox(optionStartX + 40, optionY, answer === "N/A", "N/A");
 
           y += rowHeight;
         });
@@ -206,11 +242,14 @@ export const usePdfExportManutencao = () => {
 
         if (!observacoes.length) return;
 
-        sectionHeader('OBSERVAÇÕES DIÁRIAS');
+        sectionHeader("OBSERVAÇÕES DIÁRIAS");
 
         observacoes.forEach((obs) => {
           const dateStr = formatDate(obs.data);
-          const textLines = pdf.splitTextToSize(obs.texto || '-', contentWidth - 10);
+          const textLines = pdf.splitTextToSize(
+            obs.texto || "-",
+            contentWidth - 10,
+          );
           const height = Math.max(14, (textLines.length + 1) * 4 + 8);
 
           ensureSpace(height);
@@ -230,83 +269,110 @@ export const usePdfExportManutencao = () => {
         try {
           const img = new Image();
           img.src = logoPath;
-          await new Promise((resolve) => (img.onload = () => resolve(undefined)));
-          pdf.addImage(img, 'PNG', marginX, y + 2, 27, 20);
+          await new Promise(
+            (resolve) => (img.onload = () => resolve(undefined)),
+          );
+          pdf.addImage(img, "PNG", marginX, y + 2, 27, 20);
           y += 18;
         } catch (e) {
-          console.error('Erro ao adicionar logo:', e);
+          console.error("Erro ao adicionar logo:", e);
         }
       }
 
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont("helvetica", "normal");
       pdf.setFontSize(14);
       pdf.setTextColor(0, 0, 0);
-      pdf.text('HISTÓRICO DE INSPEÇÃO DE MANUTENÇÃO', pageWidth / 2, y, { align: 'center' });
+      pdf.text("HISTÓRICO DE INSPEÇÃO DE MANUTENÇÃO", pageWidth / 2, y, {
+        align: "center",
+      });
       y += 8;
       pdf.setDrawColor(0, 0, 0);
       pdf.line(marginX, y, pageWidth - marginX, y);
       y += 7;
 
-      sectionHeader('DADOS DA MANUTENÇÃO');
+      sectionHeader("DADOS DA MANUTENÇÃO");
       drawDataGrid();
 
-      drawSection('CERTIFICAÇÕES E DOCUMENTAÇÃO', inspecaoChecklist.certificacoes);
-      drawSection('ESTRUTURA E INTEGRIDADE MECÂNICA', inspecaoChecklist.estruturaMecanica);
-      drawSection('SISTEMA HIDRÁULICO', inspecaoChecklist.sistemaHidraulico);
-      drawSection('SISTEMA PNEUMÁTICO', inspecaoChecklist.sistemaPneumatico);
-      drawSection('SISTEMA ELÉTRICO', inspecaoChecklist.sistemaEletrico);
-      drawSection('DISPOSITIVOS DE SEGURANÇA', inspecaoChecklist.dispositivoSeguranca);
-      drawSection('COMPONENTES OPERACIONAIS', inspecaoChecklist.componentesOperacionais);
-      drawSection('ACESSÓRIOS E ITENS ESPECÍFICOS', inspecaoChecklist.acessorios);
-      drawSection('TESTES OPERACIONAIS', inspecaoChecklist.testesOperacionais);
+      drawSection(
+        "CERTIFICAÇÕES E DOCUMENTAÇÃO",
+        inspecaoChecklist.certificacoes,
+      );
+      drawSection(
+        "ESTRUTURA E INTEGRIDADE MECÂNICA",
+        inspecaoChecklist.estruturaMecanica,
+      );
+      drawSection("SISTEMA HIDRÁULICO", inspecaoChecklist.sistemaHidraulico);
+      drawSection("SISTEMA PNEUMÁTICO", inspecaoChecklist.sistemaPneumatico);
+      drawSection("SISTEMA ELÉTRICO", inspecaoChecklist.sistemaEletrico);
+      drawSection(
+        "DISPOSITIVOS DE SEGURANÇA",
+        inspecaoChecklist.dispositivoSeguranca,
+      );
+      drawSection(
+        "COMPONENTES OPERACIONAIS",
+        inspecaoChecklist.componentesOperacionais,
+      );
+      drawSection(
+        "ACESSÓRIOS E ITENS ESPECÍFICOS",
+        inspecaoChecklist.acessorios,
+      );
+      drawSection("TESTES OPERACIONAIS", inspecaoChecklist.testesOperacionais);
 
-      sectionHeader('AVALIAÇÃO FINAL');
+      sectionHeader("AVALIAÇÃO FINAL");
       ensureSpace(10);
       const finalAnswer = normalizeResposta(inspecao.avaliacaoFinal);
-      drawCheckbox(marginX, y + 2, finalAnswer === 'CONFORME', 'CONFORME');
-      drawCheckbox(marginX + 55, y + 2, finalAnswer === 'NAO CONFORME', 'NÃO CONFORME');
+      drawCheckbox(marginX, y + 2, finalAnswer === "CONFORME", "CONFORME");
+      drawCheckbox(
+        marginX + 55,
+        y + 2,
+        finalAnswer === "NAO CONFORME",
+        "NÃO CONFORME",
+      );
       y += 11;
 
       drawObservacoesDiarias();
 
       if (inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0) {
-        sectionHeader('FOTOS DA MANUTENÇÃO');
-        
+        sectionHeader("FOTOS DA MANUTENÇÃO");
+
         const imagensPerPage = 2;
         const imageWidth = 85;
         const imageHeight = 85;
         const pageMargin = marginX;
-        
+
         for (let i = 0; i < inspecao.imagensAnexadas.length; i++) {
           const indexInPage = i % imagensPerPage;
-          
+
           if (indexInPage === 0 && i > 0) {
             pdf.addPage();
             y = 14;
-            sectionHeader('FOTOS DA MANUTENÇÃO (Continuação)');
+            sectionHeader("FOTOS DA MANUTENÇÃO (Continuação)");
           }
-          
+
           ensureSpace(imageHeight + 10);
-          
+
           const imageX = pageMargin + (i % 2) * (imageWidth + 10);
           const imageY = y;
-          
+
           try {
             pdf.addImage(
               inspecao.imagensAnexadas[i],
-              'JPEG',
+              "JPEG",
               imageX,
               imageY,
               imageWidth,
-              imageHeight
+              imageHeight,
             );
-            
-            drawText(`Foto ${i + 1}`, imageX, imageY + imageHeight + 4, { 
-              size: 8, 
-              bold: true 
+
+            drawText(`Foto ${i + 1}`, imageX, imageY + imageHeight + 4, {
+              size: 8,
+              bold: true,
             });
-            
-            if ((i + 1) % imagensPerPage === 0 || i === inspecao.imagensAnexadas.length - 1) {
+
+            if (
+              (i + 1) % imagensPerPage === 0 ||
+              i === inspecao.imagensAnexadas.length - 1
+            ) {
               y += imageHeight + 10;
             }
           } catch (error) {
@@ -315,34 +381,54 @@ export const usePdfExportManutencao = () => {
         }
       }
 
-      sectionHeader('ASSINATURA');
+      sectionHeader("ASSINATURA");
       ensureSpace(36);
       const assinaturaLineWidth = 78;
       const assinaturaGap = 24;
       const assinaturaTotalWidth = assinaturaLineWidth * 2 + assinaturaGap;
-      const assinaturaStartX = marginX + (contentWidth - assinaturaTotalWidth) / 2;
+      const assinaturaStartX =
+        marginX + (contentWidth - assinaturaTotalWidth) / 2;
       const linhaExecutanteInicio = assinaturaStartX;
       const linhaExecutanteFim = linhaExecutanteInicio + assinaturaLineWidth;
       const linhaRevisaoInicio = linhaExecutanteFim + assinaturaGap;
       const linhaRevisaoFim = linhaRevisaoInicio + assinaturaLineWidth;
-      drawText(`Executado por: ${inspecao.responsavel || '-'}`, linhaExecutanteInicio, y + 2, { size: 9 });
-      drawText(`Revisado por: ${inspecao.responsavelRevisao || '-'}`, linhaRevisaoInicio, y + 2, { size: 9 });
+      drawText(
+        `Executado por: ${inspecao.responsavel || "-"}`,
+        linhaExecutanteInicio,
+        y + 2,
+        { size: 9 },
+      );
+      drawText(
+        `Revisado por: ${inspecao.responsavelRevisao || "-"}`,
+        linhaRevisaoInicio,
+        y + 2,
+        { size: 9 },
+      );
       y += 20;
       pdf.setDrawColor(0, 0, 0);
       pdf.line(linhaExecutanteInicio, y, linhaExecutanteFim, y);
-      drawCenteredText('Assinatura executante', linhaExecutanteInicio, linhaExecutanteFim, y + 5, { size: 8 });
-      pdf.line(linhaRevisaoInicio, y, linhaRevisaoFim, y);
-      drawCenteredText('Assinatura revisão', linhaRevisaoInicio, linhaRevisaoFim, y + 5, { size: 8 });
-      drawText(
-        `Data: ${formatDate(inspecao.dataTermino)}`,
-        marginX,
-        y + 18,
-        { size: 9 }
+      drawCenteredText(
+        "Assinatura executante",
+        linhaExecutanteInicio,
+        linhaExecutanteFim,
+        y + 5,
+        { size: 8 },
       );
+      pdf.line(linhaRevisaoInicio, y, linhaRevisaoFim, y);
+      drawCenteredText(
+        "Assinatura revisão",
+        linhaRevisaoInicio,
+        linhaRevisaoFim,
+        y + 5,
+        { size: 8 },
+      );
+      drawText(`Data: ${formatDate(inspecao.dataTermino)}`, marginX, y + 18, {
+        size: 9,
+      });
 
       pdf.save(filename);
     } catch (error) {
-      console.error('Erro ao exportar PDF:', error);
+      console.error("Erro ao exportar PDF:", error);
       throw error;
     }
   };

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 import '../../core/storage/token_storage.dart';
 import '../../core/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import '../../services/recebimento_service.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/os_card.dart';
 import '../os_detail/os_detail_screen.dart';
+import '../login/login_screen.dart';
 
 class OsListScreen extends StatefulWidget {
   const OsListScreen({super.key});
@@ -34,7 +36,7 @@ class _OsListScreenState extends State<OsListScreen> {
 
     return osList.where((os) {
       return os.numeroOs.toLowerCase().contains(termo) ||
-        os.cliente.toLowerCase().contains(termo);
+          os.cliente.toLowerCase().contains(termo);
     }).toList();
   }
 
@@ -59,10 +61,8 @@ class _OsListScreenState extends State<OsListScreen> {
         usarMock: false,
       );
 
-      final equipamentosRecebidos =
-          await recebimentoService.listarEquipamentosRecebidos(
-        usarMock: false,
-      );
+      final equipamentosRecebidos = await recebimentoService
+          .listarEquipamentosRecebidos(usarMock: false);
 
       final idsRecebidos = equipamentosRecebidos
           .map((item) => item.equipamentoIdSynchro.trim())
@@ -87,32 +87,36 @@ class _OsListScreenState extends State<OsListScreen> {
           .where((chave) => !chave.endsWith('|'))
           .toSet();
 
-      final osFiltradas = resultadoSynchro.map((os) {
-        final numeroOs = os.numeroOs.trim().toUpperCase();
+      final osFiltradas = resultadoSynchro
+          .map((os) {
+            final numeroOs = os.numeroOs.trim().toUpperCase();
 
-        final equipamentosPendentes = os.equipamentos.where((equipamento) {
-          final equipamentoId = equipamento.id.trim();
-          final tag = equipamento.tag.trim().toUpperCase();
-          final serie = equipamento.numeroSerie.trim().toUpperCase();
+            final equipamentosPendentes = os.equipamentos.where((equipamento) {
+              final equipamentoId = equipamento.id.trim();
+              final tag = equipamento.tag.trim().toUpperCase();
+              final serie = equipamento.numeroSerie.trim().toUpperCase();
 
-          final recebidoPorId =
-              equipamentoId.isNotEmpty && idsRecebidos.contains(equipamentoId);
+              final recebidoPorId =
+                  equipamentoId.isNotEmpty &&
+                  idsRecebidos.contains(equipamentoId);
 
-          final recebidoPorTag =
-              tag.isNotEmpty && chavesTagRecebidas.contains('$numeroOs|$tag');
+              final recebidoPorTag =
+                  tag.isNotEmpty &&
+                  chavesTagRecebidas.contains('$numeroOs|$tag');
 
-          final recebidoPorSerie =
-              serie.isNotEmpty && chavesSerieRecebidas.contains('$numeroOs|$serie');
+              final recebidoPorSerie =
+                  serie.isNotEmpty &&
+                  chavesSerieRecebidas.contains('$numeroOs|$serie');
 
-          return !recebidoPorId && !recebidoPorTag && !recebidoPorSerie;
-        }).toList();
+              return !recebidoPorId && !recebidoPorTag && !recebidoPorSerie;
+            }).toList();
 
-        return os.copyWith(
-          equipamentos: equipamentosPendentes,
-        );
-      }).where((os) {
-        return os.equipamentos.isNotEmpty;
-      }).toList();
+            return os.copyWith(equipamentos: equipamentosPendentes);
+          })
+          .where((os) {
+            return os.equipamentos.isNotEmpty;
+          })
+          .toList();
 
       if (!mounted) return;
 
@@ -122,6 +126,14 @@ class _OsListScreenState extends State<OsListScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+
+      if (e is DioException && e.response?.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
+        return;
+      }
 
       setState(() {
         erro = 'Erro ao carregar OS.';
@@ -298,15 +310,11 @@ class _OsListScreenState extends State<OsListScreen> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: AppColors.border,
-                    ),
+                    borderSide: const BorderSide(color: AppColors.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: AppColors.border,
-                    ),
+                    borderSide: const BorderSide(color: AppColors.border),
                   ),
                 ),
               ),
@@ -317,10 +325,7 @@ class _OsListScreenState extends State<OsListScreen> {
 
         final os = osFiltradas[index - 1];
 
-        return OsCard(
-          os: os,
-          onTap: () => abrirDetalheOs(os),
-        );
+        return OsCard(os: os, onTap: () => abrirDetalheOs(os));
       },
     );
   }

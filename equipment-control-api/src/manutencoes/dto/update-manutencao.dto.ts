@@ -33,6 +33,11 @@ export class UpdateManutencaoDto {
   @IsString()
   modeloEquipamento?: string;
 
+  @ApiPropertyOptional({ example: 'SN-000123' })
+  @IsOptional()
+  @IsString()
+  numeroSerie?: string;
+
   @ApiPropertyOptional({ example: 'TAG-0001' })
   @IsOptional()
   @IsString()

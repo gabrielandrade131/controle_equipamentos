@@ -124,6 +124,60 @@
   padding: 12px 14px;
   color: #17324d;
   background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tipos-equipamento-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tipos-equipamento-actions button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.tipos-equipamento-actions button.edit-btn:hover {
+  background-color: #dafbe1;
+}
+
+.tipos-equipamento-actions button.delete-btn:hover {
+  background-color: #ffebe9;
+}
+
+.tipos-equipamento-inline-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.tipos-equipamento-inline-edit input {
+  flex: 1;
+  border: 1px solid #bfd0de;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.tipos-equipamento-inline-edit button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.tipos-equipamento-inline-edit button:hover {
+  background-color: #f1f5f9;
 }
 
 @media (max-width: 900px) {

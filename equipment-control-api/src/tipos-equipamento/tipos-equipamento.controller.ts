@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -53,6 +54,7 @@ export class TiposEquipamentoController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard, VerifiedUserGuard)
   @ApiOperation({ summary: 'Editar tipo de equipamento' })
   update(
     @CurrentUser() usuarioAtual: AuthenticatedUser,
@@ -64,6 +66,7 @@ export class TiposEquipamentoController {
   }
 
   @Patch(':id/inativar')
+  @UseGuards(JwtAuthGuard, VerifiedUserGuard)
   @ApiOperation({ summary: 'Inativar tipo de equipamento' })
   inactivate(
     @CurrentUser() usuarioAtual: AuthenticatedUser,
@@ -74,6 +77,7 @@ export class TiposEquipamentoController {
   }
 
   @Patch(':id/ativar')
+  @UseGuards(JwtAuthGuard, VerifiedUserGuard)
   @ApiOperation({ summary: 'Ativar tipo de equipamento' })
   activate(
     @CurrentUser() usuarioAtual: AuthenticatedUser,
@@ -81,5 +85,16 @@ export class TiposEquipamentoController {
   ) {
     assertNotOperationalUser(usuarioAtual);
     return this.tiposEquipamentoService.ativar(id);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, VerifiedUserGuard)
+  @ApiOperation({ summary: 'Excluir tipo de equipamento' })
+  remove(
+    @CurrentUser() usuarioAtual: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    assertNotOperationalUser(usuarioAtual);
+    return this.tiposEquipamentoService.inativar(id);
   }
 }

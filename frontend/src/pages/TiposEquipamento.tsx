@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import { TipoEquipamento } from '../types/producao';
-import { isVerifiedUser } from '../utils/auth';
+import { isAdminUser, isVerifiedUser } from '../utils/auth';
 import './TiposEquipamento.css';
 
 type FormState = {
@@ -31,7 +31,11 @@ const TiposEquipamentoPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const usuarioVerificado = isVerifiedUser();
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingNome, setEditingNome] = useState<string>('');
+
+  const usuarioMaster = isAdminUser() || isVerifiedUser();
 
   const tiposOrdenados = useMemo(
     () => [...tipos].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
@@ -70,7 +74,7 @@ const TiposEquipamentoPage: React.FC = () => {
       return;
     }
 
-    if (!usuarioVerificado) {
+    if (!usuarioMaster) {
       setError('Apenas usuários master podem cadastrar tipos de equipamento.');
       return;
     }
@@ -96,6 +100,52 @@ const TiposEquipamentoPage: React.FC = () => {
     }
   };
 
+  const handleStartEdit = (id: string, nome: string) => {
+    setEditingId(id);
+    setEditingNome(nome);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingNome('');
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    const nome = editingNome.trim();
+    if (!nome) {
+      alert('Nome não pode ser vazio.');
+      return;
+    }
+    try {
+      setSaving(true);
+      await axiosInstance.put(`/tipos-equipamento/${id}`, { nome });
+      setEditingId(null);
+      setEditingNome('');
+      setSuccessMessage('Tipo de equipamento editado com sucesso.');
+      await carregarTipos();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Erro ao editar o tipo de equipamento.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string, nome: string) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o tipo de equipamento "${nome}"?`)) {
+      return;
+    }
+    try {
+      setSaving(true);
+      await axiosInstance.delete(`/tipos-equipamento/${id}`);
+      setSuccessMessage('Tipo de equipamento excluído com sucesso.');
+      await carregarTipos();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Erro ao excluir o tipo de equipamento.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="tipos-equipamento-page">
       <div className="tipos-equipamento-header">
@@ -108,7 +158,7 @@ const TiposEquipamentoPage: React.FC = () => {
       <div className="tipos-equipamento-layout">
         <section className="tipos-equipamento-card">
           <h3>Novo Tipo</h3>
-          {!usuarioVerificado ? (
+          {!usuarioMaster ? (
             <p className="tipos-equipamento-feedback warning">
               Apenas usuários master podem cadastrar tipos de equipamento.
             </p>
@@ -121,12 +171,12 @@ const TiposEquipamentoPage: React.FC = () => {
               value={form.nome}
               onChange={(e) => setForm({ nome: e.target.value })}
               placeholder="Ex.: Exaustor SH-30"
-              disabled={!usuarioVerificado || saving}
+              disabled={!usuarioMaster || saving}
             />
             <button
               type="submit"
               className="tipos-equipamento-secondary"
-              disabled={!usuarioVerificado || saving}
+              disabled={!usuarioMaster || saving}
             >
               {saving ? 'Salvando...' : 'Cadastrar tipo'}
             </button>
@@ -161,7 +211,40 @@ const TiposEquipamentoPage: React.FC = () => {
             <ul className="tipos-equipamento-list">
               {tiposOrdenados.map((tipo) => (
                 <li key={tipo.id}>
-                  <span>{tipo.nome}</span>
+                  {editingId === tipo.id ? (
+                    <div className="tipos-equipamento-inline-edit">
+                      <input
+                        type="text"
+                        value={editingNome}
+                        onChange={(e) => setEditingNome(e.target.value)}
+                        disabled={saving}
+                      />
+                      <button onClick={() => handleSaveEdit(tipo.id)} disabled={saving} title="Salvar">💾</button>
+                      <button onClick={handleCancelEdit} disabled={saving} title="Cancelar">✕</button>
+                    </div>
+                  ) : (
+                    <>
+                      <span>{tipo.nome}</span>
+                      {usuarioMaster && (
+                        <div className="tipos-equipamento-actions">
+                          <button
+                            className="edit-btn"
+                            onClick={() => handleStartEdit(tipo.id, tipo.nome)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(tipo.id, tipo.nome)}
+                            title="Excluir"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

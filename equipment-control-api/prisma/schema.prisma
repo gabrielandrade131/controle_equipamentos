@@ -13,13 +13,13 @@ datasource db {
 }
 
 model Equipment {
-  id                                String                                    @id @default(uuid())
-  numeroOrdem                       Int                                       @unique @default(autoincrement())
-  numeroSerie                       String?   
-  tag                               String?                                   @unique
-  validade                          DateTime?
+  id          String    @id @default(uuid())
+  numeroOrdem Int       @unique @default(autoincrement())
+  numeroSerie String?
+  tag         String?   @unique
+  validade    DateTime?
 
-  descricao                         String?
+  descricao String?
 
   listaPecas                        String?
   sequenciaMontagem                 String?
@@ -29,119 +29,116 @@ model Equipment {
   responsavelServico                String?
   responsavelRevisao                String?
 
-  criadoEm                          DateTime                                  @default(now())
-  atualizadoEm                      DateTime                                  @updatedAt
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
-  itensSeriados                     ItemSeriado[]
-  observacoes                       ObservacaoProducao[]
-  registrosInspecaoMontagem         RegistroInspecaoMontagem[]
-  historicoAlteracoes               HistoricoProducao[]
-  historicoEquipamentoRegistros     HistoricoEquipamentoRegistro[]
+  itensSeriados                 ItemSeriado[]
+  observacoes                   ObservacaoProducao[]
+  registrosInspecaoMontagem     RegistroInspecaoMontagem[]
+  historicoAlteracoes           HistoricoProducao[]
+  historicoEquipamentoRegistros HistoricoEquipamentoRegistro[]
 
-  loteProducaoId                    String           
-  loteProducao                      LoteProducao      @relation(fields: [loteProducaoId], references: [id]) 
+  loteProducaoId String
+  loteProducao   LoteProducao @relation(fields: [loteProducaoId], references: [id])
 
-  ativo                             Boolean           @default(true)
-  excluidoEm                        DateTime?         
+  ativo      Boolean   @default(true)
+  excluidoEm DateTime?
 }
 
 model HistoricoProducao {
-  id                String        @id @default(uuid())
-  equipmentId       String      
-  campo             String
-  valorAnterior     String?
-  valorNovo         String?
-  alteradoPor       String?
-  criadoEm          DateTime      @default(now())
+  id            String   @id @default(uuid())
+  equipmentId   String
+  campo         String
+  valorAnterior String?
+  valorNovo     String?
+  alteradoPor   String?
+  criadoEm      DateTime @default(now())
 
-  equipment         Equipment     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@index([equipmentId])
 }
 
 model HistoricoEquipamentoRegistro {
-  id                String        @id @default(uuid())
-  equipmentId       String
-  data              DateTime
-  historico         String
-  assinatura        String
-  criadoEm          DateTime      @default(now())
-  atualizadoEm      DateTime      @updatedAt
+  id           String   @id @default(uuid())
+  equipmentId  String
+  data         DateTime
+  historico    String
+  assinatura   String
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
-  equipment         Equipment     @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@index([equipmentId])
 }
 
 model ItemSeriado {
-  id                String          @id             @default(uuid())
-  equipmentId       String          @map("producaoID")
-  descricao         String
-  criadoEm          DateTime        @default(now())
+  id          String   @id @default(uuid())
+  equipmentId String   @map("producaoID")
+  descricao   String
+  criadoEm    DateTime @default(now())
 
-  equipment         Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 }
 
-
 model ObservacaoProducao {
-  id          String        @id @default(uuid())
+  id          String   @id @default(uuid())
   producaoId  String
   descricao   String
   responsavel String
-  criadoEm    DateTime      @default(now())
+  criadoEm    DateTime @default(now())
 
-  equipment   Equipment     @relation(fields: [producaoId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [producaoId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id                      String                            @id @default(uuid())
-  nome                    String        
-  email                   String                            @unique
-  senha                   String        
-  ativo                   Boolean                           @default(true)
-  precisaTrocarSenha      Boolean                           @default(true)
-  cSafety                 Boolean                           @default(false)
-  operacional             Boolean                           @default(false)
-  verificado              Boolean                           @default(false)
-  criadoEm                DateTime                          @default(now())   
+  id                 String   @id @default(uuid())
+  nome               String
+  email              String   @unique
+  senha              String
+  ativo              Boolean  @default(true)
+  precisaTrocarSenha Boolean  @default(true)
+  cSafety            Boolean  @default(false)
+  operacional        Boolean  @default(false)
+  verificado         Boolean  @default(false)
+  criadoEm           DateTime @default(now())
 }
 
 model TipoEquipamento {
-  id                String          @id @default(uuid())
-  nome              String          @unique
-  
-  ativo             Boolean         @default(true)
-  criadoEm          DateTime        @default(now())
-  atualizadoEm      DateTime        @updatedAt
+  id   String @id @default(uuid())
+  nome String @unique
 
-  lotesProducao     LoteProducao[]
-  manutencoes       Manutencao[]
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  lotesProducao LoteProducao[]
+  manutencoes   Manutencao[]
 }
 
 model RegistroInspecaoMontagem {
-  id                  String      @id @default(uuid())
-  equipmentId         String      
-  ordem               Int
-  valorObservado      String?  
-  instrumentoMedicao  String?
-  conformidades       Boolean?
-  criadoEm            DateTime  @default(now())
-  atualizadoEm        DateTime  @updatedAt
+  id                 String   @id @default(uuid())
+  equipmentId        String
+  ordem              Int
+  valorObservado     String?
+  instrumentoMedicao String?
+  conformidades      Boolean?
+  criadoEm           DateTime @default(now())
+  atualizadoEm       DateTime @updatedAt
 
-  equipment           Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@unique([equipmentId, ordem])
 }
 
 model Manutencao {
-  id                      String        @id @default(uuid())
-  numeroOrdemManutencao   Int           @unique @default(autoincrement())
-  synchroId               String?       @unique
-  origem                  OrigemManutencao      @default(SYNCHRO)
-  
-  tipoEquipamentoId       String?
-  tipoEquipamento         TipoEquipamento?      @relation(fields: [tipoEquipamentoId], references: [id])
+  id                    String           @id @default(uuid())
+  numeroOrdemManutencao Int              @unique @default(autoincrement())
+  synchroId             String?          @unique
+  origem                OrigemManutencao @default(SYNCHRO)
 
+<<<<<<< HEAD
   tipoEquipamentoNome     String?
   fabricante              String?
   tipoManutencao          TipoManutencao      @default(CORRETIVA)
@@ -150,106 +147,116 @@ model Manutencao {
   tag                     String?
   situacaoEquipamento     String?
   
+=======
+  tipoEquipamentoId String?
+  tipoEquipamento   TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
+>>>>>>> 7f4dc8c9957f1bed059a74b5ce5c19892ed6d7f2
 
-  dataRetornoBase         DateTime?
-  dataInicio              DateTime?
-  dataParalisacao         DateTime?
-  previsaoTermino         DateTime?
-  dataTermino             DateTime?
-  
+  tipoEquipamentoNome   String?
+  tipoManutencao        TipoManutencao @default(CORRETIVA)
+  fabricanteEquipamento String?
+  modeloEquipamento     String?
+  numeroSerie           String?
+  tag                   String?
+  situacaoEquipamento   String?
 
-  statusManutencao        StatusManutencao    @default(EM_QUARENTENA)
-  avaliacaoFinalConforme  Boolean?
-  anexoPdf                String?
-  diagnostico             String?
-  responsavelManutencao   String?
-  responsavelRevisao      String?
+  dataRetornoBase DateTime?
+  dataInicio      DateTime?
+  dataParalisacao DateTime?
+  previsaoTermino DateTime?
+  dataTermino     DateTime?
 
-  criadoEm                DateTime            @default(now())
-  atualizadoEm            DateTime            @updatedAt
-  historicoAlteracoes     HistoricoManutencao[]
+  statusManutencao       StatusManutencao @default(EM_QUARENTENA)
+  avaliacaoFinalConforme Boolean?
+  anexoPdf               String?
+  diagnostico            String?
+  dadosInspecao          Json?
+  imagensAnexadas        String?
+  responsavelManutencao  String?
+  responsavelRevisao     String?
+
+  criadoEm            DateTime              @default(now())
+  atualizadoEm        DateTime              @updatedAt
+  historicoAlteracoes HistoricoManutencao[]
 
   recebimentosEquipamento RecebimentoEquipamento[]
 
-  ativo                   Boolean           @default(true)
-  excluidoEm              DateTime?         
+  ativo      Boolean   @default(true)
+  excluidoEm DateTime?
 
   @@index([tag])
   @@index([numeroSerie])
-
 }
 
 model HistoricoManutencao {
-  id                String              @id @default(uuid())
-  manutencaoId      String      
-  campo             String
-  valorAnterior     String?
-  valorNovo         String?
-  alteradoPor       String?
-  criadoEm          DateTime            @default(now())
+  id            String   @id @default(uuid())
+  manutencaoId  String
+  campo         String
+  valorAnterior String?
+  valorNovo     String?
+  alteradoPor   String?
+  criadoEm      DateTime @default(now())
 
-  manutencao        Manutencao          @relation(fields: [manutencaoId], references: [id], onDelete: Cascade)
+  manutencao Manutencao @relation(fields: [manutencaoId], references: [id], onDelete: Cascade)
 
   @@index([manutencaoId])
 }
 
 model LoteProducao {
-  id                        String          @id @default(uuid())
-  numeroLote                Int             @unique @default(autoincrement())
+  id         String @id @default(uuid())
+  numeroLote Int    @unique @default(autoincrement())
 
-  tipoEquipamentoId         String?           
-  modelo                    String?
-  descricao                 String?
-  solicitante               String?
-  quantidade                Int?
+  tipoEquipamentoId String?
+  modelo            String?
+  descricao         String?
+  solicitante       String?
+  quantidade        Int?
 
-  dataSolicitacao           DateTime?
-  dataInicio                DateTime?
-  dataParalisacao           DateTime?
-  dataNecessidade           DateTime?
-  previsaoTermino           DateTime?
-  dataTermino               DateTime?
-  statusProducao            StatusProducao                           @default(PROGRAMADA)
+  dataSolicitacao DateTime?
+  dataInicio      DateTime?
+  dataParalisacao DateTime?
+  dataNecessidade DateTime?
+  previsaoTermino DateTime?
+  dataTermino     DateTime?
+  statusProducao  StatusProducao @default(PROGRAMADA)
 
+  ativo      Boolean   @default(true)
+  excluidoEm DateTime?
 
-  ativo                     Boolean           @default(true)
-  excluidoEm                DateTime?         
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
-  criadoEm                  DateTime            @default(now())
-  atualizadoEm              DateTime            @updatedAt
-
-  tipoEquipamento           TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id]) 
-  equipamentos              Equipment[]
+  tipoEquipamento TipoEquipamento? @relation(fields: [tipoEquipamentoId], references: [id])
+  equipamentos    Equipment[]
 
   @@index([numeroLote])
   @@index([statusProducao])
   @@index([tipoEquipamentoId])
-
 }
 
 model RecebimentoOperacional {
-  id                  String                    @id @default(uuid())
+  id String @id @default(uuid())
 
-  osIdSynchro          String?
-  numeroOs             String
-  cliente              String?
-  descricaoOperacao    String?
-  statusOperacao       String?
+  osIdSynchro       String?
+  numeroOs          String
+  cliente           String?
+  descricaoOperacao String?
+  statusOperacao    String?
 
   usuarioRecebimentoId String?
   usuarioRecebimento   String?
 
-  dataRecebimento      DateTime                 @default(now())
+  dataRecebimento DateTime @default(now())
 
-  statusRecebimento          StatusRecebimentoOperacional @default(CONCLUIDO)
-  sincronizadoSynchro        Boolean                       @default(false)
-  erroSincronizacaoSynchro   String?
-  dataSincronizacaoSynchro   DateTime?
+  statusRecebimento        StatusRecebimentoOperacional @default(CONCLUIDO)
+  sincronizadoSynchro      Boolean                      @default(false)
+  erroSincronizacaoSynchro String?
+  dataSincronizacaoSynchro DateTime?
 
-  criadoEm             DateTime                 @default(now())
-  atualizadoEm         DateTime                 @updatedAt
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
-  equipamentos         RecebimentoEquipamento[]
+  equipamentos RecebimentoEquipamento[]
 
   @@index([numeroOs])
   @@index([osIdSynchro])
@@ -258,28 +265,28 @@ model RecebimentoOperacional {
 }
 
 model RecebimentoEquipamento {
-  id                       String                     @id @default(uuid())
+  id String @id @default(uuid())
 
-  recebimentoId             String
-  equipamentoIdSynchro      String?
-  tag                       String?
-  numeroSerie               String?
-  tipoEquipamento           String?
-  modelo                    String?
+  recebimentoId        String
+  equipamentoIdSynchro String?
+  tag                  String?
+  numeroSerie          String?
+  tipoEquipamento      String?
+  modelo               String?
 
-  retornouFisicamente       Boolean                   @default(false)
-  equipamentoConferido      Boolean                   @default(false)
-  possuiAvaria              Boolean                   @default(false)
-  observacao                String?
+  retornouFisicamente  Boolean @default(false)
+  equipamentoConferido Boolean @default(false)
+  possuiAvaria         Boolean @default(false)
+  observacao           String?
 
-  manutencaoId              String?
-  manutencao                Manutencao?               @relation(fields: [manutencaoId], references: [id])
+  manutencaoId String?
+  manutencao   Manutencao? @relation(fields: [manutencaoId], references: [id])
 
-  criadoEm                  DateTime                  @default(now())
-  atualizadoEm              DateTime                  @updatedAt
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
-  recebimento               RecebimentoOperacional    @relation(fields: [recebimentoId], references: [id], onDelete: Cascade)
-  fotos                     FotoRecebimentoEquipamento[]
+  recebimento RecebimentoOperacional       @relation(fields: [recebimentoId], references: [id], onDelete: Cascade)
+  fotos       FotoRecebimentoEquipamento[]
 
   @@index([tag])
   @@index([numeroSerie])
@@ -287,18 +294,18 @@ model RecebimentoEquipamento {
 }
 
 model FotoRecebimentoEquipamento {
-  id                         String                   @id @default(uuid())
+  id String @id @default(uuid())
 
-  recebimentoEquipamentoId    String
-  tag                         String?
-  numeroSerie                 String?
-  tipoFoto                    String
-  nomeArquivo                 String
-  caminhoArquivo              String
+  recebimentoEquipamentoId String
+  tag                      String?
+  numeroSerie              String?
+  tipoFoto                 String
+  nomeArquivo              String
+  caminhoArquivo           String
 
-  criadoEm                    DateTime                 @default(now())
+  criadoEm DateTime @default(now())
 
-  recebimentoEquipamento      RecebimentoEquipamento   @relation(fields: [recebimentoEquipamentoId], references: [id], onDelete: Cascade)
+  recebimentoEquipamento RecebimentoEquipamento @relation(fields: [recebimentoEquipamentoId], references: [id], onDelete: Cascade)
 
   @@index([tag])
   @@index([numeroSerie])

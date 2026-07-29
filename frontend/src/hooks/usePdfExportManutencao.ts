@@ -353,11 +353,18 @@ export const usePdfExportManutencao = () => {
 
           const imageX = pageMargin + (i % 2) * (imageWidth + 10);
           const imageY = y;
+          const formatoImagem = inspecao.imagensAnexadas[i].startsWith(
+            "data:image/png",
+          )
+            ? "PNG"
+            : inspecao.imagensAnexadas[i].startsWith("data:image/webp")
+              ? "WEBP"
+              : "JPEG";
 
           try {
             pdf.addImage(
               inspecao.imagensAnexadas[i],
-              "JPEG",
+              formatoImagem,
               imageX,
               imageY,
               imageWidth,

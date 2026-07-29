@@ -110,6 +110,48 @@ describe('ManutencoesService', () => {
     expect(result.totalPages).toBe(1);
   });
 
+  it('keeps calculated maintenance days after conclusion', async () => {
+    prisma.manutencao.findMany.mockResolvedValue([
+      {
+        id: 'man-1',
+        statusManutencao: 'CONCLUIDA',
+        dataInicio: new Date('2024-01-01T00:00:00.000Z'),
+        dataTermino: new Date('2024-01-03T00:00:00.000Z'),
+      },
+    ]);
+    prisma.manutencao.count.mockResolvedValue(1);
+
+    const result = await service.findAll({ page: 1, limit: 10 });
+
+    expect(result.data[0].diasManutencao).toBe(2);
+  });
+
+  it('persists manufacturer and inspection data when creating maintenance', async () => {
+    prisma.manutencao.create.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'EM_MANUTENCAO',
+      fabricanteEquipamento: 'WEG',
+      dadosInspecao: { certificacoes: [] },
+      imagensAnexadas: '[]',
+    });
+
+    await service.create({
+      fabricanteEquipamento: 'WEG',
+      dadosInspecao: { certificacoes: [] },
+      imagensAnexadas: '[]',
+    } as any);
+
+    expect(prisma.manutencao.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          fabricanteEquipamento: 'WEG',
+          dadosInspecao: { certificacoes: [] },
+          imagensAnexadas: '[]',
+        }),
+      }),
+    );
+  });
+
   it('calculates diasParalisacao when status is PARALISADA', async () => {
     prisma.manutencao.findMany.mockResolvedValue([
       {
@@ -245,6 +287,53 @@ describe('ManutencoesService', () => {
           alteradoPor: 'Gabriel',
         },
       ],
+    });
+  });
+
+  it('persists the maintenance executor informed in the request', async () => {
+    prisma.manutencao.findUnique
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'EM_MANUTENCAO',
+        responsavelManutencao: 'Executor anterior',
+      })
+      .mockResolvedValueOnce({
+        id: 'man-1',
+        statusManutencao: 'CONCLUIDA',
+        responsavelManutencao: 'Executor informado',
+        historicoAlteracoes: [],
+      });
+    prisma.manutencao.update.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'CONCLUIDA',
+      responsavelManutencao: 'Executor informado',
+    });
+    prisma.historicoManutencao.createMany.mockResolvedValue({ count: 2 });
+
+    await service.update(
+      'man-1',
+      {
+        statusManutencao: 'CONCLUIDA',
+        responsavelManutencao: 'Executor informado',
+      } as any,
+      { nome: 'Usuario autenticado' },
+    );
+
+    expect(prisma.manutencao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          responsavelManutencao: 'Executor informado',
+        }),
+      }),
+    );
+    expect(prisma.historicoManutencao.createMany).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          campo: 'responsavelManutencao',
+          valorNovo: 'Executor informado',
+          alteradoPor: 'Usuario autenticado',
+        }),
+      ]),
     });
   });
 

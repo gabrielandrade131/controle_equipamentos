@@ -7,6 +7,21 @@ import {
 import { InspecaoManutencao, StatusManutencao } from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
 
+const SECOES_INSPECAO = [
+  "certificacoes",
+  "estruturaMecanica",
+  "sistemaHidraulico",
+  "sistemaPneumatico",
+  "sistemaEletrico",
+  "dispositivoSeguranca",
+  "componentesOperacionais",
+  "acessorios",
+  "testesOperacionais",
+] as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 type ApiListResponse<T> = {
   data: T[];
 };
@@ -25,6 +40,62 @@ export type FotoRecebimentoManutencao = {
   tipoFoto: string;
   nomeArquivo: string;
   url: string;
+};
+
+const parseJson = (value: unknown): unknown => {
+  if (typeof value !== "string") return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+};
+
+const parseDadosInspecaoRecord = (value: unknown): Record<string, unknown> => {
+  const parsed = parseJson(value);
+  return isRecord(parsed) ? parsed : {};
+};
+
+const parseDadosInspecao = (
+  value: unknown,
+): Partial<InspecaoManutencao> => {
+  const parsed = parseDadosInspecaoRecord(value);
+
+  return SECOES_INSPECAO.reduce<Partial<InspecaoManutencao>>(
+    (dados, key) => {
+      const itens = parsed[key];
+      if (Array.isArray(itens)) dados[key] = itens;
+      return dados;
+    },
+    {},
+  );
+};
+
+const mapDadosInspecao = (inspecao: InspecaoManutencao) =>
+  SECOES_INSPECAO.reduce<Record<string, unknown>>(
+    (dados, key) => {
+      dados[key] = inspecao[key];
+      return dados;
+    },
+    { imagensAnexadas: inspecao.imagensAnexadas || [] },
+  );
+
+const serializarDiagnostico = (inspecao: InspecaoManutencao) => {
+  const textoAtual = inspecao.observacoes?.trim();
+  const historico = [...(inspecao.observacoesHistorico || [])];
+  const ultimoTexto = historico[historico.length - 1]?.texto?.trim();
+
+  if (textoAtual && textoAtual !== ultimoTexto) {
+    historico.push({
+      data: getLocalDateInput(),
+      texto: textoAtual,
+    });
+  }
+
+  return historico.length
+    ? JSON.stringify(historico)
+    : textoAtual || undefined;
 };
 
 const toDateInput = (value?: string | null, fallbackToday = true) =>
@@ -87,6 +158,10 @@ const extrairObservacaoTexto = (diagnostico: any): string => {
 
 const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   const base = criarInspecaoVazia();
+  const dadosInspecaoBrutos = parseDadosInspecaoRecord(
+    manutencao.dadosInspecao,
+  );
+  const dadosInspecao = parseDadosInspecao(dadosInspecaoBrutos);
   const avaliacaoFinal =
     manutencao.avaliacaoFinalConforme === true
       ? "CONFORME"
@@ -94,14 +169,25 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
         ? "NÃO CONFORME"
         : "";
 
-  const imagensAnexadas = manutencao.imagensAnexadas
-    ? typeof manutencao.imagensAnexadas === "string"
-      ? JSON.parse(manutencao.imagensAnexadas)
-      : manutencao.imagensAnexadas
+  const imagensSalvas = parseJson(manutencao.imagensAnexadas);
+  const imagensCampoSeparado = Array.isArray(imagensSalvas)
+    ? imagensSalvas.filter(
+        (imagem): imagem is string => typeof imagem === "string",
+      )
     : [];
+  const imagensNoChecklist = Array.isArray(dadosInspecaoBrutos.imagensAnexadas)
+    ? dadosInspecaoBrutos.imagensAnexadas.filter(
+        (imagem): imagem is string => typeof imagem === "string",
+      )
+    : [];
+  const imagensAnexadas =
+    imagensCampoSeparado.length > 0
+      ? imagensCampoSeparado
+      : imagensNoChecklist;
 
   const inspecaoMapeada: InspecaoManutencao = {
     ...base,
+    ...dadosInspecao,
     id: manutencao.id,
     dataInicio: toDateInput(manutencao.dataInicio, false),
     dataRetornoBase: toDateInput(manutencao.dataRetornoBase, false),
@@ -112,15 +198,17 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
         ? "Retorno Synchro"
         : manutencao.origem === "MANUAL"
           ? "Manutenção manual"
-          : "",
+          : manutencao.origem === "APP_RECEBIMENTO"
+            ? "Recebimento operacional"
+            : manutencao.situacaoEquipamento ?? "",
     tipoManutencao: manutencao.tipoManutencao ?? "CORRETIVA",
     tipoEquipamentoId:
       manutencao.tipoEquipamentoId ?? manutencao.tipoEquipamento?.id ?? "",
     tipoEquipamento:
       manutencao.tipoEquipamento?.nome ?? manutencao.tipoEquipamentoNome ?? "",
     fabricante:
-      manutencao.fabricante ??
       manutencao.fabricanteEquipamento ??
+      manutencao.fabricante ??
       manutencao.fabricanteNome ??
       "",
     modelo: manutencao.modeloEquipamento ?? "",
@@ -148,6 +236,12 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     atualizadoEm: manutencao.atualizadoEm,
   };
 
+  SECOES_INSPECAO.forEach((secao) => {
+    if (Array.isArray(dadosInspecao[secao])) {
+      inspecaoMapeada[secao] = dadosInspecao[secao] as InspecaoManutencao[typeof secao];
+    }
+  });
+
   return aplicarChecklistManutencao(inspecaoMapeada, {
     tipoEquipamento: inspecaoMapeada.tipoEquipamento,
     modeloEquipamento: inspecaoMapeada.modelo,
@@ -157,6 +251,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   tipoEquipamentoId: inspecao.tipoEquipamentoId || undefined,
   tipoManutencao: inspecao.tipoManutencao || "CORRETIVA",
+  fabricanteEquipamento: inspecao.fabricante || undefined,
   tipoEquipamentoNome:
     inspecao.tipoEquipamento || inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
@@ -170,11 +265,8 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   dataParalisacao: inspecao.dataParalisacao || undefined,
   dataTermino: inspecao.dataTermino || undefined,
   validade: inspecao.validade || undefined,
-  diagnostico:
-    inspecao.observacoes?.trim() ||
-    (inspecao.observacoesHistorico?.length
-      ? JSON.stringify(inspecao.observacoesHistorico)
-      : undefined),
+  diagnostico: serializarDiagnostico(inspecao),
+  dadosInspecao: mapDadosInspecao(inspecao),
   responsavelManutencao: inspecao.responsavel || undefined,
   responsavelRevisao: inspecao.responsavelRevisao || undefined,
   statusManutencao: (inspecao.statusManutencao ||
@@ -183,9 +275,7 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
     inspecao.avaliacaoFinal === ""
       ? undefined
       : inspecao.avaliacaoFinal === "CONFORME",
-  imagensAnexadas: inspecao.imagensAnexadas?.length
-    ? JSON.stringify(inspecao.imagensAnexadas)
-    : undefined,
+  imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
 });
 
 export const useManutencao = () => {
@@ -283,7 +373,8 @@ export const useManutencao = () => {
     inspecao: InspecaoManutencao,
   ) => {
     const response = await axiosInstance.patch(`/manutencoes/${id}`, {
-      diagnostico: inspecao.observacoes?.trim() || undefined,
+      diagnostico: serializarDiagnostico(inspecao),
+      dadosInspecao: mapDadosInspecao(inspecao),
       avaliacaoFinalConforme:
         inspecao.avaliacaoFinal === ""
           ? undefined
@@ -292,6 +383,7 @@ export const useManutencao = () => {
       fabricante: inspecao.fabricante || undefined,
       responsavelManutencao: inspecao.responsavel || undefined,
       responsavelRevisao: inspecao.responsavelRevisao || undefined,
+      imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
     });
     const inspecaoAtualizada = mapApiToInspecao(response.data);
     setHistorico((prev) =>

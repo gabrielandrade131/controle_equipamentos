@@ -143,6 +143,7 @@ model Manutencao {
   tipoEquipamento         TipoEquipamento?      @relation(fields: [tipoEquipamentoId], references: [id])
 
   tipoEquipamentoNome     String?
+  fabricante              String?
   tipoManutencao          TipoManutencao      @default(CORRETIVA)
   modeloEquipamento       String?
   numeroSerie             String?

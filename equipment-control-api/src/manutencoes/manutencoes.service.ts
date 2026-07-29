@@ -530,6 +530,7 @@ export class ManutencoesService {
         tipoEquipamentoNome: tipoEquipamento.tipoEquipamentoNome,
         tipoManutencao: data.tipoManutencao ?? TipoManutencao.CORRETIVA,
         modeloEquipamento: data.modeloEquipamento,
+        fabricante: data.fabricante,
         numeroSerie: data.numeroSerie,
         tag: data.tag,
         situacaoEquipamento: data.situacaoEquipamento,
@@ -669,7 +670,7 @@ export class ManutencoesService {
     const alteradoPor = user?.nome || user?.email || user?.username || null;
     const responsavelManutencaoFinal =
       data.responsavelManutencao !== undefined
-        ? (alteradoPor ?? data.responsavelManutencao)
+        ? (data.responsavelManutencao || alteradoPor)
         : undefined;
     const statusMudou =
       data.statusManutencao !== undefined &&
@@ -736,6 +737,7 @@ export class ManutencoesService {
         'responsavelRevisao',
         'tipoEquipamentoId',
         'tipoEquipamentoNome',
+        'fabricante',
       ] as const;
 
       const camposData = new Set([
@@ -798,6 +800,7 @@ export class ManutencoesService {
                 ? tipoEquipamento.tipoEquipamentoNome
                 : undefined,
             diagnostico: data.diagnostico,
+            fabricante: data.fabricante,
             avaliacaoFinalConforme: data.avaliacaoFinalConforme,
             responsavelManutencao: responsavelManutencaoFinal,
             responsavelRevisao: data.responsavelRevisao,
@@ -839,6 +842,7 @@ export class ManutencoesService {
           : undefined,
       tipoManutencao: data.tipoManutencao,
       modeloEquipamento: data.modeloEquipamento,
+      fabricante: data.fabricante,
       numeroSerie: data.numeroSerie,
       tag: data.tag,
       situacaoEquipamento: data.situacaoEquipamento,
@@ -876,6 +880,7 @@ export class ManutencoesService {
       'tipoEquipamentoNome',
       'tipoManutencao',
       'modeloEquipamento',
+      'fabricante',
       'numeroSerie',
       'tag',
       'situacaoEquipamento',

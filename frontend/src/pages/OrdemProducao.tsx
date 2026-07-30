@@ -420,7 +420,7 @@ const OrdemProducao: React.FC = () => {
                         <small>
                           Responsável: {registro.responsavel || "-"}
                         </small>
-                        <p>{registro.descricao}</p>
+                        <p>{registro.descricao.trim()}</p>
                       </div>
                     ))}
                   </div>

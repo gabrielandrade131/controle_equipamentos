@@ -18,6 +18,13 @@ npm run build
 
 Write-Host "Reiniciando processo frontend no PM2..."
 & pm2 delete axis-front 2>$null
+try {
+    $conn = Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue
+    if ($conn) {
+        Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 1
+    }
+} catch {}
 & pm2 serve "$ROOT_DIR\frontend\build" 3001 --spa --name axis-front
 
 # Backend
@@ -38,6 +45,14 @@ Write-Host "Gerando build de produção..."
 npm run build
 
 Write-Host "Reiniciando processo backend no PM2..."
+try {
+    $conn3000 = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+    if ($conn3000) {
+        Stop-Process -Id $conn3000.OwningProcess -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 1
+    }
+} catch {}
+
 $pm2Desc = & pm2 describe axis-api 2>$null
 if ($LASTEXITCODE -eq 0 -and $pm2Desc) {
     & pm2 restart axis-api --update-env

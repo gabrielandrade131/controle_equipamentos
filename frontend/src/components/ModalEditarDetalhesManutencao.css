@@ -228,6 +228,8 @@
   font-size: 14px;
   line-height: 1.4;
   word-break: break-word;
+  white-space: pre-line;
+  text-align: justify;
 }
 
 .manutencao-modal-content .sem-observacoes {

@@ -540,7 +540,6 @@ export class ManutencoesService {
         tipoEquipamentoId: tipoEquipamento.tipoEquipamentoId,
         tipoEquipamentoNome: tipoEquipamento.tipoEquipamentoNome,
         tipoManutencao: data.tipoManutencao ?? TipoManutencao.CORRETIVA,
-        fabricanteEquipamento: data.fabricanteEquipamento,
         modeloEquipamento: data.modeloEquipamento,
         fabricante: data.fabricante,
         numeroSerie: data.numeroSerie,

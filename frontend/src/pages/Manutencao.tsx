@@ -698,7 +698,7 @@ export const Manutencao: React.FC = () => {
                         className="observacao-item-view"
                       >
                         <strong>{formatDatePtBr(obs.data)}</strong>
-                        <p>{obs.texto}</p>
+                        <p>{obs.texto.trim()}</p>
                       </div>
                     ))
                   ) : (

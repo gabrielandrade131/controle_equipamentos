@@ -72,7 +72,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
     const observacao: ObservacaoHistorico = {
       id: `obs_${Date.now()}`,
       data: getLocalDateInput(),
-      texto: novaObservacao,
+      texto: novaObservacao.trim(),
     };
 
     setFormData((prev) => ({
@@ -368,7 +368,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
                       <div className="observacao-header">
                         <strong>{formatDatePtBr(obs.data)}</strong>
                       </div>
-                      <p className="observacao-texto">{obs.texto}</p>
+                      <p className="observacao-texto">{obs.texto.trim()}</p>
                     </div>
                   ))}
                 </div>

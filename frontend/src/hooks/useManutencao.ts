@@ -40,6 +40,11 @@ type RecebimentoManutencaoResponse = {
   }>;
 };
 
+type AnexoPdfResponse = {
+  id: string;
+  anexoPdf: string;
+};
+
 export type FotoRecebimentoManutencao = {
   id: string;
   tipoFoto: string;
@@ -384,20 +389,24 @@ export const useManutencao = () => {
     const dados = new FormData();
     dados.append("arquivo", arquivo);
 
-    const response = await axiosInstance.post(
+    const response = await axiosInstance.post<AnexoPdfResponse>(
       `/manutencoes/${id}/anexo-pdf`,
       dados,
       {
         // Override the JSON default so Axios builds the multipart boundary
         // and Multer can actually receive the file field.
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: INSPECAO_TIMEOUT,
       },
     );
-    const inspecaoAtualizada = mapApiToInspecao(response.data);
     setHistorico((prev) =>
-      prev.map((item) => (item.id === id ? inspecaoAtualizada : item)),
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, anexoPdf: toAssetUrl(response.data.anexoPdf) }
+          : item,
+      ),
     );
-    return inspecaoAtualizada;
+    return response.data;
   };
 
   const atualizarInspecaoConcluida = async (

@@ -807,7 +807,7 @@ export const Manutencao: React.FC = () => {
 
       <AlertModal
         isOpen={alertModal.isOpen}
-        title="Operação não permitida"
+        title="Atenção"
         message={alertModal.message}
         onClose={() => setAlertModal({ isOpen: false, message: "" })}
         type="warning"

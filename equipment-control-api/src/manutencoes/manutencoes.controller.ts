@@ -175,7 +175,7 @@ export class ManutencoesController {
       },
     }),
   )
-  anexarPdf(
+  async anexarPdf(
     @Param('id') id: string,
     @UploadedFile() arquivo: Express.Multer.File | undefined,
     @Req() req: any,
@@ -184,11 +184,18 @@ export class ManutencoesController {
       throw new BadRequestException('Selecione um arquivo PDF para anexar.');
     }
 
-    return this.manutencoesService.atualizarAnexoPdf(
+    const manutencao = await this.manutencoesService.atualizarAnexoPdf(
       id,
       `/uploads/manutencoes/${arquivo.filename}`,
       req.user,
     );
+
+    // O anexo não precisa devolver todo o checklist e as fotos em data URL.
+    // Isso evita respostas de vários megabytes após um upload simples de PDF.
+    return {
+      id: manutencao.id,
+      anexoPdf: manutencao.anexoPdf,
+    };
   }
 
   @Patch(':id')

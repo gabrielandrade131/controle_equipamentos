@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { AxiosRequestConfig } from "axios";
 import axiosInstance from "../services/axiosConfig";
 import {
   aplicarChecklistManutencao,
@@ -18,6 +19,10 @@ const SECOES_INSPECAO = [
   "acessorios",
   "testesOperacionais",
 ] as const;
+
+// Inspeções podem conter até cinco fotos em data URL. Em conexões externas,
+// cinco segundos não são suficientes para enviar o JSON e receber a resposta.
+const INSPECAO_TIMEOUT = 60_000;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -78,7 +83,7 @@ const mapDadosInspecao = (inspecao: InspecaoManutencao) =>
       dados[key] = inspecao[key];
       return dados;
     },
-    { imagensAnexadas: inspecao.imagensAnexadas || [] },
+    {},
   );
 
 const serializarDiagnostico = (inspecao: InspecaoManutencao) => {
@@ -98,9 +103,13 @@ const serializarDiagnostico = (inspecao: InspecaoManutencao) => {
     : textoAtual || undefined;
 };
 
-const patchManutencao = async <T>(url: string, payload: unknown) => {
+const patchManutencao = async <T>(
+  url: string,
+  payload: unknown,
+  config?: AxiosRequestConfig,
+) => {
   try {
-    return await axiosInstance.patch<T>(url, payload);
+    return await axiosInstance.patch<T>(url, payload, config);
   } catch (error: any) {
     const mensagem = String(error.response?.data?.message || "");
     const rotaIndisponivel =
@@ -111,7 +120,7 @@ const patchManutencao = async <T>(url: string, payload: unknown) => {
     }
 
     await new Promise((resolve) => window.setTimeout(resolve, 700));
-    return axiosInstance.patch<T>(url, payload);
+    return axiosInstance.patch<T>(url, payload, config);
   }
 };
 
@@ -268,7 +277,6 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   tipoEquipamentoId: inspecao.tipoEquipamentoId || undefined,
   tipoManutencao: inspecao.tipoManutencao || "CORRETIVA",
-  fabricanteEquipamento: inspecao.fabricante || undefined,
   tipoEquipamentoNome:
     inspecao.tipoEquipamento || inspecao.fabricante || undefined,
   modeloEquipamento: inspecao.modelo || undefined,
@@ -349,6 +357,7 @@ export const useManutencao = () => {
     const response = await axiosInstance.post(
       "/manutencoes",
       mapInspecaoToApi(inspecao),
+      { timeout: INSPECAO_TIMEOUT },
     );
     const novaInspecao = mapApiToInspecao(response.data);
     setHistorico((prev) => [novaInspecao, ...prev]);
@@ -362,6 +371,7 @@ export const useManutencao = () => {
     const response = await patchManutencao(
       `/manutencoes/${id}`,
       mapInspecaoToApi(inspecao),
+      { timeout: INSPECAO_TIMEOUT },
     );
     const inspecaoAtualizada = mapApiToInspecao(response.data);
     setHistorico((prev) =>
@@ -394,19 +404,23 @@ export const useManutencao = () => {
     id: string,
     inspecao: InspecaoManutencao,
   ) => {
-    const response = await patchManutencao(`/manutencoes/${id}`, {
-      diagnostico: serializarDiagnostico(inspecao),
-      dadosInspecao: mapDadosInspecao(inspecao),
-      avaliacaoFinalConforme:
-        inspecao.avaliacaoFinal === ""
-          ? undefined
-          : inspecao.avaliacaoFinal === "CONFORME",
-      validade: inspecao.validade || undefined,
-      fabricante: inspecao.fabricante || undefined,
-      responsavelManutencao: inspecao.responsavel || undefined,
-      responsavelRevisao: inspecao.responsavelRevisao || undefined,
-      imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
-    });
+    const response = await patchManutencao(
+      `/manutencoes/${id}`,
+      {
+        diagnostico: serializarDiagnostico(inspecao),
+        dadosInspecao: mapDadosInspecao(inspecao),
+        avaliacaoFinalConforme:
+          inspecao.avaliacaoFinal === ""
+            ? undefined
+            : inspecao.avaliacaoFinal === "CONFORME",
+        validade: inspecao.validade || undefined,
+        fabricante: inspecao.fabricante || undefined,
+        responsavelManutencao: inspecao.responsavel || undefined,
+        responsavelRevisao: inspecao.responsavelRevisao || undefined,
+        imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
+      },
+      { timeout: INSPECAO_TIMEOUT },
+    );
     const inspecaoAtualizada = mapApiToInspecao(response.data);
     setHistorico((prev) =>
       prev.map((item) => (item.id === id ? inspecaoAtualizada : item)),

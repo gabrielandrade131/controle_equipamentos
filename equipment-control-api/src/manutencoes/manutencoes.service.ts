@@ -888,7 +888,6 @@ export class ManutencoesService {
           ? tipoEquipamento.tipoEquipamentoNome
           : undefined,
       tipoManutencao: data.tipoManutencao,
-      fabricanteEquipamento: data.fabricanteEquipamento,
       modeloEquipamento: data.modeloEquipamento,
       fabricante: data.fabricante,
       numeroSerie: data.numeroSerie,
@@ -931,7 +930,6 @@ export class ManutencoesService {
       'tipoEquipamentoId',
       'tipoEquipamentoNome',
       'tipoManutencao',
-      'fabricanteEquipamento',
       'modeloEquipamento',
       'fabricante',
       'numeroSerie',

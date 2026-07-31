@@ -130,13 +130,13 @@ describe('ManutencoesService', () => {
     prisma.manutencao.create.mockResolvedValue({
       id: 'man-1',
       statusManutencao: 'EM_MANUTENCAO',
-      fabricanteEquipamento: 'WEG',
+      fabricante: 'WEG',
       dadosInspecao: { certificacoes: [] },
       imagensAnexadas: '[]',
     });
 
     await service.create({
-      fabricanteEquipamento: 'WEG',
+      fabricante: 'WEG',
       dadosInspecao: { certificacoes: [] },
       imagensAnexadas: '[]',
     } as any);
@@ -144,11 +144,40 @@ describe('ManutencoesService', () => {
     expect(prisma.manutencao.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          fabricanteEquipamento: 'WEG',
+          fabricante: 'WEG',
           dadosInspecao: { certificacoes: [] },
           imagensAnexadas: '[]',
         }),
       }),
+    );
+  });
+
+  it('updates manufacturer through the canonical fabricante field only', async () => {
+    prisma.manutencao.findUnique.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'PENDENTE',
+      tipoEquipamentoId: null,
+      tipoEquipamentoNome: null,
+      dataInicio: null,
+      dataTermino: null,
+      dataParalisacao: null,
+      responsavelRevisao: null,
+    });
+    prisma.manutencao.update.mockResolvedValue({
+      id: 'man-1',
+      tag: 'TAG-1',
+      statusManutencao: 'PENDENTE',
+    });
+
+    await service.update('man-1', { fabricante: 'WEG' });
+
+    expect(prisma.manutencao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ fabricante: 'WEG' }),
+      }),
+    );
+    expect(prisma.manutencao.update.mock.calls[0][0].data).not.toHaveProperty(
+      'fabricanteEquipamento',
     );
   });
 

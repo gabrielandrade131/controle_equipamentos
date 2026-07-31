@@ -34,11 +34,6 @@ export class UpdateManutencaoDto {
   @IsEnum(TipoManutencao)
   tipoManutencao?: TipoManutencao;
 
-  @ApiPropertyOptional({ example: 'WEG' })
-  @IsOptional()
-  @IsString()
-  fabricanteEquipamento?: string;
-
   @ApiPropertyOptional({ example: 'Exaustor 420 Monofasico' })
   @IsOptional()
   @IsString()

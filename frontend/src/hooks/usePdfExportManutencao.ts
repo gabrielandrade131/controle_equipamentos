@@ -361,10 +361,9 @@ export const usePdfExportManutencao = () => {
           }
 
           const colunaAtual = indexInPage % colunas;
-          const linhaAtual = Math.floor(indexInPage / colunas);
           const imageX =
             pageMargin + colunaAtual * (imageWidth + espacamentoHorizontal);
-          const imageY = y + linhaAtual * alturaLinha;
+          const imageY = y;
           const formatoImagem = inspecao.imagensAnexadas[i].startsWith(
             "data:image/png",
           )

@@ -339,9 +339,8 @@ export const usePdfExportManutencao = () => {
         const imageWidth =
           (contentWidth - espacamentoHorizontal * (colunas - 1)) / colunas;
         const imageHeight = 52;
-        const alturaLegenda = 6;
-        const espacamentoVertical = 8;
-        const alturaLinha = imageHeight + alturaLegenda + espacamentoVertical;
+        const espacamentoVertical = 4;
+        const alturaLinha = imageHeight + espacamentoVertical;
         const pageMargin = marginX;
 
         // Garante espaço para o cabeçalho (12) + primeira linha de imagens (alturaLinha)
@@ -385,11 +384,6 @@ export const usePdfExportManutencao = () => {
               imageWidth,
               imageHeight,
             );
-
-            drawText(`Foto ${i + 1}`, imageX, imageY + imageHeight + 4, {
-              size: 8,
-              bold: true,
-            });
 
             if (
               (i + 1) % colunas === 0 ||

@@ -333,8 +333,6 @@ export const usePdfExportManutencao = () => {
       drawObservacoesDiarias();
 
       if (inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0) {
-        sectionHeader("FOTOS DA MANUTENÇÃO");
-
         const colunas = 3;
         const imagensPerPage = colunas * 2;
         const espacamentoHorizontal = 7;
@@ -346,21 +344,29 @@ export const usePdfExportManutencao = () => {
         const alturaLinha = imageHeight + alturaLegenda + espacamentoVertical;
         const pageMargin = marginX;
 
-        const linhasNaPagina = Math.ceil(
-          Math.min(inspecao.imagensAnexadas.length, imagensPerPage) / colunas,
-        );
-        ensureSpace(linhasNaPagina * alturaLinha);
+        // Garante espaço para o cabeçalho (12) + primeira linha de imagens (alturaLinha)
+        ensureSpace(12 + alturaLinha);
+        sectionHeader("FOTOS DA MANUTENÇÃO");
 
         for (let i = 0; i < inspecao.imagensAnexadas.length; i++) {
-          const indexInPage = i % imagensPerPage;
+          if (i % colunas === 0) {
+            const isFirstRow = i === 0;
+            const needsContinuationHeader =
+              i > 0 &&
+              (i % imagensPerPage === 0 ||
+                y + alturaLinha > pageHeight - marginBottom);
 
-          if (indexInPage === 0 && i > 0) {
-            pdf.addPage();
-            y = 14;
-            sectionHeader("FOTOS DA MANUTENÇÃO (Continuação)");
+            if (needsContinuationHeader) {
+              pdf.addPage();
+              y = 14;
+              sectionHeader("FOTOS DA MANUTENÇÃO (Continuação)");
+            } else if (!isFirstRow) {
+              ensureSpace(alturaLinha);
+            }
           }
 
-          const colunaAtual = indexInPage % colunas;
+          const indexInPage = i % imagensPerPage;
+          const colunaAtual = i % colunas;
           const imageX =
             pageMargin + colunaAtual * (imageWidth + espacamentoHorizontal);
           const imageY = y;

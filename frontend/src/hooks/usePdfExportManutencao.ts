@@ -359,7 +359,6 @@ export const usePdfExportManutencao = () => {
             if (needsContinuationHeader) {
               pdf.addPage();
               y = 14;
-              sectionHeader("FOTOS DA MANUTENÇÃO (Continuação)");
             } else if (!isFirstRow) {
               ensureSpace(alturaLinha);
             }

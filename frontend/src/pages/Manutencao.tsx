@@ -63,6 +63,11 @@ export const Manutencao: React.FC = () => {
     FotoRecebimentoManutencao[]
   >([]);
   const [carregandoFotos, setCarregandoFotos] = useState(false);
+  const [imagemAmpliada, setImagemAmpliada] = useState<{
+    src: string;
+    alt: string;
+    legenda: string;
+  } | null>(null);
   const [enviandoAnexoPdf, setEnviandoAnexoPdf] = useState(false);
   const [statusEscolhido, setStatusEscolhido] = useState<string | null>(null);
   const [confirmandoStatus, setConfirmandoStatus] = useState(false);
@@ -175,6 +180,23 @@ export const Manutencao: React.FC = () => {
       ativo = false;
     };
   }, [selectedItem?.id, buscarFotosRecebimento]);
+
+  useEffect(() => {
+    if (!imagemAmpliada) return;
+
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setImagemAmpliada(null);
+    };
+    const overflowAnterior = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", fecharComEscape);
+
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      document.removeEventListener("keydown", fecharComEscape);
+    };
+  }, [imagemAmpliada]);
 
   const handleExportarPDF = async (inspecao: InspecaoManutencao) => {
     try {
@@ -639,11 +661,24 @@ export const Manutencao: React.FC = () => {
                   <div className="fotos-recebimento-grid">
                     {fotosRecebimento.map((foto) => (
                       <figure key={foto.id} className="foto-recebimento-item">
-                        <img
-                          src={foto.url}
-                          alt={`${foto.tipoFoto} - ${selectedItem.tag || "equipamento"}`}
-                          loading="lazy"
-                        />
+                        <button
+                          type="button"
+                          className="foto-ampliar-button"
+                          aria-label={`Ampliar ${foto.tipoFoto}`}
+                          onClick={() =>
+                            setImagemAmpliada({
+                              src: foto.url,
+                              alt: `${foto.tipoFoto} - ${selectedItem.tag || "equipamento"}`,
+                              legenda: foto.tipoFoto,
+                            })
+                          }
+                        >
+                          <img
+                            src={foto.url}
+                            alt={`${foto.tipoFoto} - ${selectedItem.tag || "equipamento"}`}
+                            loading="lazy"
+                          />
+                        </button>
                         <figcaption>
                           <span>{foto.tipoFoto}</span>
                         </figcaption>
@@ -668,11 +703,24 @@ export const Manutencao: React.FC = () => {
                           key={`${selectedItem.id}-inspecao-${index}`}
                           className="foto-recebimento-item"
                         >
-                          <img
-                            src={imagem}
-                            alt={`Foto ${index + 1} da inspeção - ${selectedItem.tag || "equipamento"}`}
-                            loading="lazy"
-                          />
+                          <button
+                            type="button"
+                            className="foto-ampliar-button"
+                            aria-label={`Ampliar foto ${index + 1}`}
+                            onClick={() =>
+                              setImagemAmpliada({
+                                src: imagem,
+                                alt: `Foto ${index + 1} da inspeção - ${selectedItem.tag || "equipamento"}`,
+                                legenda: `Foto ${index + 1}`,
+                              })
+                            }
+                          >
+                            <img
+                              src={imagem}
+                              alt={`Foto ${index + 1} da inspeção - ${selectedItem.tag || "equipamento"}`}
+                              loading="lazy"
+                            />
+                          </button>
                           <figcaption>
                             <span>Foto {index + 1}</span>
                           </figcaption>
@@ -804,6 +852,33 @@ export const Manutencao: React.FC = () => {
           )}
         </div>
       </div>
+
+      {imagemAmpliada && (
+        <div
+          className="imagem-ampliada-overlay"
+          onClick={() => setImagemAmpliada(null)}
+        >
+          <div
+            className="imagem-ampliada-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Visualização ampliada: ${imagemAmpliada.legenda}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="imagem-ampliada-fechar"
+              aria-label="Fechar imagem ampliada"
+              onClick={() => setImagemAmpliada(null)}
+              autoFocus
+            >
+              &times;
+            </button>
+            <img src={imagemAmpliada.src} alt={imagemAmpliada.alt} />
+            <p>{imagemAmpliada.legenda}</p>
+          </div>
+        </div>
+      )}
 
       <AlertModal
         isOpen={alertModal.isOpen}

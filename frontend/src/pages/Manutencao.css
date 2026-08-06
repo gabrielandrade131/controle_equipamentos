@@ -408,6 +408,29 @@
   display: block;
 }
 
+.foto-ampliar-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  display: block;
+}
+
+.foto-ampliar-button:focus-visible {
+  outline: 3px solid #b2cc21;
+  outline-offset: -3px;
+}
+
+.foto-ampliar-button img {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.foto-ampliar-button:hover img {
+  transform: scale(1.03);
+  filter: brightness(0.9);
+}
+
 .foto-recebimento-item figcaption {
   padding: 8px;
   border-top: 1px solid #e0e0e0;
@@ -419,6 +442,68 @@
   text-transform: uppercase;
   font-weight: 600;
   color: #333;
+}
+
+.imagem-ampliada-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.86);
+  cursor: zoom-out;
+}
+
+.imagem-ampliada-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: min(1200px, 95vw);
+  max-height: 92vh;
+  cursor: default;
+}
+
+.imagem-ampliada-dialog img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(92vh - 48px);
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.45);
+}
+
+.imagem-ampliada-dialog p {
+  margin: 10px 0 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.imagem-ampliada-fechar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 30px;
+  line-height: 36px;
+  cursor: pointer;
+}
+
+.imagem-ampliada-fechar:hover,
+.imagem-ampliada-fechar:focus-visible {
+  background: #b2cc21;
+  color: #1f1f1f;
+  outline: 2px solid #fff;
 }
 
 .status-choice {
@@ -467,6 +552,14 @@
 }
 
 @media (max-width: 768px) {
+  .imagem-ampliada-overlay {
+    padding: 12px;
+  }
+
+  .imagem-ampliada-dialog {
+    max-width: 100%;
+  }
+
   .page-content {
     grid-template-columns: 1fr;
     gap: 20px;

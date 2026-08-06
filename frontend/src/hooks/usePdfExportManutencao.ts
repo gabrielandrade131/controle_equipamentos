@@ -347,13 +347,13 @@ export const usePdfExportManutencao = () => {
         // Garante espaço para o cabeçalho (12) + primeira linha de imagens (alturaLinha)
         ensureSpace(12 + alturaLinha);
         sectionHeader("FOTOS DA MANUTENÇÃO");
-
         for (let i = 0; i < inspecao.imagensAnexadas.length; i++) {
+          const indexInPage = i % imagensPerPage;
           if (i % colunas === 0) {
             const isFirstRow = i === 0;
             const needsContinuationHeader =
               i > 0 &&
-              (i % imagensPerPage === 0 ||
+              (indexInPage === 0 ||
                 y + alturaLinha > pageHeight - marginBottom);
 
             if (needsContinuationHeader) {
@@ -365,7 +365,6 @@ export const usePdfExportManutencao = () => {
             }
           }
 
-          const indexInPage = i % imagensPerPage;
           const colunaAtual = i % colunas;
           const imageX =
             pageMargin + colunaAtual * (imageWidth + espacamentoHorizontal);

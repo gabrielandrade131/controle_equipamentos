@@ -165,7 +165,7 @@ const ListaEquipamentos: React.FC = () => {
           <table className="equipamentos-table">
             <thead>
               <tr>
-                <th>Série (Chave Única)</th>
+                <th>Série</th>
                 <th>TAG</th>
                 <th>Tipo</th>
                 <th>Modelo</th>

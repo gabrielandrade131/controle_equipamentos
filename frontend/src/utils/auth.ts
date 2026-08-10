@@ -42,5 +42,9 @@ export const isAdminUser = (): boolean => {
   return Boolean(email && ADMIN_EMAILS.includes(email));
 };
 
+export const isMasterUser = (): boolean => {
+  return isAdminUser() || isVerifiedUser();
+};
+
 export const canManageUserVerification = (): boolean =>
   isAdminUser() || isVerifiedUser();

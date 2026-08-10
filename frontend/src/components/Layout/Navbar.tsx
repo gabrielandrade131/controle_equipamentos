@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css';
-import { isCSafetyUser, isOperationalUser } from '../../utils/auth';
+import { isCSafetyUser, isOperationalUser, isMasterUser } from '../../utils/auth';
 
 interface NavbarProps {
   isOpen: boolean;
@@ -13,11 +13,12 @@ const Navbar: React.FC<NavbarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const isCSafety = isCSafetyUser();
   const isOperational = isOperationalUser();
+  const isMaster = isMasterUser();
   const menuItems = [
     { label: 'Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false, hiddenForOperational: false },
     { label: 'Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true, hiddenForOperational: false },
     { label: 'Validades', path: '/validade-equipamentos', icon: 'event_upcoming', hiddenForCSafety: true, hiddenForOperational: true },
-    { label: 'Equipamentos', path: '/equipamentos', icon: 'construction', hiddenForCSafety: true, hiddenForOperational: true },
+    { label: 'Equipamentos', path: '/equipamentos', icon: 'construction', hiddenForCSafety: true, hiddenForOperational: true, onlyMaster: true },
     { label: 'Usuários', path: '/usuarios', icon: 'group', hiddenForCSafety: true, hiddenForOperational: true },
     { label: 'Tipos de Equipamento', path: '/tipos-equipamento', icon: 'category', hiddenForCSafety: true, hiddenForOperational: true },
   ];
@@ -41,6 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ isOpen, onClose }) => {
         {menuItems
           .filter((item) => !(isCSafety && item.hiddenForCSafety))
           .filter((item) => !(isOperational && item.hiddenForOperational))
+          .filter((item) => !('onlyMaster' in item && item.onlyMaster && !isMaster))
           .map((item) => (
             <li key={item.path}>
               <button

@@ -16,7 +16,7 @@ import ListaUsuarios from './pages/ListaUsuarios';
 import TiposEquipamentoPage from './pages/TiposEquipamento';
 import ValidadeEquipamentos from './pages/ValidadeEquipamentos';
 import ListaEquipamentos from './pages/ListaEquipamentos';
-import { isCSafetyUser, isOperationalUser } from './utils/auth';
+import { isCSafetyUser, isOperationalUser, isMasterUser } from './utils/auth';
 
 function AppContent() {
   const location = useLocation();
@@ -29,13 +29,18 @@ function AppContent() {
     children,
     allowCSafety = true,
     allowOperational = false,
+    requireMaster = false,
   }: {
     children: React.ReactElement;
     allowCSafety?: boolean;
     allowOperational?: boolean;
+    requireMaster?: boolean;
   }) => {
     if (!isAuthenticated()) {
       return <Navigate to="/login" replace />;
+    }
+    if (requireMaster && !isMasterUser()) {
+      return <Navigate to="/producao/ordem" replace />;
     }
     if (!allowCSafety && isCSafetyUser()) {
       return <Navigate to="/producao/ordem" replace />;
@@ -177,7 +182,7 @@ function AppContent() {
         <Route
           path="/equipamentos"
           element={
-            <GuardedRoute allowCSafety={false}>
+            <GuardedRoute allowCSafety={false} requireMaster>
               <ListaEquipamentos />
             </GuardedRoute>
           }

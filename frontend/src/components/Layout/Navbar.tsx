@@ -17,6 +17,7 @@ const Navbar: React.FC<NavbarProps> = ({ isOpen, onClose }) => {
     { label: 'Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false, hiddenForOperational: false },
     { label: 'Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true, hiddenForOperational: false },
     { label: 'Validades', path: '/validade-equipamentos', icon: 'event_upcoming', hiddenForCSafety: true, hiddenForOperational: true },
+    { label: 'Equipamentos', path: '/equipamentos', icon: 'construction', hiddenForCSafety: true, hiddenForOperational: true },
     { label: 'Usuários', path: '/usuarios', icon: 'group', hiddenForCSafety: true, hiddenForOperational: true },
     { label: 'Tipos de Equipamento', path: '/tipos-equipamento', icon: 'category', hiddenForCSafety: true, hiddenForOperational: true },
   ];

@@ -171,7 +171,6 @@ const ListaEquipamentos: React.FC = () => {
                 <th>Modelo</th>
                 <th>Descrição</th>
                 <th>Validade</th>
-                <th>Última Ordem</th>
               </tr>
             </thead>
             <tbody>
@@ -187,7 +186,6 @@ const ListaEquipamentos: React.FC = () => {
                   <td>{equipamento.modelo || '-'}</td>
                   <td>{equipamento.descricao || '-'}</td>
                   <td>{formatDatePtBr(equipamento.validade) || '-'}</td>
-                  <td>{equipamento.numeroOrdem || '-'}</td>
                 </tr>
               ))}
             </tbody>

@@ -23,6 +23,7 @@ const ListaEquipamentos: React.FC = () => {
   const [buscaSerie, setBuscaSerie] = useState('');
   const [buscaModelo, setBuscaModelo] = useState('');
   const [buscaTipo, setBuscaTipo] = useState('');
+  const [buscaTag, setBuscaTag] = useState('');
 
   // Agrupa os equipamentos pelo número de série para garantir chave única, combinando Produção e Manutenção
   const equipamentosUnicos = useMemo(() => {
@@ -88,9 +89,13 @@ const ListaEquipamentos: React.FC = () => {
         .toLowerCase()
         .includes(buscaTipo.toLowerCase().trim());
 
-      return matchSerie && matchModelo && matchTipo;
+      const matchTag = (equipamento.tag || '')
+        .toLowerCase()
+        .includes(buscaTag.toLowerCase().trim());
+
+      return matchSerie && matchModelo && matchTipo && matchTag;
     });
-  }, [equipamentosUnicos, buscaSerie, buscaModelo, buscaTipo]);
+  }, [equipamentosUnicos, buscaSerie, buscaModelo, buscaTipo, buscaTag]);
 
   const handleSelectEquipamento = (equipamento: EquipamentoItem) => {
     // Define o filtro da tela de Manutenção para carregar as OMs do equipamento
@@ -151,6 +156,17 @@ const ListaEquipamentos: React.FC = () => {
               placeholder="Buscar por tipo..."
               value={buscaTipo}
               onChange={(e) => setBuscaTipo(e.target.value)}
+            />
+          </div>
+
+          <div className="equipamentos-filter-item">
+            <label htmlFor="buscaTag">TAG</label>
+            <input
+              id="buscaTag"
+              type="text"
+              placeholder="Buscar por TAG..."
+              value={buscaTag}
+              onChange={(e) => setBuscaTag(e.target.value)}
             />
           </div>
         </div>

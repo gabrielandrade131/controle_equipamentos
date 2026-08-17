@@ -21,6 +21,7 @@ const ListaEquipamentos: React.FC = () => {
   const { historico: manutencoes, loading: loadingManutencoes, error: errorManutencoes } = useManutencao();
 
   const [buscaSerie, setBuscaSerie] = useState('');
+  const [buscaTag, setBuscaTag] = useState('');
   const [buscaModelo, setBuscaModelo] = useState('');
   const [buscaTipo, setBuscaTipo] = useState('');
   const [buscaTag, setBuscaTag] = useState('');
@@ -81,6 +82,10 @@ const ListaEquipamentos: React.FC = () => {
         .toLowerCase()
         .includes(buscaSerie.toLowerCase().trim());
       
+      const matchTag = (equipamento.tag || '')
+        .toLowerCase()
+        .includes(buscaTag.toLowerCase().trim());
+      
       const matchModelo = (equipamento.modelo || '')
         .toLowerCase()
         .includes(buscaModelo.toLowerCase().trim());
@@ -89,6 +94,7 @@ const ListaEquipamentos: React.FC = () => {
         .toLowerCase()
         .includes(buscaTipo.toLowerCase().trim());
 
+<<<<<<< HEAD
       const matchTag = (equipamento.tag || '')
         .toLowerCase()
         .includes(buscaTag.toLowerCase().trim());
@@ -96,6 +102,11 @@ const ListaEquipamentos: React.FC = () => {
       return matchSerie && matchModelo && matchTipo && matchTag;
     });
   }, [equipamentosUnicos, buscaSerie, buscaModelo, buscaTipo, buscaTag]);
+=======
+      return matchSerie && matchTag && matchModelo && matchTipo;
+    });
+  }, [equipamentosUnicos, buscaSerie, buscaTag, buscaModelo, buscaTipo]);
+>>>>>>> 0911f89f2823337b2ee3c17d59c0367719c3c569
 
   const handleSelectEquipamento = (equipamento: EquipamentoItem) => {
     // Define o filtro da tela de Manutenção para carregar as OMs do equipamento
@@ -134,6 +145,17 @@ const ListaEquipamentos: React.FC = () => {
               placeholder="Buscar por série..."
               value={buscaSerie}
               onChange={(e) => setBuscaSerie(e.target.value)}
+            />
+          </div>
+
+          <div className="equipamentos-filter-item">
+            <label htmlFor="buscaTag">TAG</label>
+            <input
+              id="buscaTag"
+              type="text"
+              placeholder="Buscar por TAG..."
+              value={buscaTag}
+              onChange={(e) => setBuscaTag(e.target.value)}
             />
           </div>
 

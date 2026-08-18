@@ -28,7 +28,7 @@ const ListaEquipamentos: React.FC = () => {
   // Agrupa os equipamentos pelo número de série para garantir chave única, combinando Produção e Manutenção
   const equipamentosUnicos = useMemo(() => {
     const map = new Map<string, EquipamentoItem>();
-    
+
     // Insere os equipamentos vindos da produção
     producoes.forEach((p) => {
       const serie = (p.numeroSerie || '').trim();
@@ -80,11 +80,11 @@ const ListaEquipamentos: React.FC = () => {
       const matchSerie = (equipamento.numeroSerie || '')
         .toLowerCase()
         .includes(buscaSerie.toLowerCase().trim());
-      
+
       const matchTag = (equipamento.tag || '')
         .toLowerCase()
         .includes(buscaTag.toLowerCase().trim());
-      
+
       const matchModelo = (equipamento.modelo || '')
         .toLowerCase()
         .includes(buscaModelo.toLowerCase().trim());
@@ -92,6 +92,7 @@ const ListaEquipamentos: React.FC = () => {
       const matchTipo = (equipamento.tipoEquipamentoNome || '')
         .toLowerCase()
         .includes(buscaTipo.toLowerCase().trim());
+
       return matchSerie && matchTag && matchModelo && matchTipo;
     });
   }, [equipamentosUnicos, buscaSerie, buscaTag, buscaModelo, buscaTipo]);
@@ -135,7 +136,6 @@ const ListaEquipamentos: React.FC = () => {
               onChange={(e) => setBuscaSerie(e.target.value)}
             />
           </div>
-
           <div className="equipamentos-filter-item">
             <label htmlFor="buscaTag">TAG</label>
             <input
@@ -169,16 +169,6 @@ const ListaEquipamentos: React.FC = () => {
             />
           </div>
 
-          <div className="equipamentos-filter-item">
-            <label htmlFor="buscaTag">TAG</label>
-            <input
-              id="buscaTag"
-              type="text"
-              placeholder="Buscar por TAG..."
-              value={buscaTag}
-              onChange={(e) => setBuscaTag(e.target.value)}
-            />
-          </div>
         </div>
       </section>
 
@@ -201,7 +191,7 @@ const ListaEquipamentos: React.FC = () => {
             </thead>
             <tbody>
               {equipamentosFiltrados.map((equipamento) => (
-                <tr 
+                <tr
                   key={equipamento.numeroSerie}
                   onClick={() => handleSelectEquipamento(equipamento)}
                   className="equipamentos-row-clickable"
@@ -222,4 +212,4 @@ const ListaEquipamentos: React.FC = () => {
   );
 };
 
-export default ListaEquipamentos;
+export default ListaEquipamentos;

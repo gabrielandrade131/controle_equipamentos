@@ -37,6 +37,40 @@ export class ManutencoesService {
     },
   };
 
+  // Fotos são armazenadas em base64 e podem ter dezenas de MB. A lista precisa
+  // apenas dos metadados; o registro completo é buscado ao selecioná-lo.
+  private readonly manutencaoResumoSelect = {
+    id: true,
+    numeroOrdemManutencao: true,
+    synchroId: true,
+    origem: true,
+    tipoEquipamentoId: true,
+    tipoEquipamentoNome: true,
+    fabricante: true,
+    tipoManutencao: true,
+    modeloEquipamento: true,
+    numeroSerie: true,
+    tag: true,
+    situacaoEquipamento: true,
+    dataRetornoBase: true,
+    dataInicio: true,
+    dataParalisacao: true,
+    previsaoTermino: true,
+    dataTermino: true,
+    statusManutencao: true,
+    avaliacaoFinalConforme: true,
+    anexoPdf: true,
+    diagnostico: true,
+    dadosInspecao: true,
+    responsavelManutencao: true,
+    responsavelRevisao: true,
+    criadoEm: true,
+    atualizadoEm: true,
+    ativo: true,
+    excluidoEm: true,
+    tipoEquipamento: true,
+  } satisfies Prisma.ManutencaoSelect;
+
   private normalizarTexto(value?: string | null): string | null {
     const texto = String(value ?? '').trim();
     return texto.length > 0 ? texto : null;
@@ -594,20 +628,26 @@ export class ManutencoesService {
     const sortBy = filters.sortBy ?? 'criadoEm';
     const sortOrder = filters.sortOrder ?? 'desc';
 
-    const [data, total] = await Promise.all([
-      this.prisma.manutencao.findMany({
+    const data = filters.incluirImagens
+      ? await this.prisma.manutencao.findMany({
         where,
-        include: {
-          tipoEquipamento: true,
-        },
+        include: { tipoEquipamento: true },
         orderBy: {
           [sortBy]: sortOrder,
         },
         skip,
         take: limit,
-      }),
-      this.prisma.manutencao.count({ where }),
-    ]);
+      })
+      : await this.prisma.manutencao.findMany({
+        where,
+        select: this.manutencaoResumoSelect,
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
+        skip,
+        take: limit,
+      });
+    const total = await this.prisma.manutencao.count({ where });
 
     const manutencoesComValidade = await Promise.all(
       data.map((manutencao) =>

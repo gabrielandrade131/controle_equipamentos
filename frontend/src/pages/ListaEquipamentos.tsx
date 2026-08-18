@@ -98,9 +98,11 @@ const ListaEquipamentos: React.FC = () => {
   }, [equipamentosUnicos, buscaSerie, buscaTag, buscaModelo, buscaTipo]);
 
   const handleSelectEquipamento = (equipamento: EquipamentoItem) => {
-    // Define o filtro da tela de Manutenção para carregar as OMs do equipamento
-    localStorage.setItem('manutencao-filters', JSON.stringify({ numeroSerie: equipamento.numeroSerie }));
-    navigate('/manutencao');
+    // O filtro pertence apenas a esta navegação. Persisti-lo deixava a página
+    // de Manutenção vazia em acessos posteriores, quando a série não existia.
+    navigate('/manutencao', {
+      state: { filters: { numeroSerie: equipamento.numeroSerie } },
+    });
   };
 
   if (loadingProducoes || loadingManutencoes) {

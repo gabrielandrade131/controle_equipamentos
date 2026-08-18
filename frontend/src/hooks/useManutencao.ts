@@ -319,7 +319,8 @@ export const useManutencao = () => {
       const response = await axiosInstance.get<ApiListResponse<any>>(
         "/manutencoes",
         {
-          params: { limit: 100 },
+          params: { limit: 100, incluirImagens: false },
+          timeout: INSPECAO_TIMEOUT,
         },
       );
       setHistorico(response.data.data.map(mapApiToInspecao));
@@ -357,6 +358,18 @@ export const useManutencao = () => {
     },
     [],
   );
+
+  const carregarDetalhesManutencao = useCallback(async (id: string) => {
+    const response = await axiosInstance.get(`/manutencoes/${id}`, {
+      timeout: INSPECAO_TIMEOUT,
+    });
+    const manutencao = mapApiToInspecao(response.data);
+
+    setHistorico((prev) =>
+      prev.map((item) => (item.id === id ? manutencao : item)),
+    );
+    return manutencao;
+  }, []);
 
   const adicionarInspecao = async (inspecao: InspecaoManutencao) => {
     const response = await axiosInstance.post(
@@ -452,5 +465,6 @@ export const useManutencao = () => {
     atualizarInspecaoConcluida,
     removerInspecao,
     buscarFotosRecebimento,
+    carregarDetalhesManutencao,
   };
 };

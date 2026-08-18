@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -11,6 +12,16 @@ import {
 import { StatusManutencao } from '@prisma/client';
 
 export class FilterManutencaoDto {
+  @ApiPropertyOptional({
+    example: true,
+    description:
+      'Inclui as fotos em base64. Use false para a listagem, que carrega os detalhes sob demanda.',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  incluirImagens?: boolean;
+
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @Type(() => Number)

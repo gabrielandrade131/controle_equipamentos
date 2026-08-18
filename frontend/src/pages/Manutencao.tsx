@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { FormularioInspecaoManutencao } from "../components/FormularioInspecaoManutencao";
 import { ModalEditarDetalhesManutencao } from "../components/ModalEditarDetalhesManutencao";
 import { AlertModal } from "../components/AlertModal";
@@ -13,6 +14,7 @@ import { useFilters } from "../hooks/useFilters";
 import { usePaginatedSelection } from "../hooks/usePaginatedSelection";
 import { criarInspecaoVazia } from "../constants/inspecaoManutencao";
 import { InspecaoManutencao } from "../types/manutencao";
+import { FilterType } from "../types/filters";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { buildSelectOptions } from "../utils/filterOptions";
 import { isOperationalUser } from "../utils/auth";
@@ -47,6 +49,7 @@ const matchesTextFilter = (
 };
 
 export const Manutencao: React.FC = () => {
+  const location = useLocation();
   const [modo, setModo] = useState<
     | "lista"
     | "editar-formulario"
@@ -79,9 +82,18 @@ export const Manutencao: React.FC = () => {
     atualizarInspecaoConcluida,
     buscarFotosRecebimento,
     anexarPdf,
+    carregarDetalhesManutencao,
+    loading,
+    error,
   } = useManutencao();
   const { exportInspecaoToPdf } = usePdfExportManutencao();
-  const { filters, updateFilters } = useFilters("manutencao-filters", {});
+  const navigationFilters =
+    (location.state as { filters?: FilterType } | null)?.filters ?? {};
+  const { filters, updateFilters } = useFilters(
+    "manutencao-filters",
+    navigationFilters,
+    false,
+  );
   const tagOptions = useMemo(
     () => buildSelectOptions(historico.map((item) => item.tag)),
     [historico],
@@ -206,6 +218,14 @@ export const Manutencao: React.FC = () => {
     } catch (error) {
       alert("Erro ao gerar PDF: " + error);
     }
+  };
+
+  const handleSelecionarManutencao = (inspecao: InspecaoManutencao) => {
+    selectItem(inspecao);
+    if (!inspecao.id) return;
+    void carregarDetalhesManutencao(inspecao.id).catch(() => {
+      // O resumo já foi carregado e continua disponível caso os detalhes falhem.
+    });
   };
 
   const handleAnexarPdf = async (arquivo?: File) => {
@@ -470,7 +490,11 @@ export const Manutencao: React.FC = () => {
             titulo="Filtros"
           />
           <h3>Histórico de Manutenções ({filteredHistorico.length})</h3>
-          {filteredHistorico.length === 0 ? (
+          {loading ? (
+            <p>Carregando manutenções...</p>
+          ) : error ? (
+            <p className="error-message">Erro ao carregar manutenções: {error}</p>
+          ) : filteredHistorico.length === 0 ? (
             <p>Nenhuma manutenção registrada</p>
           ) : (
             <>
@@ -479,7 +503,7 @@ export const Manutencao: React.FC = () => {
                   <li
                     key={inspecao.id}
                     className={selectedId === inspecao.id ? "active" : ""}
-                    onClick={() => selectItem(inspecao)}
+                    onClick={() => handleSelecionarManutencao(inspecao)}
                   >
                     <strong className="equipamento-tipo-card">
                       {inspecao.tipoEquipamento || "Tipo não informado"}

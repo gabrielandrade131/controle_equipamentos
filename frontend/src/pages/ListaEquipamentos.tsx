@@ -24,7 +24,6 @@ const ListaEquipamentos: React.FC = () => {
   const [buscaTag, setBuscaTag] = useState('');
   const [buscaModelo, setBuscaModelo] = useState('');
   const [buscaTipo, setBuscaTipo] = useState('');
-  const [buscaTag, setBuscaTag] = useState('');
 
   // Agrupa os equipamentos pelo número de série para garantir chave única, combinando Produção e Manutenção
   const equipamentosUnicos = useMemo(() => {
@@ -93,20 +92,9 @@ const ListaEquipamentos: React.FC = () => {
       const matchTipo = (equipamento.tipoEquipamentoNome || '')
         .toLowerCase()
         .includes(buscaTipo.toLowerCase().trim());
-
-<<<<<<< HEAD
-      const matchTag = (equipamento.tag || '')
-        .toLowerCase()
-        .includes(buscaTag.toLowerCase().trim());
-
-      return matchSerie && matchModelo && matchTipo && matchTag;
-    });
-  }, [equipamentosUnicos, buscaSerie, buscaModelo, buscaTipo, buscaTag]);
-=======
       return matchSerie && matchTag && matchModelo && matchTipo;
     });
   }, [equipamentosUnicos, buscaSerie, buscaTag, buscaModelo, buscaTipo]);
->>>>>>> 0911f89f2823337b2ee3c17d59c0367719c3c569
 
   const handleSelectEquipamento = (equipamento: EquipamentoItem) => {
     // Define o filtro da tela de Manutenção para carregar as OMs do equipamento

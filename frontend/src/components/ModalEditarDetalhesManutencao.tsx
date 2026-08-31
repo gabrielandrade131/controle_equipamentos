@@ -77,6 +77,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
 
     setFormData((prev) => ({
       ...prev,
+      observacoes: observacao.texto,
       observacoesHistorico: [...(prev.observacoesHistorico || []), observacao],
     }));
 

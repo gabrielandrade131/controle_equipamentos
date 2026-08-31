@@ -96,7 +96,11 @@ const serializarDiagnostico = (inspecao: InspecaoManutencao) => {
   const historico = [...(inspecao.observacoesHistorico || [])];
   const ultimoTexto = historico[historico.length - 1]?.texto?.trim();
 
-  if (textoAtual && textoAtual !== ultimoTexto) {
+  if (
+    textoAtual &&
+    textoAtual !== ultimoTexto &&
+    !historico.some((item) => item.texto?.trim() === textoAtual)
+  ) {
     historico.push({
       data: getLocalDateInput(),
       texto: textoAtual,

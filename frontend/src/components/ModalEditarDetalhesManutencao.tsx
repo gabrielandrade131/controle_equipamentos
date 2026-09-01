@@ -85,6 +85,11 @@ export const ModalEditarDetalhesManutencao: React.FC<
   };
 
   const handleSalvar = () => {
+    if (statusBloqueado) {
+      alert("Manutenções concluídas não podem ser alteradas.");
+      return;
+    }
+
     if (
       formData.statusManutencao === "CONCLUIDA" &&
       !formData.responsavelRevisao?.trim()
@@ -135,10 +140,11 @@ export const ModalEditarDetalhesManutencao: React.FC<
               />
             </div>
 
-            <div className={isCreating ? "form-group" : "form-group"}>
+            <div className="form-group">
               <label>Tipo de equipamento</label>
               <select
                 value={formData.tipoEquipamentoId || ""}
+                disabled={statusBloqueado}
                 onChange={(e) => {
                   const tipoSelecionado = tiposEquipamento.find(
                     (tipo) => tipo.id === e.target.value,
@@ -170,6 +176,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <label>Tipo de manutenção</label>
               <select
                 value={formData.tipoManutencao || "CORRETIVA"}
+                disabled={statusBloqueado}
                 onChange={(e) =>
                   handleInputChange("tipoManutencao", e.target.value)
                 }
@@ -188,6 +195,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
                   handleInputChange("fabricante", e.target.value)
                 }
                 readOnly={!isCreating}
+                disabled={statusBloqueado}
                 placeholder={isCreating ? "Digite o fabricante" : "-"}
               />
             </div>
@@ -207,6 +215,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
                   })
                 }
                 readOnly={!isCreating}
+                disabled={statusBloqueado}
                 placeholder={isCreating ? "Digite o modelo" : "-"}
               />
             </div>
@@ -220,6 +229,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
                   handleInputChange("numeroSerie", e.target.value)
                 }
                 readOnly={!isCreating}
+                disabled={statusBloqueado}
                 placeholder={isCreating ? "Digite o número de série" : "-"}
               />
             </div>
@@ -239,6 +249,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="date"
                 value={formData.dataRetornoBase || ""}
+                disabled={statusBloqueado}
                 onChange={(e) =>
                   handleInputChange("dataRetornoBase", e.target.value)
                 }
@@ -250,6 +261,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="date"
                 value={formData.previsaoTermino || ""}
+                disabled={statusBloqueado}
                 onChange={(e) =>
                   handleInputChange("previsaoTermino", e.target.value)
                 }
@@ -281,6 +293,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="text"
                 value={formData.responsavel}
+                disabled={statusBloqueado}
                 onChange={(e) =>
                   handleInputChange("responsavel", e.target.value)
                 }
@@ -292,6 +305,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <input
                 type="text"
                 value={formData.responsavelRevisao || ""}
+                disabled={statusBloqueado}
                 onChange={(e) =>
                   handleInputChange("responsavelRevisao", e.target.value)
                 }
@@ -309,7 +323,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
                 <option value="PENDENTE">Pendente</option>
                 <option value="EM_MANUTENCAO">Em Manutenção</option>
                 <option value="PARALISADA">Paralisada</option>
-                <option value="CONCLUIDA">Concluída</option>
+                {!isCreating && <option value="CONCLUIDA">Concluída</option>}
               </select>
               {conclusaoPendente && (
                 <div className="confirmacao-conclusao">
@@ -402,11 +416,13 @@ export const ModalEditarDetalhesManutencao: React.FC<
 
         <div className="manutencao-modal-footer">
           <button onClick={onCancelar} className="btn-primary">
-            Cancelar
+            {statusBloqueado ? "Fechar" : "Cancelar"}
           </button>
-          <button onClick={handleSalvar} className="btn-primary">
-            Salvar
-          </button>
+          {!statusBloqueado && (
+            <button onClick={handleSalvar} className="btn-primary">
+              Salvar
+            </button>
+          )}
         </div>
       </div>
     </div>

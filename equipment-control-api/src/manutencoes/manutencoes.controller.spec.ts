@@ -53,7 +53,7 @@ describe('ManutencoesController', () => {
     const dto = { tag: 'TAG-1' };
     serviceMock.create.mockResolvedValue({ id: 'man-1' });
 
-    await controller.create(dto);
+    await controller.create({ role: 'ADMIN' } as any, dto);
 
     expect(serviceMock.create).toHaveBeenCalledWith(dto);
   });
@@ -75,7 +75,7 @@ describe('ManutencoesController', () => {
       send: jest.fn(),
     };
 
-    await controller.exportExcel({}, res as any);
+    await controller.exportExcel({ role: 'ADMIN' } as any, {}, res as any);
 
     expect(serviceMock.exportExcel).toHaveBeenCalledWith({});
     expect(res.setHeader).toHaveBeenCalledWith(
@@ -115,7 +115,7 @@ describe('ManutencoesController', () => {
   it('removes maintenance', async () => {
     serviceMock.remove.mockResolvedValue({ id: 'man-1' });
 
-    await controller.remove('man-1');
+    await controller.remove({ role: 'ADMIN' } as any, 'man-1');
 
     expect(serviceMock.remove).toHaveBeenCalledWith('man-1');
   });

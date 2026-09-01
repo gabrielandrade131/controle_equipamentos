@@ -266,6 +266,13 @@ export const Manutencao: React.FC = () => {
 
   const handleEditarInspecao = (inspecao: InspecaoManutencao) => {
     if (!selectedItem?.id) return;
+    if (selectedItem.statusManutencao === "CONCLUIDA") {
+      setAlertModal({
+        isOpen: true,
+        message: "Manutenções concluídas não podem ser alteradas.",
+      });
+      return;
+    }
 
     atualizarInspecaoConcluida(selectedItem.id, inspecao)
       .then(() => {
@@ -283,6 +290,13 @@ export const Manutencao: React.FC = () => {
 
   const handleEditarDetalhes = (inspecao: InspecaoManutencao) => {
     if (!selectedItem?.id) return;
+    if (selectedItem.statusManutencao === "CONCLUIDA") {
+      setAlertModal({
+        isOpen: true,
+        message: "Esta manutenção já foi concluída e não pode ser editada.",
+      });
+      return;
+    }
 
     atualizarInspecao(selectedItem.id, inspecao)
       .then(() => {
@@ -716,7 +730,10 @@ export const Manutencao: React.FC = () => {
                 )}
               </div>
 
-              {selectedItem.statusManutencao === "CONCLUIDA" && (
+              {Boolean(
+                selectedItem.imagensAnexadas &&
+                  selectedItem.imagensAnexadas.length > 0,
+              ) && (
                 <div className="documents-section">
                   <h3>Fotos da Inspeção de Manutenção</h3>
                   {selectedItem.imagensAnexadas &&
@@ -829,18 +846,25 @@ export const Manutencao: React.FC = () => {
                   </div>
                   <div className="inspecao-actions">
                     <button
-                      onClick={() =>
-                        selectedItem.statusManutencao === "CONCLUIDA"
-                          ? setModo("editar-inspecao")
-                          : setAlertModal({
-                              isOpen: true,
-                              message:
-                                "A inspeção de manutenção só pode ser preenchida quando a manutenção estiver concluída.",
-                            })
-                      }
+                      onClick={() => {
+                        if (
+                          selectedItem.statusManutencao === "EM_MANUTENCAO" ||
+                          selectedItem.statusManutencao === "CONCLUIDA"
+                        ) {
+                          setModo("editar-inspecao");
+                        } else {
+                          setAlertModal({
+                            isOpen: true,
+                            message:
+                              "A inspeção de manutenção só pode ser preenchida quando o status for 'Em manutenção'.",
+                          });
+                        }
+                      }}
                       className="btn-primary"
                     >
-                      Criar Inspeção
+                      {selectedItem.statusManutencao === "CONCLUIDA"
+                        ? "Visualizar Inspeção"
+                        : "Preencher Inspeção"}
                     </button>
                     <button
                       onClick={() => handleExportarPDF(selectedItem)}
@@ -854,8 +878,19 @@ export const Manutencao: React.FC = () => {
 
               <div className="action-buttons">
                 <button
-                  onClick={() => setModo("editar-detalhes")}
+                  onClick={() => {
+                    if (selectedItem.statusManutencao === "CONCLUIDA") {
+                      setAlertModal({
+                        isOpen: true,
+                        message:
+                          "Esta manutenção já foi concluída e não pode ser editada.",
+                      });
+                      return;
+                    }
+                    setModo("editar-detalhes");
+                  }}
                   className="btn-primary"
+                  disabled={selectedItem.statusManutencao === "CONCLUIDA"}
                 >
                   Editar Detalhes
                 </button>

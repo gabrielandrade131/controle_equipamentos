@@ -49,10 +49,14 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
     );
   }, [inspecao.tipoEquipamento, inspecao.modelo]);
 
-  const documentoBloqueado = inspecao.statusManutencao !== 'CONCLUIDA';
+  const documentoBloqueado = inspecao.statusManutencao !== 'EM_MANUTENCAO';
   const dadosManutencaoSomenteLeitura = true;
 
   const handleInputChange = (campo: CampoInspecao, valor: string) => {
+    if (documentoBloqueado) {
+      return;
+    }
+
     let value: any = valor;
     
     // Converter para número quando necessário
@@ -125,6 +129,8 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleImagensChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (documentoBloqueado) return;
+
     const files = e.target.files;
     if (!files) return;
 
@@ -155,6 +161,8 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleRemoverImagem = (index: number) => {
+    if (documentoBloqueado) return;
+
     setInspecao((prev) => ({
       ...prev,
       imagensAnexadas: (prev.imagensAnexadas || []).filter((_, i) => i !== index),
@@ -162,14 +170,19 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   };
 
   const handleSalvar = () => {
-    const executor = inspecao.responsavel.trim() || usuarioExecutor;
+    if (documentoBloqueado) {
+      alert('A inspeção não pode ser modificada quando a manutenção não estiver com status "Em manutenção".');
+      return;
+    }
+
+    const executor = inspecao.responsavel?.trim() || usuarioExecutor;
 
     if (!executor) {
       alert('Por favor, preencha o campo obrigatório: Executado por');
       return;
     }
 
-    if (!documentoBloqueado && !inspecao.validade) {
+    if (!inspecao.validade) {
       alert('Informe a validade do equipamento considerando a peça que vence primeiro.');
       return;
     }
@@ -183,9 +196,22 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   return (
     <form
       className="formulario-inspecao-manutencao"
-      aria-label={isEditing ? 'Editar inspeção de manutenção' : 'Nova inspeção de manutenção'}
+      aria-label={
+        documentoBloqueado
+          ? 'Visualização da inspeção de manutenção'
+          : isEditing
+            ? 'Editar inspeção de manutenção'
+            : 'Nova inspeção de manutenção'
+      }
       onSubmit={(e) => e.preventDefault()}
     >
+      {documentoBloqueado && (
+        <div className="alerta-somente-leitura" role="alert">
+          {inspecao.statusManutencao === 'CONCLUIDA'
+            ? 'Esta manutenção já foi concluída. A inspeção está finalizada e em modo somente leitura.'
+            : 'A inspeção de manutenção só pode ser preenchida e alterada quando o status for "Em manutenção".'}
+        </div>
+      )}
       <div className="dados-equipamento">
         <h2>Dados da Manutenção</h2>
         <div className="grid-inputs">
@@ -446,12 +472,14 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
       </div>
 
       <div className="botoes">
-        <button onClick={handleSalvar} className="btn-salvar">
-          Salvar Inspeção
-        </button>
+        {!documentoBloqueado && (
+          <button onClick={handleSalvar} className="btn-salvar">
+            Salvar Inspeção
+          </button>
+        )}
         {onCancelar && (
           <button type="button" onClick={onCancelar} className="btn-cancelar">
-            Cancelar
+            {documentoBloqueado ? 'Voltar' : 'Cancelar'}
           </button>
         )}
       </div>

@@ -559,12 +559,9 @@ export class ManutencoesService {
       data.tipoEquipamentoNome,
     );
 
-    if (
-      data.statusManutencao === StatusManutencao.CONCLUIDA &&
-      !data.responsavelRevisao?.trim()
-    ) {
+    if (data.statusManutencao === StatusManutencao.CONCLUIDA) {
       throw new BadRequestException(
-        'Informe o campo Revisado por antes de concluir a manutencao.',
+        'Uma nova manutenção não pode ser criada diretamente como concluída. A inspeção deve ser realizada no status Em manutenção.',
       );
     }
 
@@ -590,9 +587,7 @@ export class ManutencoesService {
         previsaoTermino: this.normalizarData(data.previsaoTermino),
         dataTermino: data.dataTermino
           ? this.normalizarData(data.dataTermino)
-          : data.statusManutencao === StatusManutencao.CONCLUIDA
-            ? new Date()
-            : null,
+          : null,
         diagnostico: data.diagnostico,
         dadosInspecao: data.dadosInspecao as
           | Prisma.InputJsonValue
@@ -796,137 +791,43 @@ export class ManutencoesService {
           : undefined;
 
     if (manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA) {
-      const tipoEquipamentoFoiInformado =
-        data.tipoEquipamentoId !== undefined ||
-        data.tipoEquipamentoNome !== undefined;
-      const tipoEquipamento = tipoEquipamentoFoiInformado
-        ? await this.resolverTipoEquipamento(
-            data.tipoEquipamentoId,
-            data.tipoEquipamentoNome,
-          )
-        : null;
-      const camposPermitidosInspecao = [
-        'diagnostico',
-        'dadosInspecao',
-        'imagensAnexadas',
-        'avaliacaoFinalConforme',
-        'validade',
-        'responsavelManutencao',
-        'responsavelRevisao',
-        'tipoEquipamentoId',
-        'tipoEquipamentoNome',
-        'fabricante',
-      ] as const;
-
-      const camposData = new Set([
-        'dataRetornoBase',
-        'dataInicio',
-        'dataParalisacao',
-        'previsaoTermino',
-        'dataTermino',
-      ]);
-
-      const camposNaoPermitidos = Object.entries(data).filter(
-        ([campo, value]) => {
-          if (value === undefined) {
-            return false;
-          }
-
-          if (
-            (campo === 'dataInicio' || campo === 'dataTermino') &&
-            statusMudou
-          ) {
-            return false;
-          }
-
-          if (
-            camposPermitidosInspecao.includes(
-              campo as (typeof camposPermitidosInspecao)[number],
-            )
-          ) {
-            return false;
-          }
-
-          const valorAnterior = manutencaoAtual[campo];
-
-          if (camposData.has(campo)) {
-            return !this.mesmaData(
-              valorAnterior as Date | null | undefined,
-              this.normalizarData(value as string),
-            );
-          }
-
-          return (
-            this.formatarValor(valorAnterior) !== this.formatarValor(value)
-          );
-        },
-      );
-
-      if (camposNaoPermitidos.length > 0) {
-        throw new BadRequestException(
-          `Manutencao concluida nao pode ter seus dados editados. Campos divergentes: ${camposNaoPermitidos
-            .map(([campo]) => campo)
-            .join(', ')}.`,
-        );
-      }
-
-      const manutencaoAtualizadaConcluida = await this.prisma.manutencao.update(
-        {
-          where: { id },
-          data: {
-            tipoEquipamentoId:
-              tipoEquipamentoFoiInformado
-                ? tipoEquipamento?.tipoEquipamentoId
-                : undefined,
-            tipoEquipamentoNome:
-              tipoEquipamentoFoiInformado
-                ? tipoEquipamento?.tipoEquipamentoNome
-                : undefined,
-            diagnostico: data.diagnostico,
-            fabricante: data.fabricante,
-            dadosInspecao: data.dadosInspecao as
-              | Prisma.InputJsonValue
-              | undefined,
-            imagensAnexadas: data.imagensAnexadas,
-            avaliacaoFinalConforme: data.avaliacaoFinalConforme,
-            responsavelManutencao: responsavelManutencaoFinal,
-            responsavelRevisao: data.responsavelRevisao,
-            statusManutencao: data.statusManutencao,
-            dataInicio: dataInicioPorStatus,
-            dataTermino: dataTerminoPorStatus,
-          },
-          include: {
-            tipoEquipamento: true,
-          },
-        },
-      );
-
-      await this.atualizarValidadeEquipamentoPorTag(
-        manutencaoAtualizadaConcluida.tag,
-        data.validade,
-        alteradoPor,
-      );
-
-      return this.adicionarValidadeEquipamento(
-        this.adicionarDiasManutencao(manutencaoAtualizadaConcluida),
+      throw new BadRequestException(
+        'Manutencao concluida nao pode ser alterada.',
       );
     }
 
-    const tipoEquipamento = await this.resolverTipoEquipamento(
-      data.tipoEquipamentoId ?? manutencaoAtual.tipoEquipamentoId,
-      data.tipoEquipamentoNome ?? manutencaoAtual.tipoEquipamentoNome,
-    );
+    const temDadosInspecao =
+      data.dadosInspecao !== undefined ||
+      data.avaliacaoFinalConforme !== undefined ||
+      data.imagensAnexadas !== undefined;
+
+    if (
+      temDadosInspecao &&
+      manutencaoAtual.statusManutencao !== StatusManutencao.EM_MANUTENCAO &&
+      data.statusManutencao !== StatusManutencao.EM_MANUTENCAO
+    ) {
+      throw new BadRequestException(
+        'A inspecao so pode ser preenchida enquanto a manutencao estiver com status Em manutencao.',
+      );
+    }
+
+    const tipoEquipamentoFoiInformado =
+      data.tipoEquipamentoId !== undefined ||
+      data.tipoEquipamentoNome !== undefined;
+    const tipoEquipamento = tipoEquipamentoFoiInformado
+      ? await this.resolverTipoEquipamento(
+          data.tipoEquipamentoId,
+          data.tipoEquipamentoNome,
+        )
+      : null;
 
     const novosDados = {
-      tipoEquipamentoId:
-        data.tipoEquipamentoId !== undefined
-          ? tipoEquipamento.tipoEquipamentoId
-          : undefined,
-      tipoEquipamentoNome:
-        data.tipoEquipamentoId !== undefined ||
-        data.tipoEquipamentoNome !== undefined
-          ? tipoEquipamento.tipoEquipamentoNome
-          : undefined,
+      tipoEquipamentoId: tipoEquipamentoFoiInformado
+        ? tipoEquipamento?.tipoEquipamentoId
+        : undefined,
+      tipoEquipamentoNome: tipoEquipamentoFoiInformado
+        ? tipoEquipamento?.tipoEquipamentoNome
+        : undefined,
       tipoManutencao: data.tipoManutencao,
       modeloEquipamento: data.modeloEquipamento,
       fabricante: data.fabricante,

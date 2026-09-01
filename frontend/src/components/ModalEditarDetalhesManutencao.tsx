@@ -3,6 +3,7 @@ import { InspecaoManutencao, ObservacaoHistorico } from "../types/manutencao";
 import { useTiposEquipamento } from "../hooks/useTiposEquipamento";
 import { aplicarChecklistManutencao } from "../constants/inspecaoManutencao";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
+import { isDouglasUser } from "../utils/auth";
 import "./ModalEditarDetalhesManutencao.css";
 
 interface ModalEditarDetalhesManutencaoProps {
@@ -35,10 +36,20 @@ export const ModalEditarDetalhesManutencao: React.FC<
   };
 
   const handleStatusChange = (valor: string) => {
+    if (valor === "CONCLUIDA" && !isDouglasUser()) {
+      alert(
+        "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
+      );
+      return;
+    }
     setFormData((prev) => {
       const statusManutencao = valor as InspecaoManutencao["statusManutencao"];
       const changes: Partial<InspecaoManutencao> = { statusManutencao };
       setConfirmouConclusao(false);
+
+      if (statusManutencao === "CONCLUIDA") {
+        changes.responsavelRevisao = "Douglas Moreira Alves";
+      }
 
       if (statusManutencao === "EM_MANUTENCAO" && !prev.dataInicio) {
         changes.dataInicio = getLocalDateInput();
@@ -90,11 +101,10 @@ export const ModalEditarDetalhesManutencao: React.FC<
       return;
     }
 
-    if (
-      formData.statusManutencao === "CONCLUIDA" &&
-      !formData.responsavelRevisao?.trim()
-    ) {
-      alert("Informe o campo Revisado por antes de concluir a manutenção.");
+    if (formData.statusManutencao === "CONCLUIDA" && !isDouglasUser()) {
+      alert(
+        "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
+      );
       return;
     }
 
@@ -304,8 +314,12 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <label>Revisado por</label>
               <input
                 type="text"
-                value={formData.responsavelRevisao || ""}
-                disabled={statusBloqueado}
+                value={
+                  formData.statusManutencao === "CONCLUIDA"
+                    ? "Douglas Moreira Alves"
+                    : formData.responsavelRevisao || ""
+                }
+                disabled={statusBloqueado || formData.statusManutencao === "CONCLUIDA"}
                 onChange={(e) =>
                   handleInputChange("responsavelRevisao", e.target.value)
                 }
@@ -323,7 +337,14 @@ export const ModalEditarDetalhesManutencao: React.FC<
                 <option value="PENDENTE">Pendente</option>
                 <option value="EM_MANUTENCAO">Em Manutenção</option>
                 <option value="PARALISADA">Paralisada</option>
-                {!isCreating && <option value="CONCLUIDA">Concluída</option>}
+                {!isCreating && (
+                  <option
+                    value="CONCLUIDA"
+                    disabled={!isDouglasUser() && formData.statusManutencao !== "CONCLUIDA"}
+                  >
+                    Concluída{!isDouglasUser() && formData.statusManutencao !== "CONCLUIDA" ? " (Somente douglas.alves)" : ""}
+                  </option>
+                )}
               </select>
               {conclusaoPendente && (
                 <div className="confirmacao-conclusao">

@@ -727,20 +727,25 @@ export class ManutencoesService {
       data.statusManutencao !== manutencaoAtual.statusManutencao;
     const statusFinal =
       data.statusManutencao ?? manutencaoAtual.statusManutencao;
-    const responsavelRevisaoFinal =
-      data.responsavelRevisao !== undefined
-        ? data.responsavelRevisao
-        : manutencaoAtual.responsavelRevisao;
 
     if (
       statusFinal === StatusManutencao.CONCLUIDA &&
-      (statusMudou || data.statusManutencao === StatusManutencao.CONCLUIDA) &&
-      !responsavelRevisaoFinal?.trim()
+      (statusMudou || data.statusManutencao === StatusManutencao.CONCLUIDA)
     ) {
-      throw new BadRequestException(
-        'Informe o campo Revisado por antes de concluir a manutencao.',
-      );
+      const emailUsuario = user?.email?.toLowerCase().trim();
+      if (emailUsuario !== 'douglas.alves@ambipar.com') {
+        throw new BadRequestException(
+          'Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status para Concluída.',
+        );
+      }
     }
+
+    const responsavelRevisaoFinal =
+      statusFinal === StatusManutencao.CONCLUIDA
+        ? 'Douglas Moreira Alves'
+        : data.responsavelRevisao !== undefined
+          ? data.responsavelRevisao
+          : manutencaoAtual.responsavelRevisao;
 
     if (
       manutencaoAtual.statusManutencao === StatusManutencao.CONCLUIDA &&
@@ -844,7 +849,7 @@ export class ManutencoesService {
         | undefined,
       imagensAnexadas: data.imagensAnexadas,
       responsavelManutencao: responsavelManutencaoFinal,
-      responsavelRevisao: data.responsavelRevisao,
+      responsavelRevisao: responsavelRevisaoFinal,
       statusManutencao: data.statusManutencao,
       avaliacaoFinalConforme: data.avaliacaoFinalConforme,
       dataInicio: dataInicioPorStatus,

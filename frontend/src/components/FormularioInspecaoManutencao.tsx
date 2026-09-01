@@ -339,10 +339,14 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
             <label>Revisado por</label>
             <input
               type="text"
-              value={inspecao.responsavelRevisao || ''}
+              value={
+                inspecao.statusManutencao === 'CONCLUIDA'
+                  ? 'Douglas Moreira Alves'
+                  : inspecao.responsavelRevisao || ''
+              }
               onChange={(e) => handleInputChange('responsavelRevisao', e.target.value)}
-              readOnly={dadosManutencaoSomenteLeitura}
-              disabled={dadosManutencaoSomenteLeitura}
+              readOnly={dadosManutencaoSomenteLeitura || inspecao.statusManutencao === 'CONCLUIDA'}
+              disabled={dadosManutencaoSomenteLeitura || inspecao.statusManutencao === 'CONCLUIDA'}
             />
           </div>
           <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>

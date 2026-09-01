@@ -397,8 +397,29 @@ export const usePdfExportManutencao = () => {
         }
       }
 
+      const loadImage = (src: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              reject(new Error("Não foi possível obter contexto 2d"));
+              return;
+            }
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+          };
+          img.onerror = (e) => reject(e);
+          img.src = src;
+        });
+      };
+
       sectionHeader("ASSINATURA");
-      ensureSpace(36);
+      ensureSpace(45);
       const assinaturaLineWidth = 78;
       const assinaturaGap = 24;
       const assinaturaTotalWidth = assinaturaLineWidth * 2 + assinaturaGap;
@@ -408,6 +429,12 @@ export const usePdfExportManutencao = () => {
       const linhaExecutanteFim = linhaExecutanteInicio + assinaturaLineWidth;
       const linhaRevisaoInicio = linhaExecutanteFim + assinaturaGap;
       const linhaRevisaoFim = linhaRevisaoInicio + assinaturaLineWidth;
+
+      const revisadoPor =
+        inspecao.statusManutencao === "CONCLUIDA"
+          ? "Douglas Moreira Alves"
+          : inspecao.responsavelRevisao || "-";
+
       drawText(
         `Executado por: ${inspecao.responsavel || "-"}`,
         linhaExecutanteInicio,
@@ -415,12 +442,26 @@ export const usePdfExportManutencao = () => {
         { size: 9 },
       );
       drawText(
-        `Revisado por: ${inspecao.responsavelRevisao || "-"}`,
+        `Revisado por: ${revisadoPor}`,
         linhaRevisaoInicio,
         y + 2,
         { size: 9 },
       );
-      y += 20;
+
+      if (inspecao.statusManutencao === "CONCLUIDA") {
+        try {
+          const sigDataUrl = await loadImage("/assinatura_douglas.png");
+          const sigWidth = 36;
+          const sigHeight = 21;
+          const sigX = linhaRevisaoInicio + (assinaturaLineWidth - sigWidth) / 2;
+          const sigY = y + 6.5;
+          pdf.addImage(sigDataUrl, "PNG", sigX, sigY, sigWidth, sigHeight);
+        } catch (error) {
+          console.warn("Assinatura não pôde ser carregada no PDF:", error);
+        }
+      }
+
+      y += 24;
       pdf.setDrawColor(0, 0, 0);
       pdf.line(linhaExecutanteInicio, y, linhaExecutanteFim, y);
       drawCenteredText(
@@ -435,7 +476,7 @@ export const usePdfExportManutencao = () => {
         "Assinatura revisão",
         linhaRevisaoInicio,
         linhaRevisaoFim,
-        y + 5,
+        y + 3,
         { size: 8 },
       );
       drawText(`Data: ${formatDate(inspecao.dataTermino)}`, marginX, y + 18, {

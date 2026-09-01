@@ -347,7 +347,7 @@ describe('ManutencoesService', () => {
         id: 'man-1',
         statusManutencao: 'CONCLUIDA',
         responsavelManutencao: 'Executor informado',
-        responsavelRevisao: 'Revisor informado',
+        responsavelRevisao: 'Douglas Moreira Alves',
         historicoAlteracoes: [],
       });
     prisma.manutencao.update.mockResolvedValue({
@@ -362,15 +362,15 @@ describe('ManutencoesService', () => {
       {
         statusManutencao: 'CONCLUIDA',
         responsavelManutencao: 'Executor informado',
-        responsavelRevisao: 'Revisor informado',
       } as any,
-      { nome: 'Usuario autenticado' },
+      { nome: 'Douglas Alves', email: 'douglas.alves@ambipar.com' },
     );
 
     expect(prisma.manutencao.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           responsavelManutencao: 'Executor informado',
+          responsavelRevisao: 'Douglas Moreira Alves',
         }),
       }),
     );
@@ -379,10 +379,25 @@ describe('ManutencoesService', () => {
         expect.objectContaining({
           campo: 'responsavelManutencao',
           valorNovo: 'Executor informado',
-          alteradoPor: 'Usuario autenticado',
+          alteradoPor: 'Douglas Alves',
         }),
       ]),
     });
+  });
+
+  it('rejects conclusion when user is not douglas.alves@ambipar.com', async () => {
+    prisma.manutencao.findUnique.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'EM_MANUTENCAO',
+    });
+
+    await expect(
+      service.update(
+        'man-1',
+        { statusManutencao: 'CONCLUIDA' } as any,
+        { email: 'outro.usuario@ambipar.com' },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('allows changing equipment type without failing when work dates keep the same day', async () => {
@@ -504,13 +519,13 @@ describe('ManutencoesService', () => {
     );
     await service.update(
       'man-2',
-      { statusManutencao: 'CONCLUIDA', responsavelRevisao: 'Revisor' } as any,
-      { nome: 'Gabriel' },
+      { statusManutencao: 'CONCLUIDA' } as any,
+      { nome: 'Douglas Alves', email: 'douglas.alves@ambipar.com' },
     );
     await service.update(
       'man-3',
-      { statusManutencao: 'CONCLUIDA', responsavelRevisao: 'Revisor' } as any,
-      { nome: 'Gabriel' },
+      { statusManutencao: 'CONCLUIDA' } as any,
+      { nome: 'Douglas Alves', email: 'douglas.alves@ambipar.com' },
     );
 
     expect(prisma.manutencao.update).toHaveBeenNthCalledWith(

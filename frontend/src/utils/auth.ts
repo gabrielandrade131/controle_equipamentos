@@ -48,3 +48,13 @@ export const isMasterUser = (): boolean => {
 
 export const canManageUserVerification = (): boolean =>
   isAdminUser() || isVerifiedUser();
+
+export const isDouglasUser = (): boolean => {
+  const email = getAuthUser()?.email?.toLowerCase().trim();
+  return email === 'douglas.alves@ambipar.com';
+};
+
+export const canConcludeManutencao = (): boolean => {
+  return isDouglasUser();
+};
+

@@ -64,6 +64,10 @@ describe('FormularioInspecaoManutencao', () => {
       screen.queryByRole('button', { name: /Salvar Inspeção/i }),
     ).not.toBeInTheDocument();
 
+    expect(
+      screen.getByDisplayValue('Douglas Moreira Alves'),
+    ).toBeInTheDocument();
+
     const radios = screen.getAllByRole('radio');
     radios.forEach((radio) => {
       expect(radio).toBeDisabled();

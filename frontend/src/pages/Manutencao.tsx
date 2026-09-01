@@ -17,7 +17,7 @@ import { InspecaoManutencao } from "../types/manutencao";
 import { FilterType } from "../types/filters";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { buildSelectOptions } from "../utils/filterOptions";
-import { isOperationalUser } from "../utils/auth";
+import { isOperationalUser, isDouglasUser } from "../utils/auth";
 import "./Manutencao.css";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -318,16 +318,25 @@ export const Manutencao: React.FC = () => {
       setConfirmandoStatus(false);
       return;
     }
+    if (status === "CONCLUIDA" && !isDouglasUser()) {
+      setAlertModal({
+        isOpen: true,
+        message:
+          "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
+      });
+      return;
+    }
     setStatusEscolhido(status);
     setConfirmandoStatus(false);
   };
 
   const confirmarAlteracaoStatus = async () => {
     if (!selectedItem || !statusEscolhido || !confirmandoStatus) return;
-    if (statusEscolhido === "CONCLUIDA" && !selectedItem.responsavelRevisao?.trim()) {
+    if (statusEscolhido === "CONCLUIDA" && !isDouglasUser()) {
       setAlertModal({
         isOpen: true,
-        message: "Informe o campo Revisado por antes de concluir a manutenção.",
+        message:
+          "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
       });
       return;
     }
@@ -336,6 +345,10 @@ export const Manutencao: React.FC = () => {
     const atualizacao: InspecaoManutencao = {
       ...selectedItem,
       statusManutencao: statusEscolhido as InspecaoManutencao["statusManutencao"],
+      responsavelRevisao:
+        statusEscolhido === "CONCLUIDA"
+          ? "Douglas Moreira Alves"
+          : selectedItem.responsavelRevisao,
       dataInicio:
         statusEscolhido === "EM_MANUTENCAO" && !selectedItem.dataInicio
           ? hoje
@@ -640,7 +653,11 @@ export const Manutencao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Revisado por:</label>
-                  <p>{selectedItem.responsavelRevisao || "-"}</p>
+                  <p>
+                    {selectedItem.statusManutencao === "CONCLUIDA"
+                      ? "Douglas Moreira Alves"
+                      : selectedItem.responsavelRevisao || "-"}
+                  </p>
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
@@ -654,7 +671,12 @@ export const Manutencao: React.FC = () => {
                     <option value="PENDENTE">Pendente</option>
                     <option value="EM_MANUTENCAO">Em manutenção</option>
                     <option value="PARALISADA">Paralisada</option>
-                    <option value="CONCLUIDA">Concluída</option>
+                    <option
+                      value="CONCLUIDA"
+                      disabled={!isDouglasUser() && selectedItem.statusManutencao !== "CONCLUIDA"}
+                    >
+                      Concluída{!isDouglasUser() && selectedItem.statusManutencao !== "CONCLUIDA" ? " (Somente douglas.alves)" : ""}
+                    </option>
                   </select>
                   {statusEscolhido && (
                     <div className="status-confirmacao">

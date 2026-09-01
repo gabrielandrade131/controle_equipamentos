@@ -37,9 +37,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
 
   const handleStatusChange = (valor: string) => {
     if (valor === "CONCLUIDA" && !isDouglasUser()) {
-      alert(
-        "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
-      );
+      alert("Você não tem autorização para concluir o status.");
       return;
     }
     setFormData((prev) => {
@@ -102,9 +100,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
     }
 
     if (formData.statusManutencao === "CONCLUIDA" && !isDouglasUser()) {
-      alert(
-        "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
-      );
+      alert("Você não tem autorização para concluir o status.");
       return;
     }
 
@@ -342,7 +338,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
                     value="CONCLUIDA"
                     disabled={!isDouglasUser() && formData.statusManutencao !== "CONCLUIDA"}
                   >
-                    Concluída{!isDouglasUser() && formData.statusManutencao !== "CONCLUIDA" ? " (Somente douglas.alves)" : ""}
+                    Concluída{!isDouglasUser() && formData.statusManutencao !== "CONCLUIDA" ? " (Sem autorização)" : ""}
                   </option>
                 )}
               </select>

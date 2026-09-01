@@ -735,7 +735,7 @@ export class ManutencoesService {
       const emailUsuario = user?.email?.toLowerCase().trim();
       if (emailUsuario !== 'douglas.alves@ambipar.com') {
         throw new BadRequestException(
-          'Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status para Concluída.',
+          'Você não tem autorização para concluir o status.',
         );
       }
     }

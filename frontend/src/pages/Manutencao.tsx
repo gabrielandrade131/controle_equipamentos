@@ -321,8 +321,7 @@ export const Manutencao: React.FC = () => {
     if (status === "CONCLUIDA" && !isDouglasUser()) {
       setAlertModal({
         isOpen: true,
-        message:
-          "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
+        message: "Você não tem autorização para concluir o status.",
       });
       return;
     }
@@ -335,8 +334,7 @@ export const Manutencao: React.FC = () => {
     if (statusEscolhido === "CONCLUIDA" && !isDouglasUser()) {
       setAlertModal({
         isOpen: true,
-        message:
-          "Somente o usuário douglas.alves@ambipar.com tem permissão para alterar o status da manutenção para Concluída.",
+        message: "Você não tem autorização para concluir o status.",
       });
       return;
     }
@@ -675,7 +673,7 @@ export const Manutencao: React.FC = () => {
                       value="CONCLUIDA"
                       disabled={!isDouglasUser() && selectedItem.statusManutencao !== "CONCLUIDA"}
                     >
-                      Concluída{!isDouglasUser() && selectedItem.statusManutencao !== "CONCLUIDA" ? " (Somente douglas.alves)" : ""}
+                      Concluída{!isDouglasUser() && selectedItem.statusManutencao !== "CONCLUIDA" ? " (Sem autorização)" : ""}
                     </option>
                   </select>
                   {statusEscolhido && (

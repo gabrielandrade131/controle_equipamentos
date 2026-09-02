@@ -4,6 +4,7 @@ import { useTiposEquipamento } from "../hooks/useTiposEquipamento";
 import { aplicarChecklistManutencao } from "../constants/inspecaoManutencao";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { isDouglasUser } from "../utils/auth";
+import { normalizeTag } from "../utils/tag";
 import "./ModalEditarDetalhesManutencao.css";
 
 interface ModalEditarDetalhesManutencaoProps {
@@ -29,9 +30,13 @@ export const ModalEditarDetalhesManutencao: React.FC<
     statusInicial !== "CONCLUIDA";
 
   const handleInputChange = (campo: keyof InspecaoManutencao, valor: any) => {
+    let finalValor = valor;
+    if (campo === "tag" && typeof valor === "string") {
+      finalValor = valor.toUpperCase();
+    }
     setFormData((prev) => ({
       ...prev,
-      [campo]: valor,
+      [campo]: finalValor,
     }));
   };
 
@@ -111,7 +116,10 @@ export const ModalEditarDetalhesManutencao: React.FC<
       return;
     }
 
-    onSalvar?.(formData);
+    onSalvar?.({
+      ...formData,
+      tag: normalizeTag(formData.tag),
+    });
   };
 
   return (

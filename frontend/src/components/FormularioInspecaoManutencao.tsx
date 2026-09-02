@@ -8,6 +8,7 @@ import {
 } from '../constants/inspecaoManutencao';
 import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
 import { getAuthUserDisplayName } from '../utils/auth';
+import { normalizeTag } from '../utils/tag';
 import './FormularioInspecaoManutencao.css';
 
 interface FormularioInspecaoManutencaoProps {
@@ -62,6 +63,8 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
     // Converter para número quando necessário
     if (campo === 'numeroOrdemManutencao' || campo === 'diasEsperaManutencao' || campo === 'diasManutencao') {
       value = valor === '' ? null : parseInt(valor, 10);
+    } else if (campo === 'tag') {
+      value = valor.toUpperCase();
     }
     
     setInspecao((prev) => ({
@@ -189,6 +192,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
 
     onSalvar?.({
       ...inspecao,
+      tag: normalizeTag(inspecao.tag),
       responsavel: executor,
     });
   };

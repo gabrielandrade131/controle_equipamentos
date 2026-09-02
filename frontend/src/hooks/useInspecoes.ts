@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axiosInstance from '../services/axiosConfig';
 import { InspecaoMontagem, VerificacaoItem } from '../types/inspecao';
 import { extractDateInput, getLocalDateInput } from '../utils/date';
+import { normalizeTag } from '../utils/tag';
 import {
   NOMES_INSTRUMENTOS_AFERICAO,
   NOMES_VERIFICACOES_GERAIS_PREMONTAGEM,
@@ -80,7 +81,7 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
     id: producao.id,
     numeroSerie: producao.numeroSerie ?? '',
     numeroLote: producao.numeroLote ?? producao.loteProducao?.numeroLote ?? null,
-    tag: producao.tag ?? '',
+    tag: normalizeTag(producao.tag),
     statusProducao: producao.statusProducao ?? '',
     tipoEquipamentoNome: producao.tipoEquipamento?.nome ?? '',
     dataInspecao: toDateInput(producao.atualizadoEm || producao.criadoEm),

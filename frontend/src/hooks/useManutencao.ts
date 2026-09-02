@@ -7,6 +7,7 @@ import {
 } from "../constants/inspecaoManutencao";
 import { InspecaoManutencao, StatusManutencao } from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
+import { normalizeTag } from "../utils/tag";
 
 const SECOES_INSPECAO = [
   "certificacoes",
@@ -248,7 +249,7 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
       "",
     modelo: manutencao.modeloEquipamento ?? "",
     numeroSerie: manutencao.numeroSerie ?? "",
-    tag: manutencao.tag ?? "",
+    tag: normalizeTag(manutencao.tag),
     numeroOrdemManutencao: manutencao.numeroOrdemManutencao ?? null,
     destino: manutencao.situacaoEquipamento ?? "",
     responsavel: manutencao.responsavelManutencao ?? "",
@@ -291,7 +292,7 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   modeloEquipamento: inspecao.modelo || undefined,
   fabricante: inspecao.fabricante || undefined,
   numeroSerie: inspecao.numeroSerie || undefined,
-  tag: inspecao.tag || undefined,
+  tag: normalizeTag(inspecao.tag) || undefined,
   situacaoEquipamento: inspecao.destino || "Manutenção manual",
   dataRetornoBase: inspecao.dataRetornoBase || undefined,
   dataInicio: inspecao.dataInicio || undefined,

@@ -8,6 +8,7 @@ import {
 import { useTiposEquipamento } from "../hooks/useTiposEquipamento";
 import { getLocalDateInput } from "../utils/date";
 import { isAdminUser, isVerifiedUser } from "../utils/auth";
+import { normalizeTag } from "../utils/tag";
 import "./FormularioOrdem.css";
 
 interface FormularioOrdemProps {
@@ -163,7 +164,11 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     >,
   ) => {
     const { name, value } = e.currentTarget;
-    updateFormData({ [name]: value });
+    let finalValue = value;
+    if (name === "tag") {
+      finalValue = value.toUpperCase();
+    }
+    updateFormData({ [name]: finalValue });
   };
 
   const handleQuantidadeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,7 +304,10 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSalvar(formData);
+    onSalvar({
+      ...formData,
+      tag: normalizeTag(formData.tag),
+    });
   };
 
   return (

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsEnum,
   IsIn,
@@ -37,6 +37,7 @@ export class FilterProducaoDto extends PaginationProducaoDto {
 
   @ApiPropertyOptional({ example: 'TAG-0001' })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
   @IsString()
   tag?: string;
 

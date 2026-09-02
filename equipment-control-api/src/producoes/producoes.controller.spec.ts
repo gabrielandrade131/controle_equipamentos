@@ -4,6 +4,7 @@ import { ProducoesService } from './producoes.service';
 
 describe('ProducoesController', () => {
   let controller: ProducoesController;
+  const mockUser: any = { role: 'ADMIN', verificado: true };
   const serviceMock = {
     create: jest.fn(),
     addObservacao: jest.fn(),
@@ -46,16 +47,15 @@ describe('ProducoesController', () => {
     expect(serviceMock.addObservacao).toHaveBeenCalledWith('prod-1', dto);
   });
 
-  it('lists productions with filters', async () => {
-    const filters = { page: 1 };
-    serviceMock.findAll.mockResolvedValue([]);
+  it('lists producoes', async () => {
+    serviceMock.findAll.mockResolvedValue({ data: [], total: 0 });
 
-    await controller.findAll(filters);
+    await controller.findAll({});
 
-    expect(serviceMock.findAll).toHaveBeenCalledWith(filters);
+    expect(serviceMock.findAll).toHaveBeenCalledWith({});
   });
 
-  it('lists observations', async () => {
+  it('lists observacoes', async () => {
     serviceMock.listObservacoes.mockResolvedValue([]);
 
     await controller.listObservacoes('prod-1');
@@ -79,7 +79,7 @@ describe('ProducoesController', () => {
       send: jest.fn(),
     };
 
-    await controller.exportExcel({}, res as any);
+    await controller.exportExcel(mockUser, {}, res as any);
 
     expect(serviceMock.exportExcel).toHaveBeenCalledWith({});
     expect(res.setHeader).toHaveBeenCalledWith(
@@ -131,7 +131,7 @@ describe('ProducoesController', () => {
     const dto = { data: '2024-01-01', historico: 'OK' };
     serviceMock.addHistoricoEquipamento.mockResolvedValue({ id: 'hist-1' });
 
-    await controller.addHistoricoEquipamento('prod-1', dto as any);
+    await controller.addHistoricoEquipamento(mockUser, 'prod-1', dto as any);
 
     expect(serviceMock.addHistoricoEquipamento).toHaveBeenCalledWith(
       'prod-1',
@@ -153,11 +153,15 @@ describe('ProducoesController', () => {
   it('updates tag', async () => {
     serviceMock.updateTag.mockResolvedValue({ id: 'prod-1' });
 
-    await controller.updateTag('prod-1', { tag: 'TAG-1' });
+    await controller.updateTag('prod-1', { tag: 'TAG-1' }, mockUser);
 
-    expect(serviceMock.updateTag).toHaveBeenCalledWith('prod-1', {
-      tag: 'TAG-1',
-    });
+    expect(serviceMock.updateTag).toHaveBeenCalledWith(
+      'prod-1',
+      {
+        tag: 'TAG-1',
+      },
+      mockUser,
+    );
   });
 
   it('updates registro de inspeção de montagem', async () => {
@@ -178,7 +182,7 @@ describe('ProducoesController', () => {
   it('removes a production', async () => {
     serviceMock.remove.mockResolvedValue({ id: 'prod-1' });
 
-    await controller.remove('prod-1');
+    await controller.remove(mockUser, 'prod-1');
 
     expect(serviceMock.remove).toHaveBeenCalledWith('prod-1');
   });

@@ -15,6 +15,7 @@ import { Prisma, StatusProducao as PrismaStatusProducao } from '@prisma/client';
 import { FilterProducaoDto } from './dto/filter-producao.dto';
 import * as ExcelJS from 'exceljs';
 import { isAdminUser, AuthenticatedUser } from '../auth/user-permissions';
+import { normalizarTag } from '../common/utils/tag.util';
 
 @Injectable()
 export class ProducoesService {
@@ -279,7 +280,7 @@ export class ProducoesService {
 
     if (filters.tag) {
       where.tag = {
-        contains: filters.tag,
+        contains: filters.tag.trim().toUpperCase(),
         mode: 'insensitive',
       };
     }
@@ -860,9 +861,14 @@ export class ProducoesService {
       );
     }
 
+    const tagNormalizada = normalizarTag(data.tag);
+    if (!tagNormalizada) {
+      throw new BadRequestException('A TAG informada é inválida.');
+    }
+
     const existenteComTag = await this.prisma.equipment.findFirst({
       where: {
-        tag: data.tag,
+        tag: tagNormalizada,
         NOT: {
           id,
         },
@@ -878,7 +884,7 @@ export class ProducoesService {
     const equipamentoAtulizado = await this.prisma.equipment.update({
       where: { id },
       data: {
-        tag: data.tag,
+        tag: tagNormalizada,
       },
       include: {
         loteProducao: {

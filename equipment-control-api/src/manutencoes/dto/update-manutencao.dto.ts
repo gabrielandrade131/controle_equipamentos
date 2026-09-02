@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -46,6 +47,7 @@ export class UpdateManutencaoDto {
 
   @ApiPropertyOptional({ example: 'TAG-0001' })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
   @IsString()
   tag?: string;
 

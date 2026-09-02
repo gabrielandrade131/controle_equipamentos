@@ -8,6 +8,7 @@ import {
 } from "../types/producao";
 import { extractDateInput } from "../utils/date";
 import { isAdminUser, isVerifiedUser } from "../utils/auth";
+import { normalizeTag } from "../utils/tag";
 
 type ApiListResponse<T> = {
   data: T[];
@@ -168,7 +169,7 @@ export const mapApiToProducao = (producao: any): Producao => ({
   numeroLote: producao.numeroLote ?? producao.loteProducao?.numeroLote ?? null,
   loteProducao: producao.loteProducao ?? undefined,
   numeroSerie: producao.numeroSerie ?? "",
-  tag: producao.tag ?? "",
+  tag: normalizeTag(producao.tag),
   validade: toDateInput(producao.validade),
   dataSolicitacao: toDateInput(producao.dataSolicitacao),
   dataNecessidade: toDateInput(producao.dataNecessidade),
@@ -334,9 +335,10 @@ export const useProducoes = () => {
     }
 
     const isMasterUser = isAdminUser() || isVerifiedUser();
-    if (producaoAtualizada.tag && (producao.statusProducao === "CONCLUIDA" || isMasterUser) && producaoAtualizada.tag !== producao.tag) {
+    const tagNormalizada = normalizeTag(producaoAtualizada.tag);
+    if (tagNormalizada && (producao.statusProducao === "CONCLUIDA" || isMasterUser) && tagNormalizada !== producao.tag) {
       const tagResponse = await axiosInstance.patch(`/producoes/${id}/tag`, {
-        tag: producaoAtualizada.tag,
+        tag: tagNormalizada,
       });
       producao = mapApiToProducao(tagResponse.data);
     }

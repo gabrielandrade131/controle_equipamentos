@@ -4,6 +4,7 @@ import { TiposEquipamentoService } from './tipos-equipamento.service';
 
 describe('TiposEquipamentoController', () => {
   let controller: TiposEquipamentoController;
+  const mockUser: any = { role: 'ADMIN', verificado: true };
   const serviceMock = {
     create: jest.fn(),
     findAll: jest.fn(),
@@ -34,7 +35,7 @@ describe('TiposEquipamentoController', () => {
     const dto = { nome: 'Gerador' };
     serviceMock.create.mockResolvedValue({ id: 'tipo-1' });
 
-    await controller.create(dto);
+    await controller.create(mockUser, dto);
 
     expect(serviceMock.create).toHaveBeenCalledWith(dto);
   });
@@ -59,7 +60,7 @@ describe('TiposEquipamentoController', () => {
     const dto = { nome: 'Gerador X' };
     serviceMock.update.mockResolvedValue({ id: 'tipo-1' });
 
-    await controller.update('tipo-1', dto);
+    await controller.update(mockUser, 'tipo-1', dto);
 
     expect(serviceMock.update).toHaveBeenCalledWith('tipo-1', dto);
   });
@@ -67,7 +68,7 @@ describe('TiposEquipamentoController', () => {
   it('inactivates a tipo de equipamento', async () => {
     serviceMock.inativar.mockResolvedValue({ id: 'tipo-1' });
 
-    await controller.inactivate('tipo-1');
+    await controller.inactivate(mockUser, 'tipo-1');
 
     expect(serviceMock.inativar).toHaveBeenCalledWith('tipo-1');
   });
@@ -75,7 +76,7 @@ describe('TiposEquipamentoController', () => {
   it('activates a tipo de equipamento', async () => {
     serviceMock.ativar.mockResolvedValue({ id: 'tipo-1' });
 
-    await controller.activate('tipo-1');
+    await controller.activate(mockUser, 'tipo-1');
 
     expect(serviceMock.ativar).toHaveBeenCalledWith('tipo-1');
   });

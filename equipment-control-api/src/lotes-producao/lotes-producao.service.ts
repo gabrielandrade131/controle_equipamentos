@@ -7,6 +7,7 @@ import { Prisma, StatusProducao } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLoteProducaoDto } from './dto/create-lote-producao.dto';
 import { UpdateLoteProducaoDto } from './dto/update-lote-producao.dto';
+import { normalizarTag } from '../common/utils/tag.util';
 
 @Injectable()
 export class LotesProducaoService {
@@ -292,7 +293,7 @@ export class LotesProducaoService {
           },
           data: {
             numeroSerie: identificadorEquipamento,
-            tag: identificadorEquipamento,
+            tag: normalizarTag(identificadorEquipamento),
           },
         });
       }
@@ -421,7 +422,7 @@ export class LotesProducaoService {
             },
             data: {
               numeroSerie: identificadorEquipamento,
-              tag: identificadorEquipamento,
+              tag: normalizarTag(identificadorEquipamento),
             },
           });
         }

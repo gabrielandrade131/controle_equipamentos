@@ -76,6 +76,11 @@ export class ManutencoesService {
     return texto.length > 0 ? texto : null;
   }
 
+  private normalizarTag(value?: string | null): string | null {
+    const texto = String(value ?? '').trim().toUpperCase();
+    return texto.length > 0 ? texto : null;
+  }
+
   private normalizarData(data?: string | Date | null): Date | null {
     if (!data) {
       return null;
@@ -132,7 +137,7 @@ export class ManutencoesService {
   private async adicionarValidadeEquipamento<T extends { tag?: string | null }>(
     manutencao: T,
   ) {
-    const tag = this.normalizarTexto(manutencao.tag);
+    const tag = this.normalizarTag(manutencao.tag);
 
     if (!tag) {
       return {
@@ -169,7 +174,7 @@ export class ManutencoesService {
       return;
     }
 
-    const tagNormalizada = this.normalizarTexto(tag);
+    const tagNormalizada = this.normalizarTag(tag);
 
     if (!tagNormalizada) {
       return;
@@ -327,7 +332,7 @@ export class ManutencoesService {
 
     if (filters.tag) {
       where.tag = {
-        contains: filters.tag,
+        contains: filters.tag.trim().toUpperCase(),
         mode: 'insensitive',
       };
     }
@@ -378,7 +383,7 @@ export class ManutencoesService {
     }
 
     const synchroId = this.normalizarTexto(data.synchroId);
-    const tag = this.normalizarTexto(data.tag);
+    const tag = this.normalizarTag(data.tag);
     const dataRetornoBase = this.normalizarData(data.dataRetornoBase);
 
     const manutencaoPorSynchroId = synchroId
@@ -422,7 +427,7 @@ export class ManutencoesService {
 
     const manutencaoExistente = candidatos.find(
       (item) =>
-        this.normalizarTexto(item.tag) === tag &&
+        this.normalizarTag(item.tag) === tag &&
         this.mesmaData(item.dataRetornoBase, dataRetornoBase),
     );
 
@@ -574,7 +579,7 @@ export class ManutencoesService {
         modeloEquipamento: data.modeloEquipamento,
         fabricante: data.fabricante,
         numeroSerie: data.numeroSerie,
-        tag: data.tag,
+        tag: this.normalizarTag(data.tag),
         situacaoEquipamento: data.situacaoEquipamento,
         dataRetornoBase: this.normalizarData(data.dataRetornoBase),
         dataInicio: this.normalizarData(data.dataInicio),
@@ -837,7 +842,8 @@ export class ManutencoesService {
       modeloEquipamento: data.modeloEquipamento,
       fabricante: data.fabricante,
       numeroSerie: data.numeroSerie,
-      tag: data.tag,
+      tag:
+        data.tag !== undefined ? this.normalizarTag(data.tag) : undefined,
       situacaoEquipamento: data.situacaoEquipamento,
       dataRetornoBase:
         data.dataRetornoBase !== undefined

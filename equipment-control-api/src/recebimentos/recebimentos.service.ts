@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SynchroIntegrationService } from '../integracoes/synchro/synchro-integration.service';
+import { normalizarTag } from '../common/utils/tag.util';
 
 @Injectable()
 export class RecebimentosService {
@@ -34,7 +35,7 @@ export class RecebimentosService {
       equipamentoId:
         this.normalizarTexto(equipamento?.equipamentoId) ??
         this.normalizarTexto(equipamento?.equipamentoIdSynchro),
-      tag: this.normalizarTexto(equipamento?.tag),
+      tag: normalizarTag(equipamento?.tag),
       numeroSerie: this.normalizarTexto(equipamento?.numeroSerie),
       tipoEquipamento:
         this.normalizarTexto(equipamento?.tipoEquipamento) ??
@@ -381,7 +382,7 @@ export class RecebimentosService {
           ...(filtros.tag
             ? {
                 tag: {
-                  contains: filtros.tag,
+                  contains: filtros.tag.trim().toUpperCase(),
                   mode: 'insensitive',
                 },
               }

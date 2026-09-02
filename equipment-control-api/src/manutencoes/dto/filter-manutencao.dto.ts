@@ -40,6 +40,7 @@ export class FilterManutencaoDto {
 
   @ApiPropertyOptional({ example: 'TAG-0001' })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
   @IsString()
   tag?: string;
 

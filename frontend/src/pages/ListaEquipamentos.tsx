@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducoes } from '../hooks/useProducoes';
 import { useManutencao } from '../hooks/useManutencao';
 import { formatDatePtBr } from '../utils/date';
+import { normalizeTag } from '../utils/tag';
 import './ListaEquipamentos.css';
 
 interface EquipamentoItem {
@@ -35,7 +36,7 @@ const ListaEquipamentos: React.FC = () => {
       if (serie && !map.has(serie)) {
         map.set(serie, {
           numeroSerie: serie,
-          tag: p.tag || '',
+          tag: normalizeTag(p.tag),
           tipoEquipamentoNome: p.tipoEquipamentoNome || '',
           modelo: p.modelo || '',
           descricao: p.descricao || '',
@@ -53,7 +54,7 @@ const ListaEquipamentos: React.FC = () => {
         if (!itemExistente) {
           map.set(serie, {
             numeroSerie: serie,
-            tag: m.tag || '',
+            tag: normalizeTag(m.tag),
             tipoEquipamentoNome: m.tipoEquipamento || '',
             modelo: m.modelo || '',
             descricao: m.observacoes || '',
@@ -62,7 +63,7 @@ const ListaEquipamentos: React.FC = () => {
           });
         } else {
           // Preenche campos que estiverem em branco no item de produção
-          if (!itemExistente.tag && m.tag) itemExistente.tag = m.tag;
+          if (!itemExistente.tag && m.tag) itemExistente.tag = normalizeTag(m.tag);
           if (!itemExistente.tipoEquipamentoNome && m.tipoEquipamento) itemExistente.tipoEquipamentoNome = m.tipoEquipamento;
           if (!itemExistente.modelo && m.modelo) itemExistente.modelo = m.modelo;
           if (!itemExistente.validade && m.validade) itemExistente.validade = m.validade;
@@ -81,9 +82,8 @@ const ListaEquipamentos: React.FC = () => {
         .toLowerCase()
         .includes(buscaSerie.toLowerCase().trim());
 
-      const matchTag = (equipamento.tag || '')
-        .toLowerCase()
-        .includes(buscaTag.toLowerCase().trim());
+      const matchTag = normalizeTag(equipamento.tag)
+        .includes(normalizeTag(buscaTag));
 
       const matchModelo = (equipamento.modelo || '')
         .toLowerCase()

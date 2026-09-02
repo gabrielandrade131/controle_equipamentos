@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class CreateManutencaoSynchroDto {
@@ -19,6 +20,7 @@ export class CreateManutencaoSynchroDto {
 
   @ApiPropertyOptional({ example: 'TAG-0001' })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
   @IsString()
   tag?: string;
 

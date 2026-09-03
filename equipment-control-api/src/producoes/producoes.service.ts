@@ -487,15 +487,36 @@ export class ProducoesService {
     const alteradoPor = user?.nome || user?.email || user?.username || null;
     const responsavelServicoFinal =
       data.responsavelServico !== undefined
-        ? alteradoPor ?? data.responsavelServico
+        ? data.responsavelServico
         : undefined;
     const statusAtual = producaoAtual.loteProducao?.statusProducao;
     const statusMudou =
       data.statusProducao !== undefined && data.statusProducao !== statusAtual;
+    const statusFinal = data.statusProducao ?? statusAtual;
 
-    if (statusAtual === PrismaStatusProducao.CONCLUIDA && statusMudou) {
+    const responsavelRevisaoFinal =
+      statusFinal === PrismaStatusProducao.CONCLUIDA
+        ? 'Douglas Moreira Alves'
+        : data.responsavelRevisao !== undefined
+          ? data.responsavelRevisao
+          : producaoAtual.responsavelRevisao;
+
+    if (statusAtual === PrismaStatusProducao.CONCLUIDA) {
       throw new BadRequestException(
-        'Producao concluida nao pode ter o status alterado.',
+        'Producao concluida nao pode ser alterada.',
+      );
+    }
+
+    const possuiDadosInspecao =
+      data.inspecaoMontagem !== undefined ||
+      data.procedimentoTestes !== undefined;
+    if (
+      possuiDadosInspecao &&
+      statusAtual !== PrismaStatusProducao.EM_ANDAMENTO &&
+      data.statusProducao !== PrismaStatusProducao.EM_ANDAMENTO
+    ) {
+      throw new BadRequestException(
+        'A inspecao de montagem so pode ser preenchida enquanto a producao estiver com status Em andamento.',
       );
     }
 
@@ -530,108 +551,7 @@ export class ProducoesService {
     const dataTerminoPorStatus =
       statusMudou && data.statusProducao === PrismaStatusProducao.CONCLUIDA
         ? new Date()
-        : statusMudou &&
-            statusAtual === PrismaStatusProducao.CONCLUIDA &&
-            data.statusProducao !== PrismaStatusProducao.CONCLUIDA
-          ? null
-          : undefined;
-
-    if (producaoAtual.loteProducao?.statusProducao === 'CONCLUIDA') {
-      const camposPermitidosConcluida = [] as const;
-
-      const valoresAtuais: Record<string, unknown> = {
-        statusProducao: producaoAtual.loteProducao?.statusProducao,
-        dataInicio: producaoAtual.loteProducao?.dataInicio,
-        dataTermino: producaoAtual.loteProducao?.dataTermino,
-      };
-
-      const valoresNovos: Record<string, unknown> = {
-        tipoEquipamentoId: data.tipoEquipamentoId,
-        modelo: data.modelo,
-        descricao: data.descricaoComplemento,
-        statusProducao: data.statusProducao,
-        dataSolicitacao: data.dataSolicitacao
-          ? this.parseDateInput(data.dataSolicitacao)
-          : undefined,
-        dataNecessidade: data.dataNecessidade
-          ? this.parseDateInput(data.dataNecessidade)
-          : undefined,
-        solicitante: data.solicitante,
-        dataInicio: data.dataInicio
-          ? this.parseDateInput(data.dataInicio)
-          : undefined,
-        dataParalisacao: data.dataParalisacao
-          ? this.parseDateInput(data.dataParalisacao)
-          : undefined,
-        previsaoTermino: this.obterPrevisaoTermino(data)
-          ? this.parseDateInput(this.obterPrevisaoTermino(data))
-          : undefined,
-        dataTermino: data.dataTermino
-          ? this.parseDateInput(data.dataTermino)
-          : undefined,
-        validade:
-          data.validade !== undefined
-            ? this.parseDateInput(data.validade)
-            : undefined,
-        listaPecas: data.listaPecas,
-        sequenciaMontagem: data.sequencialMontagem,
-        inspecaoMontagem: data.inspecaoMontagem,
-        historicoEquipamento: data.historicoEquipamento,
-        procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
-        responsavelServico: responsavelServicoFinal,
-        responsavelRevisao: data.responsavelRevisao,
-      };
-
-      const obterValorAtual = (campo: string) => {
-        if (campo in valoresAtuais) {
-          return valoresAtuais[campo];
-        }
-
-        if (campo === 'descricao') {
-          return producaoAtual.loteProducao?.descricao;
-        }
-
-        if (campo in (producaoAtual.loteProducao ?? {})) {
-          return (producaoAtual.loteProducao as any)[campo];
-        }
-
-        return (producaoAtual as any)[campo];
-      };
-
-      const possuiCampoNaoPermitidoAlterado = Object.entries(valoresNovos).some(
-        ([campo, novoValor]) => {
-          if (novoValor === undefined) {
-            return false;
-          }
-
-          if (
-            (campo === 'dataInicio' || campo === 'dataTermino') &&
-            statusMudou
-          ) {
-            return false;
-          }
-
-          if (
-            camposPermitidosConcluida.includes(
-              campo as (typeof camposPermitidosConcluida)[number],
-            )
-          ) {
-            return false;
-          }
-
-          const valorAnterior = obterValorAtual(campo);
-          return (
-            this.formartarValor(valorAnterior) !== this.formartarValor(novoValor)
-          );
-        },
-      );
-
-      if (possuiCampoNaoPermitidoAlterado) {
-        throw new BadRequestException(
-          'Producao concluida nao pode ter seus dados editados.',
-        );
-      }
-    }
+        : undefined;
 
     const historicoParaCriar: {
       campo: string;
@@ -670,7 +590,7 @@ export class ProducoesService {
       historicoEquipamento: data.historicoEquipamento,
       procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
       responsavelServico: responsavelServicoFinal,
-      responsavelRevisao: data.responsavelRevisao,
+      responsavelRevisao: responsavelRevisaoFinal,
     };
 
     for (const [campo, novoValor] of Object.entries(camposMonitorados)) {
@@ -781,7 +701,7 @@ export class ProducoesService {
             historicoEquipamento: data.historicoEquipamento,
             procedimentoTesteInspecaoMontagem: data.procedimentoTestes,
             responsavelServico: responsavelServicoFinal,
-            responsavelRevisao: data.responsavelRevisao,
+            responsavelRevisao: responsavelRevisaoFinal,
             itensSeriados:
               data.itensSeriados !== undefined
                 ? {
@@ -927,7 +847,22 @@ export class ProducoesService {
     ordem: number,
     data: UpdateRegistroInspecaoDto,
   ) {
-    await this.findOne(equipmentId);
+    const producao = await this.findOne(equipmentId);
+    const statusProducao =
+      producao.statusProducao ?? producao.loteProducao?.statusProducao;
+
+    if (statusProducao === PrismaStatusProducao.CONCLUIDA) {
+      throw new BadRequestException(
+        'Producao concluida nao pode ter sua inspecao alterada.',
+      );
+    }
+
+    if (statusProducao !== PrismaStatusProducao.EM_ANDAMENTO) {
+      throw new BadRequestException(
+        'A inspecao de montagem so pode ser preenchida enquanto a producao estiver com status Em andamento.',
+      );
+    }
+
     // Use upsert so PATCH succeeds even when the registro does not exist yet
     return this.prisma.registroInspecaoMontagem.upsert({
       where: {

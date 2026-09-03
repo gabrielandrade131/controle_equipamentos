@@ -435,8 +435,17 @@ const OrdemProducao: React.FC = () => {
               <div className="action-buttons">
                 {!isCSafety && (
                   <button
-                    onClick={() => setModo("editar")}
+                    onClick={() => {
+                      if (selectedItem.statusProducao === "CONCLUIDA") {
+                        alert(
+                          "Esta ordem de produção já foi concluída e não pode ser editada.",
+                        );
+                        return;
+                      }
+                      setModo("editar");
+                    }}
                     className="btn-primary"
+                    disabled={selectedItem.statusProducao === "CONCLUIDA"}
                   >
                     Editar
                   </button>

@@ -150,6 +150,17 @@ describe('ProducoesController', () => {
     });
   });
 
+  it('patches a production', async () => {
+    const dto = { responsavelServico: 'Tecnico' };
+    serviceMock.update.mockResolvedValue({ id: 'prod-1' });
+
+    await controller.patch('prod-1', dto, { user: { nome: 'Gab' } });
+
+    expect(serviceMock.update).toHaveBeenCalledWith('prod-1', dto, {
+      nome: 'Gab',
+    });
+  });
+
   it('updates tag', async () => {
     serviceMock.updateTag.mockResolvedValue({ id: 'prod-1' });
 

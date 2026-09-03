@@ -65,8 +65,8 @@ describe('FormularioInspecaoManutencao', () => {
     ).not.toBeInTheDocument();
 
     expect(
-      screen.getByDisplayValue('Douglas Moreira Alves'),
-    ).toBeInTheDocument();
+      screen.queryByText(/Revisado por/i),
+    ).not.toBeInTheDocument();
 
     const radios = screen.getAllByRole('radio');
     radios.forEach((radio) => {

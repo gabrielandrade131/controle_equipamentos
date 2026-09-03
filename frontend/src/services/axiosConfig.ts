@@ -8,15 +8,19 @@ function withApiPrefix(baseUrl: string): string {
 }
 
 function resolveApiUrl(): string {
+  if (process.env.REACT_APP_API_URL) {
+    return withApiPrefix(process.env.REACT_APP_API_URL);
+  }
+
   if (process.env.NODE_ENV === 'development') {
-    return withApiPrefix(process.env.REACT_APP_API_URL || 'http://localhost:3000');
+    return withApiPrefix('http://localhost:3000');
   }
 
   if (typeof window !== 'undefined') {
     return withApiPrefix(window.location.origin);
   }
 
-  return withApiPrefix(process.env.REACT_APP_API_URL || '');
+  return '/api';
 }
 
 const API_URL = resolveApiUrl();

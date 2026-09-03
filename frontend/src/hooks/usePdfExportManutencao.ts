@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { InspecaoManutencao } from "../types/manutencao";
+import { ASSINATURA_DOUGLAS_BASE64 } from "../constants/assinaturaDouglas";
 
 type ItemChecklist = {
   titulo: string;
@@ -120,7 +121,10 @@ export const usePdfExportManutencao = () => {
           [
             {
               label: "Revisado por",
-              value: inspecao.responsavelRevisao || "-",
+              value:
+                inspecao.statusManutencao === "CONCLUIDA"
+                  ? "Douglas Moreira Alves"
+                  : inspecao.responsavelRevisao || "-",
             },
             { label: "Validade", value: formatDate(inspecao.validade) },
           ],
@@ -397,27 +401,6 @@ export const usePdfExportManutencao = () => {
         }
       }
 
-      const loadImage = (src: string): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext("2d");
-            if (!ctx) {
-              reject(new Error("Não foi possível obter contexto 2d"));
-              return;
-            }
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL("image/png"));
-          };
-          img.onerror = (e) => reject(e);
-          img.src = src;
-        });
-      };
-
       sectionHeader("ASSINATURA");
       ensureSpace(45);
       const assinaturaLineWidth = 78;
@@ -430,10 +413,14 @@ export const usePdfExportManutencao = () => {
       const linhaRevisaoInicio = linhaExecutanteFim + assinaturaGap;
       const linhaRevisaoFim = linhaRevisaoInicio + assinaturaLineWidth;
 
-      const revisadoPor =
-        inspecao.statusManutencao === "CONCLUIDA"
-          ? "Douglas Moreira Alves"
-          : inspecao.responsavelRevisao || "-";
+      const isConcluida =
+        normalizeResposta(inspecao.statusManutencao) === "CONCLUIDA" ||
+        normalizeResposta((inspecao as any).statusProducao) === "CONCLUIDA" ||
+        normalizeResposta((inspecao as any).status) === "CONCLUIDA";
+
+      const revisadoPor = isConcluida
+        ? "Douglas Moreira Alves"
+        : inspecao.responsavelRevisao || "-";
 
       drawText(
         `Executado por: ${inspecao.responsavel || "-"}`,
@@ -448,14 +435,13 @@ export const usePdfExportManutencao = () => {
         { size: 9 },
       );
 
-      if (inspecao.statusManutencao === "CONCLUIDA") {
+      if (isConcluida || revisadoPor === "Douglas Moreira Alves") {
         try {
-          const sigDataUrl = await loadImage("/assinatura_douglas.png");
           const sigWidth = 36;
           const sigHeight = 21;
           const sigX = linhaRevisaoInicio + (assinaturaLineWidth - sigWidth) / 2;
           const sigY = y + 6.5;
-          pdf.addImage(sigDataUrl, "PNG", sigX, sigY, sigWidth, sigHeight);
+          pdf.addImage(ASSINATURA_DOUGLAS_BASE64, "PNG", sigX, sigY, sigWidth, sigHeight);
         } catch (error) {
           console.warn("Assinatura não pôde ser carregada no PDF:", error);
         }

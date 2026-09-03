@@ -201,9 +201,11 @@ describe('ProducoesService', () => {
     expect(prisma.loteProducao.update).not.toHaveBeenCalled();
   });
 
-  it('updates registro de inspeção via upsert', async () => {
+  it('updates registro de inspeção via upsert when EM_ANDAMENTO', async () => {
     jest.spyOn(service, 'findOne').mockResolvedValue({
       id: 'prod-1',
+      statusProducao: 'EM_ANDAMENTO',
+      loteProducao: { statusProducao: 'EM_ANDAMENTO' },
     } as any);
     prisma.registroInspecaoMontagem.upsert.mockResolvedValue({
       equipmentId: 'prod-1',
@@ -234,5 +236,33 @@ describe('ProducoesService', () => {
         conformidades: undefined,
       },
     });
+  });
+
+  it('rejects registro de inspeção when production is concluded', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'prod-1',
+      statusProducao: 'CONCLUIDA',
+      loteProducao: { statusProducao: 'CONCLUIDA' },
+    } as any);
+
+    await expect(
+      service.updateRegistroInspecaoMontagem('prod-1', 1, {
+        valorObservado: 'OK',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects registro de inspeção when production is not EM_ANDAMENTO', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'prod-1',
+      statusProducao: 'PROGRAMADA',
+      loteProducao: { statusProducao: 'PROGRAMADA' },
+    } as any);
+
+    await expect(
+      service.updateRegistroInspecaoMontagem('prod-1', 1, {
+        valorObservado: 'OK',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

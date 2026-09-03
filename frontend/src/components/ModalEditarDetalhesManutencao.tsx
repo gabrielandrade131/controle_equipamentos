@@ -306,26 +306,11 @@ export const ModalEditarDetalhesManutencao: React.FC<
               <label>Executado por</label>
               <input
                 type="text"
-                value={formData.responsavel}
+                value={formData.responsavel || ""}
                 disabled={statusBloqueado}
+                placeholder="Digite o nome de quem executou"
                 onChange={(e) =>
                   handleInputChange("responsavel", e.target.value)
-                }
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Revisado por</label>
-              <input
-                type="text"
-                value={
-                  formData.statusManutencao === "CONCLUIDA"
-                    ? "Douglas Moreira Alves"
-                    : formData.responsavelRevisao || ""
-                }
-                disabled={statusBloqueado || formData.statusManutencao === "CONCLUIDA"}
-                onChange={(e) =>
-                  handleInputChange("responsavelRevisao", e.target.value)
                 }
               />
             </div>

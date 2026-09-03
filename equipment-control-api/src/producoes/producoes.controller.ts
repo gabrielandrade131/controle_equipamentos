@@ -143,6 +143,20 @@ export class ProducoesController {
     return this.producoesService.update(id, body, req.user);
   }
 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar parcialmente uma produção existente' })
+  @ApiParam({
+    name: 'id',
+    example: '1',
+  })
+  patch(
+    @Param('id') id: string,
+    @Body() body: UpdateProducaoDto,
+    @Req() req: any,
+  ) {
+    return this.producoesService.update(id, body, req.user);
+  }
+
   @Patch(':id/tag')
   @ApiOperation({ summary: 'Cadastrar ou atualizar a TAG do equipamento' })
   updateTag(

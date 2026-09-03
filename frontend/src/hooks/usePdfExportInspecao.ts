@@ -5,6 +5,8 @@ import {
     LINHAS_POSMONTAGEM_INSPECAO_PDF,
     NOMES_INSTRUMENTOS_AFERICAO,
 } from '../constants/inspecaoMontagem';
+import { ASSINATURA_DOUGLAS_BASE64 } from '../constants/assinaturaDouglas';
+import { formatDatePtBr } from '../utils/date';
 
 export const usePdfExportInspecao = () => {
     const exportInspecaoToPdf = async (inspecao: InspecaoMontagem, filename: string, logoPath?: string) => {
@@ -118,7 +120,12 @@ export const usePdfExportInspecao = () => {
             addField('Modelo', inspecao.modelo);
             addField('Data da Inspeção', inspecao.dataInspecao || inspecao.data || '');
             addField('Executado por', inspecao.responsavelServico || inspecao.responsavel);
-            addField('Revisado por', inspecao.responsavelRevisao || '');
+            addField(
+                'Revisado por',
+                inspecao.statusProducao === 'CONCLUIDA'
+                    ? 'Douglas Moreira Alves'
+                    : inspecao.responsavelRevisao || '',
+            );
             if (inspecao.observacoes) {
                 yPosition += 2;
                 addSection('OBSERVAÇÕES');
@@ -346,14 +353,14 @@ export const usePdfExportInspecao = () => {
             }
 
             // Resultado e assinatura
-            checkPageBreak(30);
+            checkPageBreak(40);
             addSection('RESULTADO E ASSINATURAS');
             pdf.setFontSize(9);
             pdf.text('Resultado Final:', marginLeft + 3, yPosition);
             pdf.setFont(undefined, 'bold');
             pdf.text(inspecao.resultadoFinal || (inspecao.aprovado ? 'APROVADO' : 'REPROVADO') || '-', marginLeft + 30, yPosition);
             pdf.setFont(undefined, 'normal');
-            yPosition += 18;
+            yPosition += 8;
 
             const drawCenteredText = (text: string, startX: number, endX: number, currentY: number) => {
                 const textWidth = pdf.getTextWidth(text);
@@ -368,11 +375,59 @@ export const usePdfExportInspecao = () => {
             const linhaExecutanteFim = linhaExecutanteInicio + assinaturaLineWidth;
             const linhaRevisaoInicio = linhaExecutanteFim + assinaturaGap;
             const linhaRevisaoFim = linhaRevisaoInicio + assinaturaLineWidth;
+
+            const normalizarStatus = (s?: string) =>
+                String(s || '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toUpperCase()
+                    .replace(/\s+/g, '_');
+
+            const isConcluida =
+                normalizarStatus(inspecao.statusProducao) === 'CONCLUIDA' ||
+                normalizarStatus((inspecao as any).status) === 'CONCLUIDA' ||
+                normalizarStatus((inspecao as any).statusManutencao) === 'CONCLUIDA';
+
+            const revisadoPor = isConcluida
+                ? 'Douglas Moreira Alves'
+                : inspecao.responsavelRevisao || 'Douglas Moreira Alves';
+
+            pdf.setFontSize(9);
+            pdf.text(
+                `Executado por: ${inspecao.responsavelServico || inspecao.responsavel || '-'}`,
+                linhaExecutanteInicio,
+                yPosition + 2,
+            );
+            pdf.text(
+                `Revisado por: ${revisadoPor}`,
+                linhaRevisaoInicio,
+                yPosition + 2,
+            );
+
+            try {
+                const sigWidth = 36;
+                const sigHeight = 21;
+                const sigX = linhaRevisaoInicio + (assinaturaLineWidth - sigWidth) / 2;
+                const sigY = yPosition + 6.5;
+                pdf.addImage(ASSINATURA_DOUGLAS_BASE64, 'PNG', sigX, sigY, sigWidth, sigHeight);
+            } catch (error) {
+                console.warn('Assinatura não pôde ser carregada no PDF:', error);
+            }
+
+            yPosition += 24;
+            pdf.setDrawColor(0, 0, 0);
             pdf.line(linhaExecutanteInicio, yPosition, linhaExecutanteFim, yPosition);
             drawCenteredText('Assinatura executante', linhaExecutanteInicio, linhaExecutanteFim, yPosition + 5);
             pdf.line(linhaRevisaoInicio, yPosition, linhaRevisaoFim, yPosition);
-            drawCenteredText('Assinatura revisão', linhaRevisaoInicio, linhaRevisaoFim, yPosition + 5);
-            yPosition += 14;
+            drawCenteredText('Assinatura revisão', linhaRevisaoInicio, linhaRevisaoFim, yPosition + 3);
+
+            const dataFormatada = formatDatePtBr(
+                inspecao.dataTermino || inspecao.dataInspecao || inspecao.data,
+            );
+            if (dataFormatada) {
+                pdf.setFontSize(9);
+                pdf.text(`Data: ${dataFormatada}`, marginLeft, yPosition + 14);
+            }
 
             pdf.save(filename);
         } catch (error) {

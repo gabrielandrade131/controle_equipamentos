@@ -33,12 +33,17 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     ...inspecaoInicial,
   }));
 
+  const documentoBloqueado =
+    (inspecaoInicial?.statusProducao || formData.statusProducao) !== 'EM_ANDAMENTO';
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (documentoBloqueado) return;
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImagensChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (documentoBloqueado) return;
     const files = e.target.files;
     if (!files) return;
 
@@ -69,6 +74,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
   };
 
   const handleRemoverImagem = (index: number) => {
+    if (documentoBloqueado) return;
     setFormData((prev) => ({
       ...prev,
       imagensAnexadas: (prev.imagensAnexadas || []).filter((_, i) => i !== index),
@@ -81,6 +87,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     field: 'conformidade' | 'valorObservado' | 'instrumentoMedicao',
     value: string
   ) => {
+    if (documentoBloqueado) return;
     setFormData((prev) => ({
       ...prev,
       [secao]: prev[secao].map((item) =>
@@ -95,6 +102,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
     field: 'conformidade' | 'valorObservado' | 'instrumentoMedicao',
     value: string
   ) => {
+    if (documentoBloqueado) return;
     setFormData((prev) => {
       const itens = [...prev[secao]];
       const itemAtual = itens[itemIndex] ?? formularioPadrao[secao][itemIndex];
@@ -114,6 +122,13 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (documentoBloqueado) {
+      alert(
+        "A inspeção de montagem não pode ser modificada quando a produção não estiver com status 'Em andamento'.",
+      );
+      return;
+    }
 
     if (!formData.numeroSerie.trim() || !formData.modelo.trim()) {
       alert('Preencha os campos obrigatórios!');
@@ -186,8 +201,24 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
       return itensAtualizados;
     };
 
+    const aprovado =
+      formData.aprovado === true
+        ? true
+        : formData.aprovado === false
+        ? false
+        : undefined;
+
+    const resultadoFinal =
+      aprovado === true
+        ? 'APROVADO'
+        : aprovado === false
+        ? 'REPROVADO'
+        : formData.resultadoFinal || '';
+
     const formDataNormalizado: CreateInspecaoMontageDto = {
       ...formData,
+      aprovado,
+      resultadoFinal,
       responsavel: formData.responsavelServico || formData.responsavel,
       responsavelServico: formData.responsavelServico || formData.responsavel,
       verificacoesGeraisPremontagem: aplicarInstrumentosFixosPremontagem(
@@ -441,6 +472,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         handleVerificacaoChange(secao, item.id, 'valorObservado', e.target.value)
                       }
                       placeholder="Ex: 150mm"
+                      disabled={documentoBloqueado}
                     />
                   </td>
                 )}
@@ -452,7 +484,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                       onChange={(e) =>
                         handleVerificacaoChange(secao, item.id, 'instrumentoMedicao', e.target.value)
                       }
-                      
+                      disabled={documentoBloqueado}
                     />
                   </td>
                 )}
@@ -467,6 +499,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         onChange={(e) =>
                           handleVerificacaoChange(secao, item.id, 'conformidade', e.target.value)
                         }
+                        disabled={documentoBloqueado}
                       />
                       SIM
                     </label>
@@ -479,6 +512,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         onChange={(e) =>
                           handleVerificacaoChange(secao, item.id, 'conformidade', e.target.value)
                         }
+                        disabled={documentoBloqueado}
                       />
                       NÃO
                     </label>
@@ -533,6 +567,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     }
                     title="Valor observado"
                     placeholder="Valor observado"
+                    disabled={documentoBloqueado}
                   />
                 </td>
                 <td data-label="Instrumento de Medição">
@@ -543,6 +578,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                           <input
                             type="checkbox"
                             checked={instrumentosMarcados.includes(instrumentoMarcavel)}
+                            disabled={documentoBloqueado}
                             onChange={(e) => {
                               const proximosMarcados = e.target.checked
                                 ? [...instrumentosMarcados, instrumentoMarcavel]
@@ -576,6 +612,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         type="text"
                         className="verificacoes-pm-input"
                         value={numeroSerieInstrumento}
+                        disabled={documentoBloqueado}
                         onChange={(e) =>
                           handleVerificacaoChangePorIndice(
                             'verificacoesGeraisPremontagem',
@@ -604,6 +641,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         name={`conf-premontagem-${linha.itemIndex}`}
                         value="SIM"
                         checked={item.conformidade === 'SIM'}
+                        disabled={documentoBloqueado}
                         onChange={(e) =>
                           handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'conformidade', e.target.value)
                         }
@@ -616,6 +654,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         name={`conf-premontagem-${linha.itemIndex}`}
                         value="NÃO"
                         checked={item.conformidade === 'NÃO'}
+                        disabled={documentoBloqueado}
                         onChange={(e) =>
                           handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'conformidade', e.target.value)
                         }
@@ -628,6 +667,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         name={`conf-premontagem-${linha.itemIndex}`}
                         value="N/A"
                         checked={item.conformidade === 'N/A'}
+                        disabled={documentoBloqueado}
                         onChange={(e) =>
                           handleVerificacaoChangePorIndice('verificacoesGeraisPremontagem', linha.itemIndex, 'conformidade', e.target.value)
                         }
@@ -680,6 +720,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     type="text"
                     className="verificacoes-pm-input"
                     value={item.valorObservado || ''}
+                    disabled={documentoBloqueado}
                     onChange={(e) =>
                       handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'valorObservado', e.target.value)
                     }
@@ -695,6 +736,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                           <input
                             type="checkbox"
                             checked={instrumentosMarcados.includes(instrumentoMarcavel)}
+                            disabled={documentoBloqueado}
                             onChange={(e) => {
                               const proximosMarcados = e.target.checked
                                 ? [...instrumentosMarcados, instrumentoMarcavel]
@@ -726,6 +768,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                     type="text"
                     className="verificacoes-pm-input"
                     value={numeroSerieInstrumento}
+                    disabled={documentoBloqueado}
                     onChange={(e) =>
                       handleVerificacaoChangePorIndice(
                         'verificacaoPosmontagem',
@@ -752,6 +795,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         name={`conf-posmontagem-${linha.itemIndex}`}
                         value="SIM"
                         checked={item.conformidade === 'SIM'}
+                        disabled={documentoBloqueado}
                         onChange={(e) =>
                           handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'conformidade', e.target.value)
                         }
@@ -764,6 +808,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         name={`conf-posmontagem-${linha.itemIndex}`}
                         value="NÃO"
                         checked={item.conformidade === 'NÃO'}
+                        disabled={documentoBloqueado}
                         onChange={(e) =>
                           handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'conformidade', e.target.value)
                         }
@@ -776,6 +821,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                         name={`conf-posmontagem-${linha.itemIndex}`}
                         value="N/A"
                         checked={item.conformidade === 'N/A'}
+                        disabled={documentoBloqueado}
                         onChange={(e) =>
                           handleVerificacaoChangePorIndice('verificacaoPosmontagem', linha.itemIndex, 'conformidade', e.target.value)
                         }
@@ -847,18 +893,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
             value={formData.responsavelServico || formData.responsavel || ''}
             onChange={handleInputChange}
             placeholder="Digite o nome de quem executou"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="responsavelRevisao">Revisado por:</label>
-          <input
-            type="text"
-            id="responsavelRevisao"
-            name="responsavelRevisao"
-            value={formData.responsavelRevisao || ''}
-            onChange={handleInputChange}
-            placeholder="Nome de quem revisou"
+            disabled={documentoBloqueado}
             required
           />
         </div>
@@ -870,6 +905,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
             name="data"
             value={formData.data}
             onChange={handleInputChange}
+            disabled={documentoBloqueado}
             required
           />
         </div>
@@ -882,6 +918,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                 name="aprovado"
                 value="true"
                 checked={formData.aprovado === true}
+                disabled={documentoBloqueado}
                 onChange={() =>
                   setFormData({ ...formData, aprovado: true })
                 }
@@ -894,6 +931,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                 name="aprovado"
                 value="false"
                 checked={formData.aprovado === false}
+                disabled={documentoBloqueado}
                 onChange={() =>
                   setFormData({ ...formData, aprovado: false })
                 }
@@ -909,27 +947,27 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
         
        <div className="upload-imagens">
          <div className="upload-acoes">
-           <label className="upload-label">
+           <label className={`upload-label${documentoBloqueado || (formData.imagensAnexadas || []).length >= 5 ? ' disabled' : ''}`}>
              <input
                type="file"
                multiple
                accept="image/*"
                capture="environment"
                onChange={handleImagensChange}
-               disabled={(formData.imagensAnexadas || []).length >= 5}
+               disabled={documentoBloqueado || (formData.imagensAnexadas || []).length >= 5}
                className="file-input"
              />
              <span className="upload-text">
                Abrir câmera ({(formData.imagensAnexadas || []).length}/5)
              </span>
            </label>
-           <label className="upload-label">
+           <label className={`upload-label${documentoBloqueado || (formData.imagensAnexadas || []).length >= 5 ? ' disabled' : ''}`}>
              <input
                type="file"
                multiple
                accept="image/*"
                onChange={handleImagensChange}
-               disabled={(formData.imagensAnexadas || []).length >= 5}
+               disabled={documentoBloqueado || (formData.imagensAnexadas || []).length >= 5}
                className="file-input"
              />
              <span className="upload-text">
@@ -948,6 +986,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
                  type="button"
                  onClick={() => handleRemoverImagem(index)}
                  className="btn-remover-imagem"
+                 disabled={documentoBloqueado}
                >
                  ✕
                </button>
@@ -958,11 +997,13 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
       </div>
 
       <div className="form-actions">
-        <button type="submit" className="btn-salvar">
-          Salvar Inspeção
-        </button>
+        {!documentoBloqueado && (
+          <button type="submit" className="btn-salvar">
+            Salvar Inspeção
+          </button>
+        )}
         <button type="button" onClick={onCancel} className="btn-cancelar">
-          Cancelar
+          {documentoBloqueado ? 'Voltar' : 'Cancelar'}
         </button>
       </div>
     </form>

@@ -131,7 +131,9 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   });
 
   const isMasterUser = isAdminUser() || isVerifiedUser();
-  const tagPodeSerEditada = formData.statusProducao === "CONCLUIDA" || isMasterUser;
+  const statusBloqueado = isEditing && producao?.statusProducao === "CONCLUIDA";
+  const tagPodeSerEditada =
+    (formData.statusProducao === "CONCLUIDA" || isMasterUser) && !statusBloqueado;
 
   const tipoSelecionado = useMemo(
     () =>
@@ -304,6 +306,10 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (statusBloqueado) {
+      alert("Ordens de produção concluídas não podem ser alteradas.");
+      return;
+    }
     onSalvar({
       ...formData,
       tag: normalizeTag(formData.tag),
@@ -682,11 +688,13 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
       )}
 
       <div className="form-actions">
-        <button type="submit" className="btn-salvar">
-          {isEditing ? "Atualizar ordem" : "Gerar lote"}
-        </button>
+        {!statusBloqueado && (
+          <button type="submit" className="btn-salvar">
+            {isEditing ? "Atualizar ordem" : "Gerar lote"}
+          </button>
+        )}
         <button type="button" onClick={onCancelar} className="btn-cancelar">
-          Cancelar
+          {statusBloqueado ? "Voltar" : "Cancelar"}
         </button>
       </div>
     </form>

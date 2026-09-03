@@ -6,8 +6,6 @@ import {
   SECOES_MANUTENCAO,
   SecaoInspecaoKey,
 } from '../constants/inspecaoManutencao';
-import { usePdfExportManutencao } from '../hooks/usePdfExportManutencao';
-import { getAuthUserDisplayName } from '../utils/auth';
 import { normalizeTag } from '../utils/tag';
 import './FormularioInspecaoManutencao.css';
 
@@ -26,20 +24,9 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   inspecaoInicial,
   isEditing = false,
 }) => {
-  const usuarioExecutor = getAuthUserDisplayName();
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
   );
-  usePdfExportManutencao();
-
-  useEffect(() => {
-    if (!usuarioExecutor) return;
-
-    setInspecao((prev) => ({
-      ...prev,
-      responsavel: prev.responsavel || usuarioExecutor,
-    }));
-  }, [usuarioExecutor]);
 
   useEffect(() => {
     setInspecao((prev) =>
@@ -178,7 +165,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
       return;
     }
 
-    const executor = inspecao.responsavel?.trim() || usuarioExecutor;
+    const executor = inspecao.responsavel?.trim();
 
     if (!executor) {
       alert('Por favor, preencha o campo obrigatório: Executado por');
@@ -327,30 +314,15 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
               disabled={dadosManutencaoSomenteLeitura}
             />
           </div>
-          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
+          <div className="form-group">
             <label>Executado por *</label>
             <input
               type="text"
-              value={inspecao.responsavel}
+              value={inspecao.responsavel || ''}
               onChange={(e) => handleInputChange('responsavel', e.target.value)}
-              placeholder="Preenchido automaticamente pelo usuário logado"
+              placeholder="Digite o nome de quem executou"
               required
-              readOnly={dadosManutencaoSomenteLeitura}
-              disabled={dadosManutencaoSomenteLeitura}
-            />
-          </div>
-          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
-            <label>Revisado por</label>
-            <input
-              type="text"
-              value={
-                inspecao.statusManutencao === 'CONCLUIDA'
-                  ? 'Douglas Moreira Alves'
-                  : inspecao.responsavelRevisao || ''
-              }
-              onChange={(e) => handleInputChange('responsavelRevisao', e.target.value)}
-              readOnly={dadosManutencaoSomenteLeitura || inspecao.statusManutencao === 'CONCLUIDA'}
-              disabled={dadosManutencaoSomenteLeitura || inspecao.statusManutencao === 'CONCLUIDA'}
+              disabled={documentoBloqueado}
             />
           </div>
           <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>

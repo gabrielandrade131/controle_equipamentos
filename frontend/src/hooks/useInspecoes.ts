@@ -71,27 +71,71 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
       NOMES_VERIFICACAO_POSMONTAGEM,
       19,
     );
-  const registros = [...instrumentosAfericao, ...verificacoesGeraisPremontagem];
-  const reprovado = registros.some((item) => item.conformidade === NAO);
-  const preenchido = registros.some(
+  const parsedInspecaoMontagem = String(
+    producao.inspecaoMontagem || '',
+  )
+    .toUpperCase()
+    .trim();
+
+  const isAprovado =
+    parsedInspecaoMontagem === 'APROVADO' ||
+    parsedInspecaoMontagem === 'SIM' ||
+    parsedInspecaoMontagem === 'TRUE'
+      ? true
+      : parsedInspecaoMontagem === 'REPROVADO' ||
+        parsedInspecaoMontagem === 'NAO' ||
+        parsedInspecaoMontagem === 'NÃO' ||
+        parsedInspecaoMontagem === 'FALSE'
+      ? false
+      : undefined;
+
+  const preenchido = [...instrumentosAfericao, ...verificacoesGeraisPremontagem, ...verificacaoPosmontagem].some(
     (item) => item.valorObservado || item.instrumentoMedicao || item.conformidade,
   );
+
+  const aprovado =
+    isAprovado !== undefined
+      ? isAprovado
+      : (producao.aprovado !== undefined ? Boolean(producao.aprovado) : false);
+
+  const resultadoFinal =
+    isAprovado !== undefined
+      ? (isAprovado ? 'APROVADO' : 'REPROVADO')
+      : (producao.aprovado !== undefined ? (producao.aprovado ? 'APROVADO' : 'REPROVADO') : (preenchido ? (aprovado ? 'APROVADO' : 'REPROVADO') : ''));
 
   return {
     id: producao.id,
     numeroSerie: producao.numeroSerie ?? '',
     numeroLote: producao.numeroLote ?? producao.loteProducao?.numeroLote ?? null,
     tag: normalizeTag(producao.tag),
-    statusProducao: producao.statusProducao ?? '',
-    tipoEquipamentoNome: producao.tipoEquipamento?.nome ?? '',
+    statusProducao:
+      producao.statusProducao ??
+      producao.loteProducao?.statusProducao ??
+      '',
+    tipoEquipamentoNome:
+      producao.tipoEquipamentoNome ??
+      producao.tipoEquipamento?.nome ??
+      producao.loteProducao?.tipoEquipamento?.nome ??
+      '',
     dataInspecao: toDateInput(producao.atualizadoEm || producao.criadoEm),
-    modelo: producao.modelo ?? '',
-    dataInicio: producao.dataInicio ? extractDateInput(producao.dataInicio) : '',
-    dataTermino: producao.dataTermino ? extractDateInput(producao.dataTermino) : '',
+    modelo:
+      producao.modelo ??
+      producao.loteProducao?.modelo ??
+      '',
+    dataInicio: producao.dataInicio
+      ? extractDateInput(producao.dataInicio)
+      : producao.loteProducao?.dataInicio
+        ? extractDateInput(producao.loteProducao.dataInicio)
+        : '',
+    dataTermino: producao.dataTermino
+      ? extractDateInput(producao.dataTermino)
+      : producao.loteProducao?.dataTermino
+        ? extractDateInput(producao.loteProducao.dataTermino)
+        : '',
     [INSTRUMENTOS_KEY]: instrumentosAfericao,
     verificacoesGeraisPremontagem,
     verificacaoPosmontagem,
-    resultadoFinal: preenchido ? (reprovado ? 'REPROVADO' : 'APROVADO') : '',
+    resultadoFinal,
     observacoes: '',
     responsavel: producao.responsavelServico ?? '',
     responsavelServico: producao.responsavelServico ?? '',
@@ -99,7 +143,7 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
     data: toDateInput(producao.atualizadoEm || producao.criadoEm),
     assinatura: '',
     nomeAssinante: '',
-    aprovado: !reprovado && preenchido,
+    aprovado,
     imagensAnexadas: producao.imagensAnexadas
       ? (typeof producao.imagensAnexadas === 'string'
           ? JSON.parse(producao.imagensAnexadas)
@@ -147,13 +191,22 @@ export const useInspecoes = () => {
       ),
     );
 
+    const aprovadoFinal =
+      inspecao.aprovado === true || inspecao.resultadoFinal === 'APROVADO'
+        ? true
+        : inspecao.aprovado === false || inspecao.resultadoFinal === 'REPROVADO'
+        ? false
+        : undefined;
+
     await axiosInstance.patch(`/producoes/${producaoId}`, {
       responsavelServico:
         inspecao.responsavelServico || inspecao.responsavel || undefined,
-      responsavelRevisao: inspecao.responsavelRevisao || undefined,
-      ...(inspecao.imagensAnexadas?.length
-        ? { imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas) }
-        : {}),
+      inspecaoMontagem:
+        aprovadoFinal === true
+          ? 'APROVADO'
+          : aprovadoFinal === false
+          ? 'REPROVADO'
+          : undefined,
     });
 
     await carregarInspecoes();

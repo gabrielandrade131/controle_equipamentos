@@ -296,7 +296,11 @@ const InspecaoMontagemPage: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Revisado por:</label>
-                  <p>{selectedItem.responsavelRevisao || '-'}</p>
+                  <p>
+                    {selectedItem.statusProducao === 'CONCLUIDA'
+                      ? 'Douglas Moreira Alves'
+                      : selectedItem.responsavelRevisao || '-'}
+                  </p>
                 </div>
                 <div className="detail-item">
                   <label>Resultado:</label>
@@ -312,9 +316,22 @@ const InspecaoMontagemPage: React.FC = () => {
                 <button
                   type="button"
                   className="btn-primary"
-                  onClick={() => setEditando(true)}
+                  onClick={() => {
+                    if (
+                      selectedItem.statusProducao === 'EM_ANDAMENTO' ||
+                      selectedItem.statusProducao === 'CONCLUIDA'
+                    ) {
+                      setEditando(true);
+                    } else {
+                      alert(
+                        "A inspeção de montagem só pode ser preenchida quando a produção estiver com status 'Em andamento'.",
+                      );
+                    }
+                  }}
                 >
-                  Preencher inspeção
+                  {selectedItem.statusProducao === 'CONCLUIDA'
+                    ? 'Visualizar inspeção'
+                    : 'Preencher inspeção'}
                 </button>
                 <PdfExporterInspecao inspecao={selectedItem} />
               </div>

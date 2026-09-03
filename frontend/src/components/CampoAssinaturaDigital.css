@@ -1,0 +1,121 @@
+.campo-assinatura-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.campo-assinatura-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.campo-assinatura-wrapper {
+  position: relative;
+  background-color: #ffffff;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 460px;
+  touch-action: none;
+}
+
+.campo-assinatura-wrapper:hover:not(.disabled) {
+  border-color: #94a3b8;
+}
+
+.campo-assinatura-wrapper.focus {
+  border-color: #3b82f6;
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.campo-assinatura-wrapper.disabled {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.campo-assinatura-canvas {
+  display: block;
+  width: 100%;
+  height: 140px;
+  cursor: crosshair;
+  touch-action: none;
+  background: transparent;
+}
+
+.campo-assinatura-wrapper.disabled .campo-assinatura-canvas {
+  cursor: not-allowed;
+}
+
+.campo-assinatura-guia {
+  position: absolute;
+  bottom: 28px;
+  left: 20px;
+  right: 20px;
+  border-bottom: 1px dashed #e2e8f0;
+  pointer-events: none;
+}
+
+.campo-assinatura-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #94a3b8;
+  font-size: 12px;
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.campo-assinatura-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-limpar-assinatura {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ef4444;
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-limpar-assinatura:hover:not(:disabled) {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.btn-limpar-assinatura:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.campo-assinatura-hint {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}

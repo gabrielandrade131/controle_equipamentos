@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { InspecaoMontagem, CreateInspecaoMontageDto } from '../types/inspecao';
 import { criarFormularioInspecaoMontagemVazio } from '../constants/inspecaoMontagem';
+import { CampoAssinaturaDigital } from './CampoAssinaturaDigital';
 import './FormularioInspecao.css';
 
 interface FormularioInspecaoProps {
@@ -219,6 +220,7 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
       ...formData,
       aprovado,
       resultadoFinal,
+      assinatura: formData.assinatura,
       responsavel: formData.responsavelServico || formData.responsavel,
       responsavelServico: formData.responsavelServico || formData.responsavel,
       verificacoesGeraisPremontagem: aplicarInstrumentosFixosPremontagem(
@@ -897,6 +899,14 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
             required
           />
         </div>
+        <CampoAssinaturaDigital
+          label="Assinatura do Executante:"
+          value={formData.assinatura}
+          disabled={documentoBloqueado}
+          onChange={(assinatura) =>
+            setFormData((prev) => ({ ...prev, assinatura }))
+          }
+        />
         <div className="form-group">
           <label htmlFor="data">Data:</label>
           <input

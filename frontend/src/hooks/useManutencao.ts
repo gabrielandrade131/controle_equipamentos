@@ -83,14 +83,19 @@ const parseDadosInspecao = (
   );
 };
 
-const mapDadosInspecao = (inspecao: InspecaoManutencao) =>
-  SECOES_INSPECAO.reduce<Record<string, unknown>>(
-    (dados, key) => {
-      dados[key] = inspecao[key];
-      return dados;
+const mapDadosInspecao = (inspecao: InspecaoManutencao) => {
+  const dados = SECOES_INSPECAO.reduce<Record<string, unknown>>(
+    (acc, key) => {
+      acc[key] = inspecao[key];
+      return acc;
     },
     {},
   );
+  if (inspecao.assinatura) {
+    dados.assinatura = inspecao.assinatura;
+  }
+  return dados;
+};
 
 const serializarDiagnostico = (inspecao: InspecaoManutencao) => {
   const textoAtual = inspecao.observacoes?.trim();
@@ -268,6 +273,8 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     observacoesHistorico: parseObservacoesDiarias(manutencao.diagnostico),
     imagensAnexadas,
     anexoPdf: manutencao.anexoPdf ? toAssetUrl(manutencao.anexoPdf) : "",
+    assinatura:
+      (dadosInspecaoBrutos as any)?.assinatura || manutencao.assinatura || "",
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
   };

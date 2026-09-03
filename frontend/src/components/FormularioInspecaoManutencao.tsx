@@ -7,6 +7,7 @@ import {
   SecaoInspecaoKey,
 } from '../constants/inspecaoManutencao';
 import { normalizeTag } from '../utils/tag';
+import { CampoAssinaturaDigital } from './CampoAssinaturaDigital';
 import './FormularioInspecaoManutencao.css';
 
 interface FormularioInspecaoManutencaoProps {
@@ -325,6 +326,14 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
               disabled={documentoBloqueado}
             />
           </div>
+          <CampoAssinaturaDigital
+            label="Assinatura do Executante:"
+            value={inspecao.assinatura}
+            disabled={documentoBloqueado}
+            onChange={(assinatura) =>
+              setInspecao((prev) => ({ ...prev, assinatura }))
+            }
+          />
           <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
             <label>Status da Manutenção</label>
             <input

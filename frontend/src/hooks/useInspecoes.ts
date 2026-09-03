@@ -71,21 +71,31 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
       NOMES_VERIFICACAO_POSMONTAGEM,
       19,
     );
-  const parsedInspecaoMontagem = String(
-    producao.inspecaoMontagem || '',
-  )
-    .toUpperCase()
-    .trim();
+  let parsedInspecaoMontagemRaw = String(producao.inspecaoMontagem || '').trim();
+  let parsedResultado = '';
+  let parsedAssinatura = '';
+
+  if (parsedInspecaoMontagemRaw.startsWith('{')) {
+    try {
+      const parsedObj = JSON.parse(parsedInspecaoMontagemRaw);
+      parsedResultado = String(parsedObj.resultado || '').toUpperCase().trim();
+      parsedAssinatura = parsedObj.assinatura || '';
+    } catch {
+      parsedResultado = parsedInspecaoMontagemRaw.toUpperCase();
+    }
+  } else {
+    parsedResultado = parsedInspecaoMontagemRaw.toUpperCase();
+  }
 
   const isAprovado =
-    parsedInspecaoMontagem === 'APROVADO' ||
-    parsedInspecaoMontagem === 'SIM' ||
-    parsedInspecaoMontagem === 'TRUE'
+    parsedResultado === 'APROVADO' ||
+    parsedResultado === 'SIM' ||
+    parsedResultado === 'TRUE'
       ? true
-      : parsedInspecaoMontagem === 'REPROVADO' ||
-        parsedInspecaoMontagem === 'NAO' ||
-        parsedInspecaoMontagem === 'NÃO' ||
-        parsedInspecaoMontagem === 'FALSE'
+      : parsedResultado === 'REPROVADO' ||
+        parsedResultado === 'NAO' ||
+        parsedResultado === 'NÃO' ||
+        parsedResultado === 'FALSE'
       ? false
       : undefined;
 
@@ -141,7 +151,7 @@ const mapApiToInspecao = (producao: any): InspecaoMontagem => {
     responsavelServico: producao.responsavelServico ?? '',
     responsavelRevisao: producao.responsavelRevisao ?? '',
     data: toDateInput(producao.atualizadoEm || producao.criadoEm),
-    assinatura: '',
+    assinatura: parsedAssinatura || producao.assinatura || '',
     nomeAssinante: '',
     aprovado,
     imagensAnexadas: producao.imagensAnexadas
@@ -198,15 +208,20 @@ export const useInspecoes = () => {
         ? false
         : undefined;
 
-    await axiosInstance.patch(`/producoes/${producaoId}`, {
-      responsavelServico:
-        inspecao.responsavelServico || inspecao.responsavel || undefined,
-      inspecaoMontagem:
+    const payloadInspecaoMontagem = JSON.stringify({
+      resultado:
         aprovadoFinal === true
           ? 'APROVADO'
           : aprovadoFinal === false
           ? 'REPROVADO'
           : undefined,
+      assinatura: inspecao.assinatura || undefined,
+    });
+
+    await axiosInstance.patch(`/producoes/${producaoId}`, {
+      responsavelServico:
+        inspecao.responsavelServico || inspecao.responsavel || undefined,
+      inspecaoMontagem: payloadInspecaoMontagem,
     });
 
     await carregarInspecoes();

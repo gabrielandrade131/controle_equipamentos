@@ -404,6 +404,18 @@ export const usePdfExportInspecao = () => {
                 yPosition + 2,
             );
 
+            if (inspecao.assinatura) {
+                try {
+                    const sigExecWidth = 36;
+                    const sigExecHeight = 21;
+                    const sigExecX = linhaExecutanteInicio + (assinaturaLineWidth - sigExecWidth) / 2;
+                    const sigExecY = yPosition + 6.5;
+                    pdf.addImage(inspecao.assinatura, 'PNG', sigExecX, sigExecY, sigExecWidth, sigExecHeight);
+                } catch (error) {
+                    console.warn('Assinatura do executante não pôde ser carregada no PDF:', error);
+                }
+            }
+
             try {
                 const sigWidth = 36;
                 const sigHeight = 21;

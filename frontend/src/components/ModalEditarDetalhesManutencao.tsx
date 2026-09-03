@@ -5,6 +5,7 @@ import { aplicarChecklistManutencao } from "../constants/inspecaoManutencao";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { isDouglasUser } from "../utils/auth";
 import { normalizeTag } from "../utils/tag";
+import { CampoAssinaturaDigital } from "./CampoAssinaturaDigital";
 import "./ModalEditarDetalhesManutencao.css";
 
 interface ModalEditarDetalhesManutencaoProps {
@@ -311,6 +312,17 @@ export const ModalEditarDetalhesManutencao: React.FC<
                 placeholder="Digite o nome de quem executou"
                 onChange={(e) =>
                   handleInputChange("responsavel", e.target.value)
+                }
+              />
+            </div>
+
+            <div className="form-group full">
+              <CampoAssinaturaDigital
+                label="Assinatura do Executante:"
+                value={formData.assinatura}
+                disabled={statusBloqueado}
+                onChange={(assinatura) =>
+                  handleInputChange("assinatura", assinatura)
                 }
               />
             </div>

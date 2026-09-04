@@ -24,6 +24,7 @@ const STATUS_LABELS: Record<string, string> = {
   EM_QUARENTENA: "Em quarentena",
   PENDENTE: "Pendente",
   EM_MANUTENCAO: "Em manutenção",
+  OPERACIONAL: "Operacional",
   PARALISADA: "Paralisada",
   CONCLUIDA: "Concluída",
 };
@@ -453,6 +454,7 @@ export const Manutencao: React.FC = () => {
                   { value: "EM_QUARENTENA", label: "Em quarentena" },
                   { value: "PENDENTE", label: "Pendente" },
                   { value: "EM_MANUTENCAO", label: "Em Manutenção" },
+                  { value: "OPERACIONAL", label: "Operacional" },
                   { value: "PARALISADA", label: "Paralisada" },
                   { value: "CONCLUIDA", label: "Concluída" },
                 ],
@@ -668,6 +670,7 @@ export const Manutencao: React.FC = () => {
                     <option value="EM_QUARENTENA">Em quarentena</option>
                     <option value="PENDENTE">Pendente</option>
                     <option value="EM_MANUTENCAO">Em manutenção</option>
+                    <option value="OPERACIONAL">Operacional</option>
                     <option value="PARALISADA">Paralisada</option>
                     <option
                       value="CONCLUIDA"
@@ -869,6 +872,7 @@ export const Manutencao: React.FC = () => {
                       onClick={() => {
                         if (
                           selectedItem.statusManutencao === "EM_MANUTENCAO" ||
+                          selectedItem.statusManutencao === "OPERACIONAL" ||
                           selectedItem.statusManutencao === "CONCLUIDA"
                         ) {
                           setModo("editar-inspecao");
@@ -882,7 +886,8 @@ export const Manutencao: React.FC = () => {
                       }}
                       className="btn-primary"
                     >
-                      {selectedItem.statusManutencao === "CONCLUIDA"
+                      {selectedItem.statusManutencao === "CONCLUIDA" ||
+                      selectedItem.statusManutencao === "OPERACIONAL"
                         ? "Visualizar Inspeção"
                         : "Preencher Inspeção"}
                     </button>

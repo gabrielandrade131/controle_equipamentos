@@ -309,6 +309,7 @@ enum StatusManutencao {
   EM_QUARENTENA
   PENDENTE
   EM_MANUTENCAO
+  OPERACIONAL
   CONCLUIDA
   PARALISADA
 }
@@ -321,6 +322,7 @@ enum TipoManutencao {
 enum StatusProducao {
   PROGRAMADA
   EM_ANDAMENTO
+  OPERACIONAL
   CONCLUIDA
   PARALISADA
 }

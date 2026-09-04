@@ -57,7 +57,7 @@ export class CreateProducaoDto {
 
   @ApiPropertyOptional({
     example: 'PROGRAMADA',
-    description: 'Status: PROGRAMADA, PARALISADA, EM_ANDAMENTO, CONCLUIDA',
+    description: 'Status: PROGRAMADA, PARALISADA, EM_ANDAMENTO, OPERACIONAL, CONCLUIDA',
   })
   @IsOptional()
   @IsString()

@@ -256,6 +256,7 @@ export class ManutencoesService {
   >(manutencao: T) {
     const deveCalcular =
       manutencao.statusManutencao === 'EM_MANUTENCAO' ||
+      manutencao.statusManutencao === 'OPERACIONAL' ||
       manutencao.statusManutencao === 'CONCLUIDA';
     const deveCalcularParalisacao =
       manutencao.statusManutencao === 'PARALISADA';
@@ -469,6 +470,7 @@ export class ManutencoesService {
                   StatusManutencao.EM_QUARENTENA,
                   StatusManutencao.PENDENTE,
                   StatusManutencao.EM_MANUTENCAO,
+                  StatusManutencao.OPERACIONAL,
                   StatusManutencao.PARALISADA,
                 ],
               },
@@ -788,7 +790,8 @@ export class ManutencoesService {
     const dataInicioPorStatus =
       statusMudou &&
       !manutencaoAtual.dataInicio &&
-      data.statusManutencao === StatusManutencao.EM_MANUTENCAO
+      (data.statusManutencao === StatusManutencao.EM_MANUTENCAO ||
+        data.statusManutencao === StatusManutencao.OPERACIONAL)
         ? new Date()
         : undefined;
     const dataTerminoPorStatus =

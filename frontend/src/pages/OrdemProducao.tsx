@@ -12,6 +12,14 @@ import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { isCSafetyUser, isOperationalUser } from "../utils/auth";
 import "../pages/Producao.css";
 
+const STATUS_LABELS: Record<string, string> = {
+  PROGRAMADA: "Programada",
+  EM_ANDAMENTO: "Em andamento",
+  OPERACIONAL: "Operacional",
+  CONCLUIDA: "Concluída",
+  PARALISADA: "Paralisada",
+};
+
 const formatarRotulo = (valor?: string | null) => {
   if (!valor) return "-";
 
@@ -200,6 +208,7 @@ const OrdemProducao: React.FC = () => {
                 options: [
                   { value: "PROGRAMADA", label: "Programada" },
                   { value: "EM_ANDAMENTO", label: "Em andamento" },
+                  { value: "OPERACIONAL", label: "Operacional" },
                   { value: "CONCLUIDA", label: "Concluída" },
                   { value: "PARALISADA", label: "Paralisada" },
                 ],
@@ -267,7 +276,11 @@ const OrdemProducao: React.FC = () => {
                     <strong>{producao.numeroOrdem}</strong>
                     <small>{producao.tipoEquipamentoNome || "-"}</small>
                     <small>{producao.tag || "-"}</small>
-                    <small>{producao.statusProducao}</small>
+                    <small>
+                      {STATUS_LABELS[producao.statusProducao || ""] ||
+                        producao.statusProducao ||
+                        "-"}
+                    </small>
                   </li>
                 ))}
               </ul>
@@ -303,7 +316,11 @@ const OrdemProducao: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
-                  <p>{selectedItem.statusProducao || "-"}</p>
+                  <p>
+                    {STATUS_LABELS[selectedItem.statusProducao || ""] ||
+                      selectedItem.statusProducao ||
+                      "-"}
+                  </p>
                 </div>
                 <div className="detail-item">
                   <label>TAG:</label>

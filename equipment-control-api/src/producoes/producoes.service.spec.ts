@@ -265,4 +265,24 @@ describe('ProducoesService', () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('calculates diasProducao when status is OPERACIONAL', async () => {
+    prisma.equipment.findMany.mockResolvedValue([
+      {
+        id: 'prod-1',
+        numeroOrdem: 1,
+        loteProducao: {
+          numeroLote: 10,
+          statusProducao: 'OPERACIONAL',
+          dataInicio: new Date('2026-01-01T00:00:00.000Z'),
+          dataTermino: new Date('2026-01-05T00:00:00.000Z'),
+        },
+      },
+    ]);
+    prisma.equipment.count.mockResolvedValue(1);
+
+    const result = await service.findAll({});
+
+    expect(result.data[0].diasProducao).toBe(5);
+  });
 });

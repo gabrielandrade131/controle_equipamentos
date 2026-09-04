@@ -7,6 +7,15 @@ type ItemChecklist = {
   resposta: string;
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  EM_QUARENTENA: "Em quarentena",
+  PENDENTE: "Pendente",
+  EM_MANUTENCAO: "Em manutenção",
+  OPERACIONAL: "Operacional",
+  PARALISADA: "Paralisada",
+  CONCLUIDA: "Concluída",
+};
+
 export const usePdfExportManutencao = () => {
   const exportInspecaoToPdf = async (
     inspecao: InspecaoManutencao,
@@ -115,7 +124,13 @@ export const usePdfExportManutencao = () => {
             },
           ],
           [
-            { label: "Status", value: inspecao.statusManutencao || "-" },
+            {
+              label: "Status",
+              value:
+                STATUS_LABELS[inspecao.statusManutencao] ||
+                inspecao.statusManutencao ||
+                "-",
+            },
             { label: "Executado por", value: inspecao.responsavel || "-" },
           ],
           [
@@ -133,11 +148,18 @@ export const usePdfExportManutencao = () => {
             { label: "Modelo", value: inspecao.modelo || "-" },
           ],
           [
+            { label: "Número de Série", value: inspecao.numeroSerie || "-" },
+            { label: "TAG", value: inspecao.tag || "-" },
+          ],
+          [
             {
               label: "Ordem de Manutenção",
               value: String(inspecao.numeroOrdemManutencao ?? "-"),
             },
-            { label: "TAG", value: inspecao.tag || "-" },
+            {
+              label: "Tipo de equipamento",
+              value: inspecao.tipoEquipamento || "-",
+            },
           ],
           [
             {
@@ -148,15 +170,19 @@ export const usePdfExportManutencao = () => {
                   : "Corretiva",
             },
             {
-              label: "Tipo de equipamento",
-              value: inspecao.tipoEquipamento || "-",
+              label: "Local da manutenção",
+              value: inspecao.localManutencao || "-",
             },
           ],
           [
             { label: "Destino", value: inspecao.destino || "-" },
             {
-              label: "Local da manutenção",
-              value: inspecao.localManutencao || "-",
+              label: "Dias em Manutenção",
+              value:
+                inspecao.diasManutencao !== null &&
+                inspecao.diasManutencao !== undefined
+                  ? String(inspecao.diasManutencao)
+                  : "-",
             },
           ],
         ];

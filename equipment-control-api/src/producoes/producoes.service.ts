@@ -100,7 +100,9 @@ export class ProducoesService {
       statusProducao?: string | null;
     },
   >(producao: T) {
-    const deveCalcular = producao.statusProducao === 'EM_ANDAMENTO';
+    const deveCalcular =
+      producao.statusProducao === 'EM_ANDAMENTO' ||
+      producao.statusProducao === 'OPERACIONAL';
     const deveCalcularParalisacao = producao.statusProducao === 'PARALISADA';
 
     const prazo = this.calcularPrazoProducao(
@@ -545,7 +547,10 @@ export class ProducoesService {
     }
 
     const dataInicioPorStatus =
-      statusMudou && data.statusProducao === PrismaStatusProducao.EM_ANDAMENTO
+      statusMudou &&
+      (data.statusProducao === PrismaStatusProducao.EM_ANDAMENTO ||
+        data.statusProducao === PrismaStatusProducao.OPERACIONAL) &&
+      !producaoAtual.loteProducao?.dataInicio
         ? new Date()
         : undefined;
     const dataTerminoPorStatus =

@@ -21,6 +21,7 @@ export interface HistoricoProducaoItem {
 export type StatusProducao =
   | "PROGRAMADA"
   | "EM_ANDAMENTO"
+  | "OPERACIONAL"
   | "CONCLUIDA"
   | "PARALISADA";
 

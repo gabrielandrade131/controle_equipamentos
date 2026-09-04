@@ -104,7 +104,7 @@ export class CreateManutencaoDto {
   @ApiPropertyOptional({
     enum: StatusManutencao,
     example: StatusManutencao.EM_MANUTENCAO,
-    description: 'Status: PENDENTE, PARALISADA, EM_MANUTENCAO, CONCLUIDA',
+    description: 'Status: PENDENTE, PARALISADA, EM_MANUTENCAO, OPERACIONAL, CONCLUIDA, EM_QUARENTENA',
   })
   @IsOptional()
   @IsEnum(StatusManutencao)

@@ -74,6 +74,33 @@ describe('FormularioInspecaoManutencao', () => {
     });
   });
 
+  it('bloqueia preenchimento e exibe aviso de aguardando aprovação quando o status é OPERACIONAL', () => {
+    const inspecaoOperacional: InspecaoManutencao = {
+      ...criarInspecaoVazia(),
+      statusManutencao: 'OPERACIONAL',
+      responsavel: 'Técnico Teste',
+      validade: '2026-12-31',
+    };
+
+    render(
+      <FormularioInspecaoManutencao inspecaoInicial={inspecaoOperacional} />,
+    );
+
+    expect(
+      screen.getByText(
+        /Esta manutenção está com status Operacional aguardando aprovação/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Salvar Inspeção/i }),
+    ).not.toBeInTheDocument();
+
+    const radios = screen.getAllByRole('radio');
+    radios.forEach((radio) => {
+      expect(radio).toBeDisabled();
+    });
+  });
+
   it('bloqueia preenchimento quando status é PENDENTE ou EM_QUARENTENA', () => {
     const inspecaoPendente: InspecaoManutencao = {
       ...criarInspecaoVazia(),

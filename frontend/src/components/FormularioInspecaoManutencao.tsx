@@ -10,6 +10,15 @@ import { normalizeTag } from '../utils/tag';
 import { CampoAssinaturaDigital } from './CampoAssinaturaDigital';
 import './FormularioInspecaoManutencao.css';
 
+const STATUS_LABELS: Record<string, string> = {
+  EM_QUARENTENA: 'Em quarentena',
+  PENDENTE: 'Pendente',
+  EM_MANUTENCAO: 'Em manutenção',
+  OPERACIONAL: 'Operacional',
+  PARALISADA: 'Paralisada',
+  CONCLUIDA: 'Concluída',
+};
+
 interface FormularioInspecaoManutencaoProps {
   onSalvar?: (inspecao: InspecaoManutencao) => void;
   onCancelar?: () => void;
@@ -201,7 +210,9 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
         <div className="alerta-somente-leitura" role="alert">
           {inspecao.statusManutencao === 'CONCLUIDA'
             ? 'Esta manutenção já foi concluída. A inspeção está finalizada e em modo somente leitura.'
-            : 'A inspeção de manutenção só pode ser preenchida e alterada quando o status for "Em manutenção".'}
+            : inspecao.statusManutencao === 'OPERACIONAL'
+              ? 'Esta manutenção está com status Operacional aguardando aprovação. A inspeção está em modo somente leitura.'
+              : 'A inspeção de manutenção só pode ser preenchida e alterada quando o status for "Em manutenção".'}
         </div>
       )}
       <div className="dados-equipamento">
@@ -261,6 +272,16 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
               type="text"
               value={inspecao.modelo}
               onChange={(e) => handleInputChange('modelo', e.target.value)}
+              readOnly={dadosManutencaoSomenteLeitura}
+              disabled={dadosManutencaoSomenteLeitura}
+            />
+          </div>
+          <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
+            <label>Número de Série</label>
+            <input
+              type="text"
+              value={inspecao.numeroSerie || ''}
+              onChange={(e) => handleInputChange('numeroSerie', e.target.value)}
               readOnly={dadosManutencaoSomenteLeitura}
               disabled={dadosManutencaoSomenteLeitura}
             />
@@ -338,7 +359,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
             <label>Status da Manutenção</label>
             <input
               type="text"
-              value={inspecao.statusManutencao}
+              value={STATUS_LABELS[inspecao.statusManutencao] || inspecao.statusManutencao || ''}
               readOnly
               disabled
             />

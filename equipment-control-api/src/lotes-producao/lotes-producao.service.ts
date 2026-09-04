@@ -126,7 +126,8 @@ export class LotesProducaoService {
 
   private adicionarCamposCalculados(lote: any) {
     const deveCalcularProducao =
-      lote.statusProducao === StatusProducao.EM_ANDAMENTO;
+      lote.statusProducao === StatusProducao.EM_ANDAMENTO ||
+      lote.statusProducao === StatusProducao.OPERACIONAL;
     const deveCalcularParalisacao =
       lote.statusProducao === StatusProducao.PARALISADA;
 

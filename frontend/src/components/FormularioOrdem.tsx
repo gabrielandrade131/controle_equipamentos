@@ -21,6 +21,7 @@ interface FormularioOrdemProps {
 const STATUS_OPTIONS: Array<{ value: StatusProducao; label: string }> = [
   { value: "PROGRAMADA", label: "Programada" },
   { value: "EM_ANDAMENTO", label: "Em andamento" },
+  { value: "OPERACIONAL", label: "Operacional" },
   { value: "CONCLUIDA", label: "Concluída" },
   { value: "PARALISADA", label: "Paralisada" },
 ];
@@ -183,7 +184,11 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
     const statusProducao = e.currentTarget.value as StatusProducao;
     const changes: Partial<CreateProducaoDto | Producao> = { statusProducao };
 
-    if (statusProducao === "EM_ANDAMENTO" && !formData.dataInicio) {
+    if (
+      (statusProducao === "EM_ANDAMENTO" ||
+        statusProducao === "OPERACIONAL") &&
+      !formData.dataInicio
+    ) {
       changes.dataInicio = today();
     }
 

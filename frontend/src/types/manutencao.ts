@@ -3,7 +3,12 @@
 export type RespostaBinaria = "SIM" | "NÃO" | "N/A" | "";
 
 export type StatusManutencao =
-  "EM_QUARENTENA" | "PENDENTE" | "EM_MANUTENCAO" | "CONCLUIDA" | "PARALISADA";
+  | "EM_QUARENTENA"
+  | "PENDENTE"
+  | "EM_MANUTENCAO"
+  | "OPERACIONAL"
+  | "CONCLUIDA"
+  | "PARALISADA";
 
 export type TipoManutencao = "CORRETIVA" | "PREVENTIVA";
 

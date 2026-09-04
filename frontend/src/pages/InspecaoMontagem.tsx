@@ -9,7 +9,16 @@ import { useInspecoes } from '../hooks/useInspecoes';
 import { InspecaoMontagem } from '../types/inspecao';
 import { buildSelectOptions } from '../utils/filterOptions';
 import { formatDatePtBr, getLocalDateInput } from '../utils/date';
+import './InspecaoMontagem.css';
 import '../pages/Producao.css';
+
+const STATUS_LABELS: Record<string, string> = {
+  PROGRAMADA: 'Programada',
+  EM_ANDAMENTO: 'Em andamento',
+  OPERACIONAL: 'Operacional',
+  CONCLUIDA: 'Concluída',
+  PARALISADA: 'Paralisada',
+};
 
 const getResultadoColor = (resultado?: string) => {
   if (resultado === 'APROVADO') return '#4caf50';
@@ -164,6 +173,7 @@ const InspecaoMontagemPage: React.FC = () => {
                 options: [
                   { value: 'PROGRAMADA', label: 'Programada' },
                   { value: 'EM_ANDAMENTO', label: 'Em andamento' },
+                  { value: 'OPERACIONAL', label: 'Operacional' },
                   { value: 'CONCLUIDA', label: 'Concluída' },
                   { value: 'PARALISADA', label: 'Paralisada' },
                 ],
@@ -268,7 +278,11 @@ const InspecaoMontagemPage: React.FC = () => {
                 </div>
                 <div className="detail-item">
                   <label>Status:</label>
-                  <p>{selectedItem.statusProducao || '-'}</p>
+                  <p>
+                    {STATUS_LABELS[selectedItem.statusProducao || ''] ||
+                      selectedItem.statusProducao ||
+                      '-'}
+                  </p>
                 </div>
                 <div className="detail-item">
                   <label>Tipo de equipamento:</label>
@@ -319,6 +333,7 @@ const InspecaoMontagemPage: React.FC = () => {
                   onClick={() => {
                     if (
                       selectedItem.statusProducao === 'EM_ANDAMENTO' ||
+                      selectedItem.statusProducao === 'OPERACIONAL' ||
                       selectedItem.statusProducao === 'CONCLUIDA'
                     ) {
                       setEditando(true);
@@ -329,7 +344,8 @@ const InspecaoMontagemPage: React.FC = () => {
                     }
                   }}
                 >
-                  {selectedItem.statusProducao === 'CONCLUIDA'
+                  {selectedItem.statusProducao === 'CONCLUIDA' ||
+                  selectedItem.statusProducao === 'OPERACIONAL'
                     ? 'Visualizar inspeção'
                     : 'Preencher inspeção'}
                 </button>

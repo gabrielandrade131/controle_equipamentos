@@ -55,7 +55,11 @@ export const ModalEditarDetalhesManutencao: React.FC<
         changes.responsavelRevisao = "Douglas Moreira Alves";
       }
 
-      if (statusManutencao === "EM_MANUTENCAO" && !prev.dataInicio) {
+      if (
+        (statusManutencao === "EM_MANUTENCAO" ||
+          statusManutencao === "OPERACIONAL") &&
+        !prev.dataInicio
+      ) {
         changes.dataInicio = getLocalDateInput();
       }
 
@@ -337,6 +341,7 @@ export const ModalEditarDetalhesManutencao: React.FC<
                 <option value="EM_QUARENTENA">Em quarentena</option>
                 <option value="PENDENTE">Pendente</option>
                 <option value="EM_MANUTENCAO">Em Manutenção</option>
+                <option value="OPERACIONAL">Operacional</option>
                 <option value="PARALISADA">Paralisada</option>
                 {!isCreating && (
                   <option

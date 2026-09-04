@@ -589,6 +589,70 @@ describe('ManutencoesService', () => {
     );
   });
 
+  it('calculates diasManutencao when status is OPERACIONAL', async () => {
+    prisma.manutencao.findUnique.mockResolvedValue({
+      id: 'man-1',
+      statusManutencao: 'OPERACIONAL',
+      dataInicio: new Date('2026-01-01T00:00:00.000Z'),
+      dataTermino: new Date('2026-01-05T00:00:00.000Z'),
+      historicoAlteracoes: [],
+    });
+
+    const result = await service.findOne('man-1');
+
+    expect(result.diasManutencao).toBe(4);
+  });
+
+  it('allows any user to update status to OPERACIONAL', async () => {
+    prisma.manutencao.findUnique.mockResolvedValueOnce({
+      id: 'man-1',
+      statusManutencao: 'EM_MANUTENCAO',
+      dataInicio: new Date('2026-01-01'),
+      historicoAlteracoes: [],
+    });
+    prisma.manutencao.update.mockResolvedValue({ id: 'man-1' });
+    prisma.historicoManutencao.createMany.mockResolvedValue({ count: 1 });
+    prisma.manutencao.findUnique.mockResolvedValueOnce({
+      id: 'man-1',
+      statusManutencao: 'OPERACIONAL',
+      historicoAlteracoes: [],
+    });
+
+    const result = await service.update(
+      'man-1',
+      { statusManutencao: 'OPERACIONAL' as any },
+      { nome: 'Tecnico Comum', email: 'tecnico@ambipar.com' },
+    );
+
+    expect(prisma.manutencao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'man-1' },
+        data: expect.objectContaining({
+          statusManutencao: 'OPERACIONAL',
+        }),
+      }),
+    );
+    expect(result).toBeDefined();
+  });
+
+  it('requires Douglas authorization to update status from OPERACIONAL to CONCLUIDA', async () => {
+    prisma.manutencao.findUnique.mockResolvedValueOnce({
+      id: 'man-1',
+      statusManutencao: 'OPERACIONAL',
+      historicoAlteracoes: [],
+    });
+
+    await expect(
+      service.update(
+        'man-1',
+        { statusManutencao: 'CONCLUIDA' as any },
+        { nome: 'Outro Usuario', email: 'outro@ambipar.com' },
+      ),
+    ).rejects.toThrow(
+      new BadRequestException('Você não tem autorização para concluir o status.'),
+    );
+  });
+
   it('removes maintenance by soft delete', async () => {
     prisma.manutencao.findUnique.mockResolvedValue({
       id: 'man-1',
@@ -626,3 +690,4 @@ describe('ManutencoesService', () => {
     expect(result).toEqual([{ id: 'hist-1' }]);
   });
 });
+

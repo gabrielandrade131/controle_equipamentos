@@ -843,6 +843,29 @@ export const FormularioInspecaoNovo: React.FC<FormularioInspecaoProps> = ({
   return (
     <form onSubmit={handleSubmit} className="formulario-inspecao">
       <h2>{titulo}</h2>
+      {documentoBloqueado && (
+        <div
+          className="alerta-somente-leitura"
+          role="alert"
+          style={{
+            margin: "16px 0",
+            padding: "12px 16px",
+            borderRadius: "6px",
+            background: "#fff3cd",
+            color: "#856404",
+            border: "1px solid #ffeeba",
+            fontSize: "14px",
+          }}
+        >
+          {(inspecaoInicial?.statusProducao || formData.statusProducao) ===
+          "CONCLUIDA"
+            ? "Esta ordem de produção já foi concluída. A inspeção está finalizada e em modo somente leitura."
+            : (inspecaoInicial?.statusProducao || formData.statusProducao) ===
+                "OPERACIONAL"
+              ? "Esta ordem de produção está com status Operacional aguardando aprovação. A inspeção está em modo somente leitura."
+              : 'A inspeção de montagem só pode ser preenchida e alterada quando a produção estiver com status "Em andamento".'}
+        </div>
+      )}
 
       <div className="form-section">
         <h3>Descrição</h3>

@@ -19,6 +19,10 @@ describe('FormularioOrdem', () => {
     tipoEquipamentoNome: 'Exaustor',
     modelo: 'CSEX420ACM',
     descricao: 'Exaustor 420',
+    dataSolicitacao: '2026-09-04',
+    itensSeriados: [],
+    documentos: [],
+    observacoes: '',
   };
 
   afterEach(() => {

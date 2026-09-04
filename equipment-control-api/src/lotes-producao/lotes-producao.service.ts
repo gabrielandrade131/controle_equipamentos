@@ -210,9 +210,18 @@ export class LotesProducaoService {
     return dataAtualizacao;
   }
 
-  async create(data: CreateLoteProducaoDto) {
+  async create(data: CreateLoteProducaoDto, user?: any) {
     if (data.quantidade <= 0) {
       throw new BadRequestException('A quantidade deve ser maior que zero.');
+    }
+
+    if (data.statusProducao === StatusProducao.CONCLUIDA) {
+      const emailUsuario = user?.email?.toLowerCase().trim();
+      if (emailUsuario !== 'douglas.alves@ambipar.com') {
+        throw new BadRequestException(
+          'Você não tem autorização para concluir o status.',
+        );
+      }
     }
 
     if (data.tipoEquipamentoId) {
@@ -367,8 +376,31 @@ export class LotesProducaoService {
     return this.adicionarCamposCalculados(lote);
   }
 
-  async update(id: string, data: UpdateLoteProducaoDto) {
+  async update(id: string, data: UpdateLoteProducaoDto, user?: any) {
     const loteAtual = await this.findOne(id);
+
+    const statusMudou =
+      data.statusProducao !== undefined &&
+      data.statusProducao !== loteAtual.statusProducao;
+    const statusFinal = data.statusProducao ?? loteAtual.statusProducao;
+
+    if (
+      statusFinal === StatusProducao.CONCLUIDA &&
+      (statusMudou || data.statusProducao === StatusProducao.CONCLUIDA)
+    ) {
+      const emailUsuario = user?.email?.toLowerCase().trim();
+      if (emailUsuario !== 'douglas.alves@ambipar.com') {
+        throw new BadRequestException(
+          'Você não tem autorização para concluir o status.',
+        );
+      }
+    }
+
+    if (loteAtual.statusProducao === StatusProducao.CONCLUIDA && statusMudou) {
+      throw new BadRequestException(
+        'Producao concluida nao pode ser alterada.',
+      );
+    }
 
     if (data.tipoEquipamentoId) {
       const tipoEquipamento = await this.prisma.tipoEquipamento.findUnique({

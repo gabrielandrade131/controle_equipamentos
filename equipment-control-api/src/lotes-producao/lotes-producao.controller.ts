@@ -27,7 +27,7 @@ export class LotesProducaoController {
   @ApiOperation({ summary: 'Criar lote de produção e gerar equipamentos' })
   create(@Body() body: CreateLoteProducaoDto, @Req() req: any) {
     assertNotOperationalUser(req.user);
-    return this.lotesProducaoService.create(body);
+    return this.lotesProducaoService.create(body, req.user);
   }
 
   @Get()
@@ -56,7 +56,7 @@ export class LotesProducaoController {
     @Req() req: any,
   ) {
     assertNotOperationalUser(req.user);
-    return this.lotesProducaoService.update(id, body);
+    return this.lotesProducaoService.update(id, body, req.user);
   }
 
   @Delete(':id')

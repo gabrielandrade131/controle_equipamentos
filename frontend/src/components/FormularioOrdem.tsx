@@ -7,7 +7,7 @@ import {
 } from "../types/producao";
 import { useTiposEquipamento } from "../hooks/useTiposEquipamento";
 import { getLocalDateInput } from "../utils/date";
-import { isAdminUser, isVerifiedUser } from "../utils/auth";
+import { isAdminUser, isDouglasUser, isVerifiedUser } from "../utils/auth";
 import { normalizeTag } from "../utils/tag";
 import "./FormularioOrdem.css";
 
@@ -112,7 +112,9 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
   isEditing = false,
 }) => {
   const [formData, setFormData] = useState<CreateProducaoDto | Producao>(
-    producao || createEmptyProducao(),
+    producao
+      ? { ...producao, itensSeriados: producao.itensSeriados ?? [] }
+      : createEmptyProducao(),
   );
   const { tiposEquipamento } = useTiposEquipamento();
   const [novoItem, setNovoItem] = useState({
@@ -315,6 +317,10 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
       alert("Ordens de produção concluídas não podem ser alteradas.");
       return;
     }
+    if (formData.statusProducao === "CONCLUIDA" && !isDouglasUser()) {
+      alert("Você não tem autorização para concluir o status.");
+      return;
+    }
     onSalvar({
       ...formData,
       tag: normalizeTag(formData.tag),
@@ -380,11 +386,23 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
               onChange={handleStatusChange}
               disabled={isEditing && formData.statusProducao === "CONCLUIDA"}
             >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
+              {STATUS_OPTIONS.map((status) => {
+                const isConcluida = status.value === "CONCLUIDA";
+                const semAutorizacao =
+                  isConcluida &&
+                  !isDouglasUser() &&
+                  formData.statusProducao !== "CONCLUIDA";
+                return (
+                  <option
+                    key={status.value}
+                    value={status.value}
+                    disabled={semAutorizacao}
+                  >
+                    {status.label}
+                    {semAutorizacao ? " (Sem autorização)" : ""}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -574,9 +592,9 @@ export const FormularioOrdem: React.FC<FormularioOrdemProps> = ({
             </button>
           </div>
 
-          {formData.itensSeriados.length > 0 && (
+          {(formData.itensSeriados ?? []).length > 0 && (
             <div className="items-list">
-              {formData.itensSeriados.map((item) => (
+              {(formData.itensSeriados ?? []).map((item) => (
                 <div key={item.id} className="item-card">
                   <div className="item-info">
                     <strong>Item {item.numero}</strong>

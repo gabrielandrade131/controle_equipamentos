@@ -496,6 +496,18 @@ export class ProducoesService {
       data.statusProducao !== undefined && data.statusProducao !== statusAtual;
     const statusFinal = data.statusProducao ?? statusAtual;
 
+    if (
+      statusFinal === PrismaStatusProducao.CONCLUIDA &&
+      (statusMudou || data.statusProducao === PrismaStatusProducao.CONCLUIDA)
+    ) {
+      const emailUsuario = user?.email?.toLowerCase().trim();
+      if (emailUsuario !== 'douglas.alves@ambipar.com') {
+        throw new BadRequestException(
+          'Você não tem autorização para concluir o status.',
+        );
+      }
+    }
+
     const responsavelRevisaoFinal =
       statusFinal === PrismaStatusProducao.CONCLUIDA
         ? 'Douglas Moreira Alves'

@@ -285,4 +285,76 @@ describe('ProducoesService', () => {
 
     expect(result.data[0].diasProducao).toBe(5);
   });
+
+  it('allows conclusion when user is douglas.alves@ambipar.com', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'prod-1',
+      loteProducaoId: 'lote-1',
+      numeroOrdem: 1,
+      loteProducao: {
+        id: 'lote-1',
+        numeroLote: 1,
+        modelo: 'MX',
+        statusProducao: 'EM_ANDAMENTO',
+        dataInicio: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    } as any);
+    prisma.equipment.update.mockResolvedValue({
+      id: 'prod-1',
+      numeroOrdem: 1,
+      loteProducao: {
+        id: 'lote-1',
+        numeroLote: 1,
+        modelo: 'MX',
+        statusProducao: 'CONCLUIDA',
+      },
+      itensSeriados: [],
+      observacoes: [],
+      registrosInspecaoMontagem: [],
+    });
+
+    const result = await service.update(
+      'prod-1',
+      { statusProducao: 'CONCLUIDA' } as any,
+      { nome: 'Douglas Alves', email: 'douglas.alves@ambipar.com' },
+    );
+
+    expect(prisma.loteProducao.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'lote-1' },
+        data: expect.objectContaining({
+          statusProducao: 'CONCLUIDA',
+        }),
+      }),
+    );
+    expect(prisma.equipment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          responsavelRevisao: 'Douglas Moreira Alves',
+        }),
+      }),
+    );
+  });
+
+  it('rejects conclusion when user is not douglas.alves@ambipar.com', async () => {
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: 'prod-1',
+      loteProducaoId: 'lote-1',
+      numeroOrdem: 1,
+      loteProducao: {
+        id: 'lote-1',
+        numeroLote: 1,
+        modelo: 'MX',
+        statusProducao: 'EM_ANDAMENTO',
+      },
+    } as any);
+
+    await expect(
+      service.update(
+        'prod-1',
+        { statusProducao: 'CONCLUIDA' } as any,
+        { email: 'outro.usuario@ambipar.com' },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

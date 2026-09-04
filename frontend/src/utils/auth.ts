@@ -58,3 +58,8 @@ export const canConcludeManutencao = (): boolean => {
   return isDouglasUser();
 };
 
+export const canConcludeProducao = (): boolean => {
+  return isDouglasUser();
+};
+
+

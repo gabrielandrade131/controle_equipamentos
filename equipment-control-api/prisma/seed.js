@@ -48,16 +48,63 @@ async function upsertUser({ nome, email, senha, cSafety = false }) {
 
 async function main() {
   const tipos = [
-    'Exaustor',
+    'Refletor LED',
     'Compressor de Ar',
+    'Caixa Distribuidora EX',
+    'Caixa Transformadora EX',
+    'Guincho Tripé',
+    'Trava Quedas',
+    'Luminária Pneumática',
+    'HPU - UEH-50',
+    'HPU - UEH-75',
+    'HPU',
+    'Máquina de Limpeza a Vácuo',
+    'Compressor XAS420',
+    'Detector de Gases',
+    'Guincho Pneumático',
+    'Bomba Pneumática',
+    'Bomba submersível',
+    'Conjunto Autônomo',
+    'EEBD',
+    'Exaustor / Ventilador 420-550 EX',
+    'Exaustor',
+    'Ventilador',
+    'Cavalete de ar mandado',
+    'Ventilador Alta Vazão',
+    'Ventilador Holandês',
     'Hidrojato de alta pressão',
+    'Hidrojato BP',
+    'Hidrojato de Baixa Pressão',
+    'Máscara de Ar Mandado',
+    'Robô Lombrico ROV',
+    'HVAC 16F',
+    'HVAC',
+    'UBA - Unidade Lavadora',
+    'Exaustor SH-30',
+    'Exaustor / Ventilador SHT 30',
+    'Manifold',
+    'Soprador Pneumático',
+    'Compressor a Diesel',
+    'SHAKER',
+    'WPU - Unidade Lavadora',
+    'WPU',
+    'Bomba Centrífuga',
+    'Bomba Lóbulo',
+    'Bomba Helicoidal',
+    'Container DryBox - 10pés',
+    'Container DryBox - 20pés',
+    'Container OpenTop - 10pés',
+    'Container OpenTop - 20pés',
     'Caixa Metálica',
+    'Cutting Box',
+    'Caixa Metálica de Passagem',
     'Painel Elétrico Móvel',
   ];
 
-  const [tipoExaustor, tipoCompressor, tipoHidrojato] = await Promise.all(
-    tipos.map((nome) => upsertTipoEquipamento(nome)),
-  );
+  await Promise.all(tipos.map((nome) => upsertTipoEquipamento(nome)));
+  const tipoExaustor = await prisma.tipoEquipamento.findUnique({ where: { nome: 'Exaustor' } });
+  const tipoCompressor = await prisma.tipoEquipamento.findUnique({ where: { nome: 'Compressor de Ar' } });
+  const tipoHidrojato = await prisma.tipoEquipamento.findUnique({ where: { nome: 'Hidrojato de alta pressão' } });
 
   const usuarioAdmin = await upsertUser({
     nome: 'Gabriel Roza',

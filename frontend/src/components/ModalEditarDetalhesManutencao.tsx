@@ -175,6 +175,10 @@ export const ModalEditarDetalhesManutencao: React.FC<
                       tipoEquipamento: tipoSelecionado?.nome || "",
                     };
 
+                    if (!isCreating) {
+                      return proximaInspecao;
+                    }
+
                     return aplicarChecklistManutencao(proximaInspecao, {
                       tipoEquipamento: proximaInspecao.tipoEquipamento,
                       modeloEquipamento: proximaInspecao.modelo,
@@ -227,6 +231,9 @@ export const ModalEditarDetalhesManutencao: React.FC<
                 onChange={(e) =>
                   setFormData((prev) => {
                     const proximaInspecao = { ...prev, modelo: e.target.value };
+                    if (!isCreating) {
+                      return proximaInspecao;
+                    }
                     return aplicarChecklistManutencao(proximaInspecao, {
                       tipoEquipamento: proximaInspecao.tipoEquipamento,
                       modeloEquipamento: proximaInspecao.modelo,

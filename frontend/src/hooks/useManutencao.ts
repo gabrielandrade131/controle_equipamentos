@@ -200,12 +200,22 @@ const extrairObservacaoTexto = (diagnostico: any): string => {
   }
 };
 
+const temItensInspecaoSalvos = (
+  dados: Partial<InspecaoManutencao>,
+): boolean => {
+  return SECOES_INSPECAO.some(
+    (secao) =>
+      Array.isArray(dados[secao]) && (dados[secao] as unknown[]).length > 0,
+  );
+};
+
 const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   const base = criarInspecaoVazia();
   const dadosInspecaoBrutos = parseDadosInspecaoRecord(
     manutencao.dadosInspecao,
   );
   const dadosInspecao = parseDadosInspecao(dadosInspecaoBrutos);
+  const temItensSalvos = temItensInspecaoSalvos(dadosInspecao);
   const avaliacaoFinal =
     manutencao.avaliacaoFinalConforme === true
       ? "CONFORME"
@@ -231,7 +241,6 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 
   const inspecaoMapeada: InspecaoManutencao = {
     ...base,
-    ...dadosInspecao,
     id: manutencao.id,
     dataInicio: toDateInput(manutencao.dataInicio, false),
     dataRetornoBase: toDateInput(manutencao.dataRetornoBase, false),
@@ -286,6 +295,15 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
       (dadosInspecaoBrutos as any)?.assinatura || manutencao.assinatura || "",
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
+    certificacoes: [],
+    estruturaMecanica: [],
+    sistemaHidraulico: [],
+    sistemaPneumatico: [],
+    sistemaEletrico: [],
+    dispositivoSeguranca: [],
+    componentesOperacionais: [],
+    acessorios: [],
+    testesOperacionais: [],
   };
 
   SECOES_INSPECAO.forEach((secao) => {
@@ -293,6 +311,10 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
       inspecaoMapeada[secao] = dadosInspecao[secao] as InspecaoManutencao[typeof secao];
     }
   });
+
+  if (temItensSalvos) {
+    return inspecaoMapeada;
+  }
 
   return aplicarChecklistManutencao(inspecaoMapeada, {
     tipoEquipamento: inspecaoMapeada.tipoEquipamento,

@@ -31,8 +31,8 @@ import { SynchroIntegrationGuard } from '../auth/synchro-integration.guard';
 import { FilterManutencaoDto } from './dto/filter-manutencao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { Response } from 'express';
-import { extname, join } from 'path';
-import { mkdirSync } from 'fs';
+import { basename, extname, join } from 'path';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { CurrentUser } from '../auth/current-user.decorator';
 import {
   assertNotOperationalUser,
@@ -43,6 +43,20 @@ import {
 @Controller('manutencoes')
 export class ManutencoesController {
   constructor(private readonly manutencoesService: ManutencoesService) {}
+
+  private removerArquivoAnexo(caminhoArquivo: string) {
+    const arquivo = join(
+      process.cwd(),
+      '..',
+      'uploads',
+      'manutencoes',
+      basename(caminhoArquivo),
+    );
+
+    if (existsSync(arquivo)) {
+      unlinkSync(arquivo);
+    }
+  }
 
   @Post('synchro')
   @UseGuards(SynchroIntegrationGuard)
@@ -136,7 +150,7 @@ export class ManutencoesController {
     return this.manutencoesService.listHistorico(id);
   }
 
-  @Post(':id/anexo-pdf')
+  @Post(':id/anexos-pdf')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Anexar PDF à ordem de manutenção' })
@@ -184,18 +198,78 @@ export class ManutencoesController {
       throw new BadRequestException('Selecione um arquivo PDF para anexar.');
     }
 
-    const manutencao = await this.manutencoesService.atualizarAnexoPdf(
+    const anexo = await this.manutencoesService.criarAnexoPdf(
       id,
-      `/uploads/manutencoes/${arquivo.filename}`,
+      {
+        nomeArquivo: basename(arquivo.originalname),
+        caminhoArquivo: `/uploads/manutencoes/${arquivo.filename}`,
+      },
       req.user,
     );
 
     // O anexo não precisa devolver todo o checklist e as fotos em data URL.
     // Isso evita respostas de vários megabytes após um upload simples de PDF.
-    return {
-      id: manutencao.id,
-      anexoPdf: manutencao.anexoPdf,
-    };
+    return { anexo };
+  }
+
+  @Patch(':id/anexos-pdf/:anexoId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @UseInterceptors(
+    FileInterceptor('arquivo', {
+      storage: diskStorage({
+        destination: (() => {
+          const destination = join(process.cwd(), '..', 'uploads', 'manutencoes');
+          mkdirSync(destination, { recursive: true });
+          return destination;
+        })(),
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          callback(null, `${uniqueSuffix}${extname(file.originalname).toLowerCase()}`);
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, callback) => {
+        const isPdf = extname(file.originalname).toLowerCase() === '.pdf';
+        callback(isPdf ? null : new Error('Apenas arquivos PDF sÃ£o permitidos.'), isPdf);
+      },
+    }),
+  )
+  async substituirPdf(
+    @Param('id') id: string,
+    @Param('anexoId') anexoId: string,
+    @UploadedFile() arquivo: Express.Multer.File | undefined,
+    @Req() req: any,
+  ) {
+    if (!arquivo) {
+      throw new BadRequestException('Selecione um arquivo PDF para substituir.');
+    }
+
+    const resultado = await this.manutencoesService.substituirAnexoPdf(
+      id,
+      anexoId,
+      {
+        nomeArquivo: basename(arquivo.originalname),
+        caminhoArquivo: `/uploads/manutencoes/${arquivo.filename}`,
+      },
+      req.user,
+    );
+    this.removerArquivoAnexo(resultado.caminhoArquivoAnterior);
+
+    return { anexo: resultado.anexo };
+  }
+
+  @Delete(':id/anexos-pdf/:anexoId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async removerPdf(
+    @Param('id') id: string,
+    @Param('anexoId') anexoId: string,
+    @Req() req: any,
+  ) {
+    const anexo = await this.manutencoesService.removerAnexoPdf(id, anexoId, req.user);
+    this.removerArquivoAnexo(anexo.caminhoArquivo);
+    return { id: anexo.id };
   }
 
   @Patch(':id')

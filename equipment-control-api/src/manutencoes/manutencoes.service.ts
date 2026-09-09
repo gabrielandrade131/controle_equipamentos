@@ -30,6 +30,11 @@ export class ManutencoesService {
 
   private readonly manutencaoInclude = {
     tipoEquipamento: true,
+    anexosPdf: {
+      orderBy: {
+        criadoEm: 'desc' as const,
+      },
+    },
     historicoAlteracoes: {
       orderBy: {
         criadoEm: 'desc' as const,
@@ -608,6 +613,9 @@ export class ManutencoesService {
       },
       include: {
         tipoEquipamento: true,
+        anexosPdf: {
+          orderBy: { criadoEm: 'desc' },
+        },
       },
     });
 
@@ -686,33 +694,93 @@ export class ManutencoesService {
     );
   }
 
-  async atualizarAnexoPdf(
-    id: string,
-    anexoPdf: string,
+  async criarAnexoPdf(
+    manutencaoId: string,
+    anexo: { nomeArquivo: string; caminhoArquivo: string },
     user?: UsuarioHistorico,
   ) {
-    const manutencao = await this.findOne(id);
+    await this.findOne(manutencaoId);
     const alteradoPor = user?.nome || user?.email || user?.username || null;
-
-    const atualizada = await this.prisma.manutencao.update({
-      where: { id },
-      data: { anexoPdf },
-      include: { tipoEquipamento: true },
+    const anexoCriado = await this.prisma.anexoPdfManutencao.create({
+      data: { manutencaoId, ...anexo },
     });
 
     await this.prisma.historicoManutencao.create({
       data: {
-        manutencaoId: id,
+        manutencaoId,
         campo: 'anexoPdf',
-        valorAnterior: this.formatarValor(manutencao.anexoPdf),
-        valorNovo: this.formatarValor(anexoPdf),
+        valorNovo: anexo.caminhoArquivo,
         alteradoPor,
       },
     });
 
-    return this.adicionarValidadeEquipamento(
-      this.adicionarDiasManutencao(atualizada),
-    );
+    return anexoCriado;
+  }
+
+  async substituirAnexoPdf(
+    manutencaoId: string,
+    anexoId: string,
+    anexo: { nomeArquivo: string; caminhoArquivo: string },
+    user?: UsuarioHistorico,
+  ) {
+    const anexoAtual = await this.prisma.anexoPdfManutencao.findFirst({
+      where: { id: anexoId, manutencaoId },
+    });
+
+    if (!anexoAtual) {
+      throw new NotFoundException('Anexo PDF nÃ£o encontrado.');
+    }
+
+    const alteradoPor = user?.nome || user?.email || user?.username || null;
+    const anexoAtualizado = await this.prisma.anexoPdfManutencao.update({
+      where: { id: anexoId },
+      data: anexo,
+    });
+
+    await this.prisma.historicoManutencao.create({
+      data: {
+        manutencaoId,
+        campo: 'anexoPdf',
+        valorAnterior: anexoAtual.caminhoArquivo,
+        valorNovo: anexo.caminhoArquivo,
+        alteradoPor,
+      },
+    });
+
+    return {
+      anexo: anexoAtualizado,
+      caminhoArquivoAnterior: anexoAtual.caminhoArquivo,
+    };
+  }
+
+  async removerAnexoPdf(
+    manutencaoId: string,
+    anexoId: string,
+    user?: UsuarioHistorico,
+  ) {
+    const anexo = await this.prisma.anexoPdfManutencao.findFirst({
+      where: { id: anexoId, manutencaoId },
+    });
+
+    if (!anexo) {
+      throw new NotFoundException('Anexo PDF nÃ£o encontrado.');
+    }
+
+    const alteradoPor = user?.nome || user?.email || user?.username || null;
+    await this.prisma.$transaction([
+      this.prisma.anexoPdfManutencao.delete({ where: { id: anexoId } }),
+      this.prisma.historicoManutencao.create({
+        data: {
+          manutencaoId,
+          campo: 'anexoPdf',
+          valorAnterior: anexo.caminhoArquivo,
+          valorNovo: null,
+          alteradoPor,
+        },
+      }),
+    ]);
+
+    return anexo;
   }
 
   async update(id: string, data: UpdateManutencaoDto, user?: UsuarioHistorico) {
@@ -929,6 +997,9 @@ export class ManutencoesService {
       data: novosDados,
       include: {
         tipoEquipamento: true,
+        anexosPdf: {
+          orderBy: { criadoEm: 'desc' },
+        },
       },
     });
 

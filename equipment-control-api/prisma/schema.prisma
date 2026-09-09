@@ -157,6 +157,7 @@ model Manutencao {
   statusManutencao       StatusManutencao @default(EM_QUARENTENA)
   avaliacaoFinalConforme Boolean?
   anexoPdf               String?
+  anexosPdf              AnexoPdfManutencao[]
   diagnostico            String?
   dadosInspecao          Json?
   imagensAnexadas        String?
@@ -174,6 +175,19 @@ model Manutencao {
 
   @@index([tag])
   @@index([numeroSerie])
+}
+
+model AnexoPdfManutencao {
+  id             String   @id @default(uuid())
+  manutencaoId   String
+  nomeArquivo    String
+  caminhoArquivo String
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  manutencao Manutencao @relation(fields: [manutencaoId], references: [id], onDelete: Cascade)
+
+  @@index([manutencaoId])
 }
 
 model HistoricoManutencao {

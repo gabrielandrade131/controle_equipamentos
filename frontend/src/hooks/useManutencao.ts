@@ -5,7 +5,11 @@ import {
   aplicarChecklistManutencao,
   criarInspecaoVazia,
 } from "../constants/inspecaoManutencao";
-import { InspecaoManutencao, StatusManutencao } from "../types/manutencao";
+import {
+  AnexoPdfManutencao,
+  InspecaoManutencao,
+  StatusManutencao,
+} from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
 import { normalizeTag } from "../utils/tag";
 
@@ -42,8 +46,7 @@ type RecebimentoManutencaoResponse = {
 };
 
 type AnexoPdfResponse = {
-  id: string;
-  anexoPdf: string;
+  anexo: AnexoPdfManutencao;
 };
 
 export type FotoRecebimentoManutencao = {
@@ -197,12 +200,22 @@ const extrairObservacaoTexto = (diagnostico: any): string => {
   }
 };
 
+const temItensInspecaoSalvos = (
+  dados: Partial<InspecaoManutencao>,
+): boolean => {
+  return SECOES_INSPECAO.some(
+    (secao) =>
+      Array.isArray(dados[secao]) && (dados[secao] as unknown[]).length > 0,
+  );
+};
+
 const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
   const base = criarInspecaoVazia();
   const dadosInspecaoBrutos = parseDadosInspecaoRecord(
     manutencao.dadosInspecao,
   );
   const dadosInspecao = parseDadosInspecao(dadosInspecaoBrutos);
+  const temItensSalvos = temItensInspecaoSalvos(dadosInspecao);
   const avaliacaoFinal =
     manutencao.avaliacaoFinalConforme === true
       ? "CONFORME"
@@ -228,7 +241,6 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
 
   const inspecaoMapeada: InspecaoManutencao = {
     ...base,
-    ...dadosInspecao,
     id: manutencao.id,
     dataInicio: toDateInput(manutencao.dataInicio, false),
     dataRetornoBase: toDateInput(manutencao.dataRetornoBase, false),
@@ -273,10 +285,25 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     observacoesHistorico: parseObservacoesDiarias(manutencao.diagnostico),
     imagensAnexadas,
     anexoPdf: manutencao.anexoPdf ? toAssetUrl(manutencao.anexoPdf) : "",
+    anexosPdf: Array.isArray(manutencao.anexosPdf)
+      ? manutencao.anexosPdf.map((anexo: AnexoPdfManutencao) => ({
+          ...anexo,
+          caminhoArquivo: toAssetUrl(anexo.caminhoArquivo),
+        }))
+      : [],
     assinatura:
       (dadosInspecaoBrutos as any)?.assinatura || manutencao.assinatura || "",
     criadoEm: manutencao.criadoEm,
     atualizadoEm: manutencao.atualizadoEm,
+    certificacoes: [],
+    estruturaMecanica: [],
+    sistemaHidraulico: [],
+    sistemaPneumatico: [],
+    sistemaEletrico: [],
+    dispositivoSeguranca: [],
+    componentesOperacionais: [],
+    acessorios: [],
+    testesOperacionais: [],
   };
 
   SECOES_INSPECAO.forEach((secao) => {
@@ -284,6 +311,10 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
       inspecaoMapeada[secao] = dadosInspecao[secao] as InspecaoManutencao[typeof secao];
     }
   });
+
+  if (temItensSalvos) {
+    return inspecaoMapeada;
+  }
 
   return aplicarChecklistManutencao(inspecaoMapeada, {
     tipoEquipamento: inspecaoMapeada.tipoEquipamento,
@@ -415,7 +446,7 @@ export const useManutencao = () => {
     dados.append("arquivo", arquivo);
 
     const response = await axiosInstance.post<AnexoPdfResponse>(
-      `/manutencoes/${id}/anexo-pdf`,
+      `/manutencoes/${id}/anexos-pdf`,
       dados,
       {
         // Override the JSON default so Axios builds the multipart boundary
@@ -427,11 +458,65 @@ export const useManutencao = () => {
     setHistorico((prev) =>
       prev.map((item) =>
         item.id === id
-          ? { ...item, anexoPdf: toAssetUrl(response.data.anexoPdf) }
+          ? {
+              ...item,
+              anexosPdf: [
+                {
+                  ...response.data.anexo,
+                  caminhoArquivo: toAssetUrl(response.data.anexo.caminhoArquivo),
+                },
+                ...(item.anexosPdf || []),
+              ],
+            }
           : item,
       ),
     );
     return response.data;
+  };
+
+  const substituirAnexoPdf = async (
+    manutencaoId: string,
+    anexoId: string,
+    arquivo: File,
+  ) => {
+    const dados = new FormData();
+    dados.append("arquivo", arquivo);
+    const response = await axiosInstance.patch<AnexoPdfResponse>(
+      `/manutencoes/${manutencaoId}/anexos-pdf/${anexoId}`,
+      dados,
+      { headers: { "Content-Type": "multipart/form-data" }, timeout: INSPECAO_TIMEOUT },
+    );
+    const anexoAtualizado = {
+      ...response.data.anexo,
+      caminhoArquivo: toAssetUrl(response.data.anexo.caminhoArquivo),
+    };
+    setHistorico((prev) =>
+      prev.map((item) =>
+        item.id === manutencaoId
+          ? {
+              ...item,
+              anexosPdf: (item.anexosPdf || []).map((anexo) =>
+                anexo.id === anexoId ? anexoAtualizado : anexo,
+              ),
+            }
+          : item,
+      ),
+    );
+    return response.data;
+  };
+
+  const removerAnexoPdf = async (manutencaoId: string, anexoId: string) => {
+    await axiosInstance.delete(`/manutencoes/${manutencaoId}/anexos-pdf/${anexoId}`);
+    setHistorico((prev) =>
+      prev.map((item) =>
+        item.id === manutencaoId
+          ? {
+              ...item,
+              anexosPdf: (item.anexosPdf || []).filter((anexo) => anexo.id !== anexoId),
+            }
+          : item,
+      ),
+    );
   };
 
   const atualizarInspecaoConcluida = async (
@@ -474,6 +559,8 @@ export const useManutencao = () => {
     adicionarInspecao,
     atualizarInspecao,
     anexarPdf,
+    substituirAnexoPdf,
+    removerAnexoPdf,
     atualizarInspecaoConcluida,
     removerInspecao,
     buscarFotosRecebimento,

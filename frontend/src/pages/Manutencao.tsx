@@ -73,6 +73,7 @@ export const Manutencao: React.FC = () => {
     legenda: string;
   } | null>(null);
   const [enviandoAnexoPdf, setEnviandoAnexoPdf] = useState(false);
+  const [anexoEmOperacao, setAnexoEmOperacao] = useState<string | null>(null);
   const [statusEscolhido, setStatusEscolhido] = useState<string | null>(null);
   const [confirmandoStatus, setConfirmandoStatus] = useState(false);
   const [salvandoStatus, setSalvandoStatus] = useState(false);
@@ -83,6 +84,8 @@ export const Manutencao: React.FC = () => {
     atualizarInspecaoConcluida,
     buscarFotosRecebimento,
     anexarPdf,
+    substituirAnexoPdf,
+    removerAnexoPdf,
     carregarDetalhesManutencao,
     loading,
     error,
@@ -240,18 +243,13 @@ export const Manutencao: React.FC = () => {
     });
   };
 
-  const handleAnexarPdf = async (arquivo?: File) => {
-    if (!arquivo || !selectedItem?.id) return;
-
-    const extensaoPdf = arquivo.name.toLowerCase().endsWith(".pdf");
-
-    // The browser MIME is not reliable for PDFs (it may be empty or custom).
-    if (!extensaoPdf) {
+  const validarPdf = (arquivo: File) => {
+    if (!arquivo.name.toLowerCase().endsWith(".pdf")) {
       setAlertModal({
         isOpen: true,
         message: "Selecione um arquivo no formato PDF.",
       });
-      return;
+      return false;
     }
 
     if (arquivo.size > 10 * 1024 * 1024) {
@@ -259,12 +257,21 @@ export const Manutencao: React.FC = () => {
         isOpen: true,
         message: "O PDF deve ter no máximo 10 MB.",
       });
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const handleAnexarPdfs = async (arquivos: File[]) => {
+    if (!arquivos.length || !selectedItem?.id) return;
+    if (!arquivos.every(validarPdf)) return;
 
     try {
       setEnviandoAnexoPdf(true);
-      await anexarPdf(selectedItem.id, arquivo);
+      for (const arquivo of arquivos) {
+        await anexarPdf(selectedItem.id, arquivo);
+      }
     } catch (error: any) {
       setAlertModal({
         isOpen: true,
@@ -273,6 +280,38 @@ export const Manutencao: React.FC = () => {
       });
     } finally {
       setEnviandoAnexoPdf(false);
+    }
+  };
+
+  const handleSubstituirPdf = async (anexoId: string, arquivo?: File) => {
+    if (!arquivo || !selectedItem?.id || !validarPdf(arquivo)) return;
+
+    try {
+      setAnexoEmOperacao(anexoId);
+      await substituirAnexoPdf(selectedItem.id, anexoId, arquivo);
+    } catch (error: any) {
+      setAlertModal({
+        isOpen: true,
+        message: error.response?.data?.message || "Não foi possível substituir o PDF.",
+      });
+    } finally {
+      setAnexoEmOperacao(null);
+    }
+  };
+
+  const handleExcluirPdf = async (anexoId: string) => {
+    if (!selectedItem?.id || !window.confirm("Excluir este certificado?")) return;
+
+    try {
+      setAnexoEmOperacao(anexoId);
+      await removerAnexoPdf(selectedItem.id, anexoId);
+    } catch (error: any) {
+      setAlertModal({
+        isOpen: true,
+        message: error.response?.data?.message || "Não foi possível excluir o PDF.",
+      });
+    } finally {
+      setAnexoEmOperacao(null);
     }
   };
 
@@ -840,37 +879,66 @@ export const Manutencao: React.FC = () => {
               </div>
 
               <div className="documents-section">
-                <h3>Anexo PDF da Ordem de Manutenção</h3>
-                {selectedItem.anexoPdf ? (
-                  <a
-                    className="anexo-pdf-link"
-                    href={selectedItem.anexoPdf}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Abrir PDF anexado
-                  </a>
+                <h3>Certificados</h3>
+                {selectedItem.anexosPdf && selectedItem.anexosPdf.length > 0 ? (
+                  <div className="anexos-pdf-lista">
+                    {selectedItem.anexosPdf.map((anexo) => (
+                      <div className="anexo-pdf-item" key={anexo.id}>
+                        <a
+                          className="anexo-pdf-link"
+                          href={anexo.caminhoArquivo}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {anexo.nomeArquivo}
+                        </a>
+                        <div className="anexo-pdf-acoes">
+                          <label className="anexo-pdf-alterar">
+                            <span>{anexoEmOperacao === anexo.id ? "Alterando..." : "Alterar"}</span>
+                            <input
+                              type="file"
+                              accept="application/pdf,.pdf"
+                              disabled={anexoEmOperacao !== null}
+                              onChange={(event) => {
+                                void handleSubstituirPdf(anexo.id, event.target.files?.[0]);
+                                event.target.value = "";
+                              }}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="anexo-pdf-excluir"
+                            disabled={anexoEmOperacao !== null}
+                            onClick={() => void handleExcluirPdf(anexo.id)}
+                          >
+                            {anexoEmOperacao === anexo.id ? "Excluindo..." : "Excluir"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="sem-observacoes">Nenhum PDF anexado.</p>
+                  <p className="sem-observacoes">Nenhum certificado anexado.</p>
                 )}
                 <label className="anexo-pdf-upload">
                   <span>
                     {enviandoAnexoPdf
                       ? "Enviando PDF..."
-                      : "Anexar ou substituir PDF"}
+                      : "Anexar certificados"}
                   </span>
                   <input
                     type="file"
                     accept="application/pdf,.pdf"
+                    multiple
                     disabled={enviandoAnexoPdf}
                     onChange={(event) => {
-                      void handleAnexarPdf(event.target.files?.[0]);
+                      void handleAnexarPdfs(Array.from(event.target.files || []));
                       event.target.value = "";
                     }}
                   />
                 </label>
                 <small className="anexo-pdf-hint">
-                  Somente PDF, até 10 MB.
+                  Selecione quantos certificados precisar. Somente PDF, máximo de 10 MB por arquivo.
                 </small>
               </div>
 

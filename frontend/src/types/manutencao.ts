@@ -26,6 +26,13 @@ export interface ObservacaoHistorico {
   texto: string;
 }
 
+export interface AnexoPdfManutencao {
+  id: string;
+  nomeArquivo: string;
+  caminhoArquivo: string;
+  criadoEm?: string;
+}
+
 export interface SessaoInspecao {
   categoria: string;
   titulo: string;
@@ -93,6 +100,7 @@ export interface InspecaoManutencao {
   // Imagens/Fotos
   imagensAnexadas?: string[];
   anexoPdf?: string;
+  anexosPdf?: AnexoPdfManutencao[];
 
   criadoEm?: string;
   atualizadoEm?: string;

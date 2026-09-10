@@ -39,13 +39,10 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   );
 
   useEffect(() => {
-    setInspecao((prev) =>
-      aplicarChecklistManutencao(prev, {
-        tipoEquipamento: prev.tipoEquipamento,
-        modeloEquipamento: prev.modelo,
-      })
-    );
-  }, [inspecao.tipoEquipamento, inspecao.modelo]);
+    if (inspecaoInicial) {
+      setInspecao(inspecaoInicial);
+    }
+  }, [inspecaoInicial]);
 
   const documentoBloqueado = inspecao.statusManutencao !== 'EM_MANUTENCAO';
   const dadosManutencaoSomenteLeitura = true;

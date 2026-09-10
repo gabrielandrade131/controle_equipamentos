@@ -43,6 +43,10 @@ const OrdemProducao: React.FC = () => {
   const { filters, updateFilters } = useFilters("ordem-filters", {});
   const isCSafety = isCSafetyUser();
   const isOperational = isOperationalUser();
+  const numeroOrdemOptions = useMemo(
+    () => buildSelectOptions(producoes.map((producao) => producao.numeroOrdem)),
+    [producoes],
+  );
   const loteOptions = useMemo(
     () => buildSelectOptions(producoes.map((producao) => producao.numeroLote)),
     [producoes],
@@ -70,6 +74,7 @@ const OrdemProducao: React.FC = () => {
   const filteredProducoes = useMemo(() => {
     return producoes.filter((p) => {
       if (filters.status && p.statusProducao !== filters.status) return false;
+      if (!matchesTextFilter(p.numeroOrdem, filters.numeroOrdem)) return false;
       if (!matchesTextFilter(p.numeroLote, filters.numeroLote)) return false;
       if (!matchesTextFilter(p.tag, filters.tag)) return false;
       if (!matchesTextFilter(p.numeroSerie, filters.numeroSerie)) return false;
@@ -212,6 +217,13 @@ const OrdemProducao: React.FC = () => {
                   { value: "CONCLUIDA", label: "Concluída" },
                   { value: "PARALISADA", label: "Paralisada" },
                 ],
+              },
+              {
+                key: "numeroOrdem",
+                label: "Ordem de Produção",
+                type: "text",
+                placeholder: "Digite a ordem de produção",
+                options: numeroOrdemOptions,
               },
               {
                 key: "numeroLote",

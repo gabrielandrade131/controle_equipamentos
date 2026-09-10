@@ -1,6 +1,7 @@
 // Tipos genéricos para filtros
 export interface OrdemFilter {
   status?: string;
+  numeroOrdem?: string;
   tag?: string;
   tipoEquipamento?: string;
   numeroSerie?: string;
@@ -30,6 +31,7 @@ export interface HistoricoFilter {
 export interface ManutencaoFilter {
   status?: string;
   tipoManutencao?: string;
+  numeroOrdemManutencao?: string;
   tag?: string;
   tipoEquipamento?: string;
   numeroSerie?: string;

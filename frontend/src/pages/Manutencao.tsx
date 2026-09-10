@@ -95,6 +95,10 @@ export const Manutencao: React.FC = () => {
     navigationFilters,
     false,
   );
+  const numeroOrdemManutencaoOptions = useMemo(
+    () => buildSelectOptions(historico.map((item) => item.numeroOrdemManutencao)),
+    [historico],
+  );
   const tagOptions = useMemo(
     () => buildSelectOptions(historico.map((item) => item.tag)),
     [historico],
@@ -123,6 +127,13 @@ export const Manutencao: React.FC = () => {
       if (
         filters.tipoManutencao &&
         item.tipoManutencao !== filters.tipoManutencao
+      )
+        return false;
+      if (
+        !matchesTextFilter(
+          item.numeroOrdemManutencao,
+          filters.numeroOrdemManutencao,
+        )
       )
         return false;
       if (!matchesTextFilter(item.tag, filters.tag)) return false;
@@ -467,6 +478,13 @@ export const Manutencao: React.FC = () => {
                   { value: "CORRETIVA", label: "Corretiva" },
                   { value: "PREVENTIVA", label: "Preventiva" },
                 ],
+              },
+              {
+                key: "numeroOrdemManutencao",
+                label: "Ordem de Manutenção",
+                type: "text",
+                placeholder: "Digite a ordem de manutenção",
+                options: numeroOrdemManutencaoOptions,
               },
               {
                 key: "tag",

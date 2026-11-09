@@ -57,6 +57,7 @@ export class ManutencoesService {
     numeroSerie: true,
     tag: true,
     situacaoEquipamento: true,
+    destino: true,
     dataRetornoBase: true,
     dataInicio: true,
     dataParalisacao: true,
@@ -588,6 +589,7 @@ export class ManutencoesService {
         numeroSerie: data.numeroSerie,
         tag: this.normalizarTag(data.tag),
         situacaoEquipamento: data.situacaoEquipamento,
+        destino: data.destino,
         dataRetornoBase: this.normalizarData(data.dataRetornoBase),
         dataInicio: this.normalizarData(data.dataInicio),
         dataParalisacao: this.resolverDataParalisacao(
@@ -916,6 +918,7 @@ export class ManutencoesService {
       tag:
         data.tag !== undefined ? this.normalizarTag(data.tag) : undefined,
       situacaoEquipamento: data.situacaoEquipamento,
+      destino: data.destino,
       dataRetornoBase:
         data.dataRetornoBase !== undefined
           ? this.normalizarData(data.dataRetornoBase)
@@ -958,6 +961,7 @@ export class ManutencoesService {
       'numeroSerie',
       'tag',
       'situacaoEquipamento',
+      'destino',
       'dataRetornoBase',
       'diagnostico',
       'dadosInspecao',
@@ -1059,6 +1063,7 @@ export class ManutencoesService {
         key: 'situacaoEquipamento',
         width: 26,
       },
+      { header: 'Destino', key: 'destino', width: 16 },
       { header: 'Data de Retorno à Base', key: 'dataRetornoBase', width: 22 },
       { header: 'Data de Início', key: 'dataInicio', width: 18 },
       { header: 'Data de Paralisação', key: 'dataParalisacao', width: 18 },
@@ -1081,6 +1086,7 @@ export class ManutencoesService {
         modeloEquipamento: manutencao.modeloEquipamento,
         tag: manutencao.tag,
         situacaoEquipamento: manutencao.situacaoEquipamento,
+        destino: manutencao.destino,
         dataRetornoBase: manutencao.dataRetornoBase,
         dataInicio: manutencao.dataInicio,
         dataParalisacao: manutencao.dataParalisacao,

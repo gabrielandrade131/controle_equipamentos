@@ -268,7 +268,12 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     numeroSerie: manutencao.numeroSerie ?? "",
     tag: normalizeTag(manutencao.tag),
     numeroOrdemManutencao: manutencao.numeroOrdemManutencao ?? null,
-    destino: manutencao.situacaoEquipamento ?? "",
+    situacaoEquipamento:
+      manutencao.situacaoEquipamento ??
+      dadosInspecaoBrutos.situacaoEquipamento ??
+      dadosInspecaoBrutos.destino ??
+      "",
+    destino: manutencao.destino ?? undefined,
     responsavel: manutencao.responsavelManutencao ?? "",
     responsavelRevisao: manutencao.responsavelRevisao ?? "",
     statusManutencao: manutencao.statusManutencao ?? "EM_MANUTENCAO",
@@ -331,7 +336,8 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   fabricante: inspecao.fabricante || undefined,
   numeroSerie: inspecao.numeroSerie || undefined,
   tag: normalizeTag(inspecao.tag) || undefined,
-  situacaoEquipamento: inspecao.destino || "Manutenção manual",
+  situacaoEquipamento: inspecao.situacaoEquipamento || "Manutenção manual",
+  destino: inspecao.destino || undefined,
   dataRetornoBase: inspecao.dataRetornoBase || undefined,
   dataInicio: inspecao.dataInicio || undefined,
   previsaoTermino: inspecao.previsaoTermino || undefined,

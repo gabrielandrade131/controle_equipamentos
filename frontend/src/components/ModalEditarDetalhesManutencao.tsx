@@ -109,6 +109,11 @@ export const ModalEditarDetalhesManutencao: React.FC<
       return;
     }
 
+    if (isCreating && !formData.destino) {
+      alert("Selecione o destino do equipamento: Estoque ou Operação.");
+      return;
+    }
+
     if (formData.statusManutencao === "CONCLUIDA" && !isDouglasUser()) {
       alert("Você não tem autorização para concluir o status.");
       return;
@@ -280,6 +285,23 @@ export const ModalEditarDetalhesManutencao: React.FC<
                   handleInputChange("dataRetornoBase", e.target.value)
                 }
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="destino-manutencao">Destino</label>
+              <select
+                id="destino-manutencao"
+                value={formData.destino || ""}
+                disabled={statusBloqueado}
+                required={isCreating}
+                onChange={(e) =>
+                  handleInputChange("destino", e.target.value || undefined)
+                }
+              >
+                <option value="">Selecione o destino</option>
+                <option value="ESTOQUE">Estoque</option>
+                <option value="OPERACAO">Operação</option>
+              </select>
             </div>
 
             <div className="form-group">

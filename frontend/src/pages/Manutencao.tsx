@@ -649,6 +649,16 @@ export const Manutencao: React.FC = () => {
                   </p>
                 </div>
                 <div className="detail-item">
+                  <label>Destino:</label>
+                  <p>
+                    {selectedItem.destino === "ESTOQUE"
+                      ? "Estoque"
+                      : selectedItem.destino === "OPERACAO"
+                        ? "Operação"
+                        : "-"}
+                  </p>
+                </div>
+                <div className="detail-item">
                   <label>Fabricante:</label>
                   <p>{selectedItem.fabricante || "-"}</p>
                 </div>

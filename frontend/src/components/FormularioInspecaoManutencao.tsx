@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ItemInspecao, InspecaoManutencao, RespostaBinaria } from '../types/manutencao';
 import {
-  aplicarChecklistManutencao,
   criarInspecaoVazia,
   SECOES_MANUTENCAO,
   SecaoInspecaoKey,
@@ -304,11 +303,11 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
             />
           </div>
           <div className={`form-group${dadosManutencaoSomenteLeitura ? ' form-group-readonly' : ''}`}>
-            <label>Destino</label>
+            <label>Situação do Equipamento</label>
             <input
               type="text"
-              value={inspecao.destino}
-              onChange={(e) => handleInputChange('destino', e.target.value)}
+              value={inspecao.situacaoEquipamento}
+              onChange={(e) => handleInputChange('situacaoEquipamento', e.target.value)}
               readOnly={dadosManutencaoSomenteLeitura}
               disabled={dadosManutencaoSomenteLeitura}
             />

@@ -105,7 +105,7 @@ export const usePdfExportManutencao = () => {
       };
 
       const drawDataGrid = () => {
-        const rows = [
+        const rows: Array<Array<{ label: string; value: string }>> = [
           [
             {
               label: "Data de retorno à base",
@@ -175,7 +175,10 @@ export const usePdfExportManutencao = () => {
             },
           ],
           [
-            { label: "Destino", value: inspecao.destino || "-" },
+            { label: "Situação do Equipamento", value: inspecao.situacaoEquipamento || "-" },
+            { label: "Destino", value: inspecao.destino === "ESTOQUE" ? "Estoque" : inspecao.destino === "OPERACAO" ? "Operação" : "-" },
+          ],
+          [
             {
               label: "Dias em Manutenção",
               value:
@@ -194,15 +197,22 @@ export const usePdfExportManutencao = () => {
         ensureSpace(gridHeight + 2);
 
         rows.forEach((row, rowIndex) => {
+          const currentColumnCount = Math.min(row.length, 2);
+          const currentColWidth =
+            currentColumnCount === 1 ? contentWidth : colWidth;
+
           row.forEach((cell, colIndex) => {
-            const x = marginX + colIndex * (colWidth + colGap);
+            const x =
+              currentColumnCount === 1
+                ? marginX
+                : marginX + colIndex * (colWidth + colGap);
             const rowY = y + rowIndex * rowHeight;
 
             pdf.setDrawColor(border.r, border.g, border.b);
-            pdf.rect(x, rowY, colWidth, rowHeight);
+            pdf.rect(x, rowY, currentColWidth, rowHeight);
             drawText(cell.label, x + 2, rowY + 4, { bold: true, size: 7.5 });
 
-            const valueLines = pdf.splitTextToSize(cell.value, colWidth - 4);
+            const valueLines = pdf.splitTextToSize(cell.value, currentColWidth - 4);
             drawText(valueLines[0] || "-", x + 2, rowY + 8.5, { size: 8.5 });
           });
         });

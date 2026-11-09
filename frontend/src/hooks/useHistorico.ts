@@ -36,9 +36,7 @@ export const useHistorico = () => {
   const carregarHistoricos = async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get<ApiListResponse<any>>('/producoes', {
-        params: { limit: 100 },
-      });
+      const response = await axiosInstance.get<ApiListResponse<any>>('/producoes');
       setHistoricos(response.data.data.map(mapApiToHistorico));
     } finally {
       setLoading(false);

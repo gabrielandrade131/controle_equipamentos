@@ -4,7 +4,7 @@ import './ListaUsuarios.css';
 import AlertModal from '../components/AlertModal';
 import ModalEditarUsuario from '../components/ModalEditarUsuario';
 import ModalConfirmacao from '../components/ModalConfirmacao';
-import { getAuthUser, isAdminUser } from '../utils/auth';
+import { getAuthUser, isAdminUser, setAuthUser } from '../utils/auth';
 
 interface Usuario {
   id: string;
@@ -87,7 +87,7 @@ const ListaUsuarios: React.FC = () => {
             verificado: usuarioAtualizado.verificado,
           };
 
-          sessionStorage.setItem('authUser', JSON.stringify(proximoUsuarioLogado));
+          setAuthUser(proximoUsuarioLogado);
           setUsuarioLogado(proximoUsuarioLogado);
         }
       }

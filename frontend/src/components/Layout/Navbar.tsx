@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css';
-import { isCSafetyUser, isOperationalUser, isMasterUser } from '../../utils/auth';
+import {
+  AUTH_USER_UPDATED_EVENT,
+  isCSafetyUser,
+  isOperationalUser,
+  isMasterUser,
+} from '../../utils/auth';
 
 interface NavbarProps {
   isOpen: boolean;
@@ -11,6 +16,21 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [, setAuthRevision] = useState(0);
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setAuthRevision((prev) => prev + 1);
+    };
+
+    window.addEventListener(AUTH_USER_UPDATED_EVENT, syncAuthState);
+    window.addEventListener('storage', syncAuthState);
+    return () => {
+      window.removeEventListener(AUTH_USER_UPDATED_EVENT, syncAuthState);
+      window.removeEventListener('storage', syncAuthState);
+    };
+  }, []);
+
   const isCSafety = isCSafetyUser();
   const isOperational = isOperationalUser();
   const isMaster = isMasterUser();

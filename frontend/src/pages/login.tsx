@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from "../services/axiosConfig";
+import { setAuthUser } from "../utils/auth";
 import "./login.css";
 
 import img1 from "../assets/login/img1.jpg";
@@ -41,7 +42,7 @@ export default function Login() {
 
       localStorage.setItem("token", response.data.access_token);
       sessionStorage.setItem("authToken", response.data.access_token);
-      sessionStorage.setItem("authUser", JSON.stringify(response.data.usuario));
+      setAuthUser(response.data.usuario);
 
       navigate('/producao/ordem', { replace: true });
     } catch (err: any) {

@@ -368,7 +368,7 @@ export const useManutencao = () => {
       const response = await axiosInstance.get<ApiListResponse<any>>(
         "/manutencoes",
         {
-          params: { limit: 100, incluirImagens: false },
+          params: { incluirImagens: false },
           timeout: INSPECAO_TIMEOUT,
         },
       );

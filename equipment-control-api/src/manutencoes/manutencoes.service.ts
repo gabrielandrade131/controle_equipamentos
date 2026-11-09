@@ -633,8 +633,8 @@ export class ManutencoesService {
   async findAll(filters: FilterManutencaoDto) {
     const where = this.montarWhere(filters);
     const page = filters.page ?? 1;
-    const limit = filters.limit ?? 10;
-    const skip = (page - 1) * limit;
+    const limit = filters.limit;
+    const skip = limit ? (page - 1) * limit : undefined;
     const sortBy = filters.sortBy ?? 'criadoEm';
     const sortOrder = filters.sortOrder ?? 'desc';
 
@@ -645,8 +645,8 @@ export class ManutencoesService {
         orderBy: {
           [sortBy]: sortOrder,
         },
-        skip,
-        take: limit,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(limit !== undefined ? { take: limit } : {}),
       })
       : await this.prisma.manutencao.findMany({
         where,
@@ -654,8 +654,8 @@ export class ManutencoesService {
         orderBy: {
           [sortBy]: sortOrder,
         },
-        skip,
-        take: limit,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(limit !== undefined ? { take: limit } : {}),
       });
     const total = await this.prisma.manutencao.count({ where });
 
@@ -667,12 +667,14 @@ export class ManutencoesService {
       ),
     );
 
+    const effectiveLimit = limit ?? (total || 1);
+
     return {
       data: manutencoesComValidade,
       total,
       page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      limit: limit ?? total,
+      totalPages: Math.max(1, Math.ceil(total / effectiveLimit)),
     };
   }
 

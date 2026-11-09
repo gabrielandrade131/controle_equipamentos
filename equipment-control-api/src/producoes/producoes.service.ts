@@ -337,8 +337,8 @@ export class ProducoesService {
     const where = this.montarWhere(filters);
 
     const page = filters.page ?? 1;
-    const limit = filters.limit ?? 10;
-    const skip = (page - 1) * limit;
+    const limit = filters.limit;
+    const skip = limit ? (page - 1) * limit : undefined;
     const { sortBy, sortOrder } = this.resolverOrdenacao(filters);
 
     const [data, total] = await Promise.all([
@@ -370,18 +370,20 @@ export class ProducoesService {
         orderBy: {
           [sortBy]: sortOrder,
         },
-        skip,
-        take: limit,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(limit !== undefined ? { take: limit } : {}),
       }),
       this.prisma.equipment.count({ where }),
     ]);
+
+    const effectiveLimit = limit ?? (total || 1);
 
     return {
       data: data.map((producao) => this.normalizarProducao(producao)),
       total,
       page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      limit: limit ?? total,
+      totalPages: Math.max(1, Math.ceil(total / effectiveLimit)),
     };
   }
 

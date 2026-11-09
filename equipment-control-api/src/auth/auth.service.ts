@@ -69,6 +69,8 @@ export class AuthService {
     const payload = {
       sub: usuario.id,
       email: usuario.email,
+      cSafety: usuario.cSafety,
+      operacional: usuario.operacional,
       verificado: usuario.verificado,
     };
 

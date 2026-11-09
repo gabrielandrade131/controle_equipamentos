@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import './pages/Producao.css';
@@ -16,15 +16,76 @@ import ListaUsuarios from './pages/ListaUsuarios';
 import TiposEquipamentoPage from './pages/TiposEquipamento';
 import ValidadeEquipamentos from './pages/ValidadeEquipamentos';
 import ListaEquipamentos from './pages/ListaEquipamentos';
-import { isCSafetyUser, isOperationalUser, isMasterUser } from './utils/auth';
+import axiosInstance from './services/axiosConfig';
+import {
+  AUTH_USER_UPDATED_EVENT,
+  AuthUser,
+  isCSafetyUser,
+  isOperationalUser,
+  isMasterUser,
+  setAuthUser,
+} from './utils/auth';
 
 function AppContent() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+  const [, setAuthRevision] = useState(0);
+
   const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
+    return Boolean(
+      sessionStorage.getItem("authToken") || localStorage.getItem("token"),
+    );
   };
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setAuthRevision((prev) => prev + 1);
+    };
+
+    window.addEventListener(AUTH_USER_UPDATED_EVENT, syncAuthState);
+    window.addEventListener('storage', syncAuthState);
+    return () => {
+      window.removeEventListener(AUTH_USER_UPDATED_EVENT, syncAuthState);
+      window.removeEventListener('storage', syncAuthState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/login' || !isAuthenticated()) {
+      return;
+    }
+
+    let active = true;
+
+    const refreshCurrentUser = async () => {
+      if (!isAuthenticated()) return;
+      try {
+        const response = await axiosInstance.get<AuthUser>('/auth/me');
+        if (active && response.data) {
+          setAuthUser(response.data);
+        }
+      } catch {
+        // Erros de autenticação (401) já são tratados pelo interceptor do axios
+      }
+    };
+
+    refreshCurrentUser();
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCurrentUser();
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    return () => {
+      active = false;
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
+  }, [location.pathname]);
   const GuardedRoute = ({
     children,
     allowCSafety = true,

@@ -77,6 +77,7 @@ export const Manutencao: React.FC = () => {
   const [statusEscolhido, setStatusEscolhido] = useState<string | null>(null);
   const [confirmandoStatus, setConfirmandoStatus] = useState(false);
   const [salvandoStatus, setSalvandoStatus] = useState(false);
+  const [salvandoInspecao, setSalvandoInspecao] = useState(false);
   const {
     historico,
     adicionarInspecao,
@@ -192,6 +193,9 @@ export const Manutencao: React.FC = () => {
     }
 
     setCarregandoFotos(true);
+    void carregarDetalhesManutencao(selectedItem.id).catch(() => {
+      // Mantém os dados do resumo caso a busca de detalhes falhe.
+    });
     buscarFotosRecebimento(selectedItem.id)
       .then((fotos) => {
         if (ativo) setFotosRecebimento(fotos);
@@ -206,7 +210,7 @@ export const Manutencao: React.FC = () => {
     return () => {
       ativo = false;
     };
-  }, [selectedItem?.id, buscarFotosRecebimento]);
+  }, [selectedItem?.id, buscarFotosRecebimento, carregarDetalhesManutencao]);
 
   useEffect(() => {
     if (!imagemAmpliada) return;
@@ -316,7 +320,7 @@ export const Manutencao: React.FC = () => {
   };
 
   const handleEditarInspecao = (inspecao: InspecaoManutencao) => {
-    if (!selectedItem?.id) return;
+    if (!selectedItem?.id || salvandoInspecao) return;
     if (selectedItem.statusManutencao === "CONCLUIDA") {
       setAlertModal({
         isOpen: true,
@@ -325,6 +329,7 @@ export const Manutencao: React.FC = () => {
       return;
     }
 
+    setSalvandoInspecao(true);
     atualizarInspecaoConcluida(selectedItem.id, inspecao)
       .then(() => {
         setModo("lista");
@@ -332,10 +337,17 @@ export const Manutencao: React.FC = () => {
       })
       .catch((error) => {
         console.error("Erro ao salvar inspeção:", error);
-        alert(
-          error.response?.data?.message ||
-            "Não foi possível salvar a inspeção.",
-        );
+        const apiMessage = Array.isArray(error.response?.data?.message)
+          ? error.response.data.message.join(", ")
+          : error.response?.data?.message;
+        const fallbackMessage =
+          error.response?.status === 413
+            ? "As fotos anexadas excederam o tamanho máximo permitido pelo servidor."
+            : "Não foi possível salvar a inspeção.";
+        alert(apiMessage || fallbackMessage);
+      })
+      .finally(() => {
+        setSalvandoInspecao(false);
       });
   };
 
@@ -446,6 +458,7 @@ export const Manutencao: React.FC = () => {
           onSalvar={handleEditarInspecao}
           onCancelar={() => setModo("lista")}
           isEditing
+          salvando={salvandoInspecao}
         />
       </div>
     );

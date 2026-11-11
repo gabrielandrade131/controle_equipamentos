@@ -11,6 +11,7 @@ import {
   StatusManutencao,
 } from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
+import { compressImagesList } from "../utils/imageCompression";
 import { normalizeTag } from "../utils/tag";
 
 const SECOES_INSPECAO = [
@@ -354,7 +355,10 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
     inspecao.avaliacaoFinal === ""
       ? undefined
       : inspecao.avaliacaoFinal === "CONFORME",
-  imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
+  imagensAnexadas:
+    inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0
+      ? JSON.stringify(inspecao.imagensAnexadas)
+      : undefined,
 });
 
 export const useManutencao = () => {
@@ -421,9 +425,15 @@ export const useManutencao = () => {
   }, []);
 
   const adicionarInspecao = async (inspecao: InspecaoManutencao) => {
+    const imagensComprimidas = await compressImagesList(
+      inspecao.imagensAnexadas,
+    );
     const response = await axiosInstance.post(
       "/manutencoes",
-      mapInspecaoToApi(inspecao),
+      mapInspecaoToApi({
+        ...inspecao,
+        imagensAnexadas: imagensComprimidas,
+      }),
       { timeout: INSPECAO_TIMEOUT },
     );
     const novaInspecao = mapApiToInspecao(response.data);
@@ -435,9 +445,15 @@ export const useManutencao = () => {
     id: string,
     inspecao: InspecaoManutencao,
   ) => {
+    const imagensComprimidas = await compressImagesList(
+      inspecao.imagensAnexadas,
+    );
     const response = await patchManutencao(
       `/manutencoes/${id}`,
-      mapInspecaoToApi(inspecao),
+      mapInspecaoToApi({
+        ...inspecao,
+        imagensAnexadas: imagensComprimidas,
+      }),
       { timeout: INSPECAO_TIMEOUT },
     );
     const inspecaoAtualizada = mapApiToInspecao(response.data);
@@ -529,6 +545,9 @@ export const useManutencao = () => {
     id: string,
     inspecao: InspecaoManutencao,
   ) => {
+    const imagensComprimidas = await compressImagesList(
+      inspecao.imagensAnexadas,
+    );
     const response = await patchManutencao(
       `/manutencoes/${id}`,
       {
@@ -542,7 +561,7 @@ export const useManutencao = () => {
         fabricante: inspecao.fabricante || undefined,
         responsavelManutencao: inspecao.responsavel || undefined,
         responsavelRevisao: inspecao.responsavelRevisao || undefined,
-        imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
+        imagensAnexadas: JSON.stringify(imagensComprimidas),
       },
       { timeout: INSPECAO_TIMEOUT },
     );

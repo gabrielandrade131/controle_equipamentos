@@ -140,6 +140,23 @@ export class ManutencoesService {
     return String(value);
   }
 
+  private resumirImagensHistorico(value: string | null): string | null {
+    if (!value) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return `${parsed.length} foto(s)`;
+      }
+    } catch {
+      // Fallback para texto caso não seja um JSON válido
+    }
+
+    return value.length > 500 ? `${value.slice(0, 100)}...` : value;
+  }
+
   private async adicionarValidadeEquipamento<T extends { tag?: string | null }>(
     manutencao: T,
   ) {
@@ -662,11 +679,27 @@ export class ManutencoesService {
     const total = await this.prisma.manutencao.count({ where });
 
     const manutencoesComValidade = await Promise.all(
-      data.map((manutencao) =>
-        this.adicionarValidadeEquipamento(
-          this.adicionarDiasManutencao(manutencao),
-        ),
-      ),
+      data.map((manutencao) => {
+        const itemNormalizado =
+          !filters.incluirImagens &&
+          manutencao.dadosInspecao &&
+          typeof manutencao.dadosInspecao === 'object' &&
+          !Array.isArray(manutencao.dadosInspecao) &&
+          'imagensAnexadas' in manutencao.dadosInspecao
+            ? {
+                ...manutencao,
+                dadosInspecao: Object.fromEntries(
+                  Object.entries(
+                    manutencao.dadosInspecao as Record<string, unknown>,
+                  ).filter(([key]) => key !== 'imagensAnexadas'),
+                ),
+              }
+            : manutencao;
+
+        return this.adicionarValidadeEquipamento(
+          this.adicionarDiasManutencao(itemNormalizado),
+        );
+      }),
     );
 
     const effectiveLimit = limit ?? (total || 1);
@@ -693,8 +726,23 @@ export class ManutencoesService {
       throw new NotFoundException('Manutenção não encontrada.');
     }
 
+    const historicoLimpo = Array.isArray(manutencao.historicoAlteracoes)
+      ? manutencao.historicoAlteracoes.map((item) =>
+          item.campo === 'imagensAnexadas'
+            ? {
+                ...item,
+                valorAnterior: this.resumirImagensHistorico(item.valorAnterior),
+                valorNovo: this.resumirImagensHistorico(item.valorNovo),
+              }
+            : item,
+        )
+      : manutencao.historicoAlteracoes;
+
     return this.adicionarValidadeEquipamento(
-      this.adicionarDiasManutencao(manutencao),
+      this.adicionarDiasManutencao({
+        ...manutencao,
+        historicoAlteracoes: historicoLimpo,
+      }),
     );
   }
 
@@ -992,8 +1040,14 @@ export class ManutencoesService {
       if (anteriorFormatado !== novoFormatado) {
         historicoParaCriar.push({
           campo,
-          valorAnterior: anteriorFormatado,
-          valorNovo: novoFormatado,
+          valorAnterior:
+            campo === 'imagensAnexadas'
+              ? this.resumirImagensHistorico(anteriorFormatado)
+              : anteriorFormatado,
+          valorNovo:
+            campo === 'imagensAnexadas'
+              ? this.resumirImagensHistorico(novoFormatado)
+              : novoFormatado,
         });
       }
     }

@@ -6,6 +6,7 @@ import {
   SecaoInspecaoKey,
 } from '../constants/inspecaoManutencao';
 import { normalizeTag } from '../utils/tag';
+import { compressImageFile } from '../utils/imageCompression';
 import { CampoAssinaturaDigital } from './CampoAssinaturaDigital';
 import './FormularioInspecaoManutencao.css';
 
@@ -19,10 +20,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 interface FormularioInspecaoManutencaoProps {
-  onSalvar?: (inspecao: InspecaoManutencao) => void;
+  onSalvar?: (inspecao: InspecaoManutencao) => void | Promise<void>;
   onCancelar?: () => void;
   inspecaoInicial?: InspecaoManutencao;
   isEditing?: boolean;
+  salvando?: boolean;
 }
 
 type CampoInspecao = keyof Omit<InspecaoManutencao, SecaoInspecaoKey>;
@@ -32,6 +34,7 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
   onCancelar,
   inspecaoInicial,
   isEditing = false,
+  salvando = false,
 }) => {
   const [inspecao, setInspecao] = useState<InspecaoManutencao>(
     inspecaoInicial || criarInspecaoVazia()
@@ -141,17 +144,19 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
     const availableSlots = maxImages - currentCount;
     const filesToAdd = Array.from(files).slice(0, availableSlots);
 
-    filesToAdd.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string;
+    void Promise.all(filesToAdd.map((file) => compressImageFile(file))).then(
+      (imagensComprimidas) => {
+        const validas = imagensComprimidas.filter(Boolean);
+        if (!validas.length) return;
         setInspecao((prev) => ({
           ...prev,
-          imagensAnexadas: [...(prev.imagensAnexadas || []), base64],
+          imagensAnexadas: [...(prev.imagensAnexadas || []), ...validas].slice(
+            0,
+            maxImages,
+          ),
         }));
-      };
-      reader.readAsDataURL(file);
-    });
+      },
+    );
 
     e.target.value = '';
   };
@@ -479,12 +484,22 @@ export const FormularioInspecaoManutencao: React.FC<FormularioInspecaoManutencao
 
       <div className="botoes">
         {!documentoBloqueado && (
-          <button onClick={handleSalvar} className="btn-salvar">
-            Salvar Inspeção
+          <button
+            type="button"
+            onClick={handleSalvar}
+            className="btn-salvar"
+            disabled={salvando}
+          >
+            {salvando ? 'Salvando...' : 'Salvar Inspeção'}
           </button>
         )}
         {onCancelar && (
-          <button type="button" onClick={onCancelar} className="btn-cancelar">
+          <button
+            type="button"
+            onClick={onCancelar}
+            className="btn-cancelar"
+            disabled={salvando}
+          >
             {documentoBloqueado ? 'Voltar' : 'Cancelar'}
           </button>
         )}

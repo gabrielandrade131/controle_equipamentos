@@ -58,6 +58,11 @@ function getAuthUserFromToken(): AuthUser | null {
 
 export const setAuthUser = (user: AuthUser): void => {
   const serialized = JSON.stringify(user);
+  const currentSession = sessionStorage.getItem('authUser');
+  const currentLocal = localStorage.getItem('authUser');
+  if (currentSession === serialized && currentLocal === serialized) {
+    return;
+  }
   sessionStorage.setItem('authUser', serialized);
   localStorage.setItem('authUser', serialized);
   if (typeof window !== 'undefined') {

@@ -26,16 +26,44 @@ import {
   setAuthUser,
 } from './utils/auth';
 
+const isAuthenticated = () => {
+  return Boolean(
+    sessionStorage.getItem("authToken") || localStorage.getItem("token"),
+  );
+};
+
+interface GuardedRouteProps {
+  children: React.ReactElement;
+  allowCSafety?: boolean;
+  allowOperational?: boolean;
+  requireMaster?: boolean;
+}
+
+const GuardedRoute: React.FC<GuardedRouteProps> = ({
+  children,
+  allowCSafety = true,
+  allowOperational = false,
+  requireMaster = false,
+}) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  if (requireMaster && !isMasterUser()) {
+    return <Navigate to="/producao/ordem" replace />;
+  }
+  if (!allowCSafety && isCSafetyUser()) {
+    return <Navigate to="/producao/ordem" replace />;
+  }
+  if (!allowOperational && isOperationalUser()) {
+    return <Navigate to="/producao/ordem" replace />;
+  }
+  return children;
+};
+
 function AppContent() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [, setAuthRevision] = useState(0);
-
-  const isAuthenticated = () => {
-    return Boolean(
-      sessionStorage.getItem("authToken") || localStorage.getItem("token"),
-    );
-  };
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -86,32 +114,7 @@ function AppContent() {
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
     };
   }, [location.pathname]);
-  const GuardedRoute = ({
-    children,
-    allowCSafety = true,
-    allowOperational = false,
-    requireMaster = false,
-  }: {
-    children: React.ReactElement;
-    allowCSafety?: boolean;
-    allowOperational?: boolean;
-    requireMaster?: boolean;
-  }) => {
-    if (!isAuthenticated()) {
-      return <Navigate to="/login" replace />;
-    }
-    if (requireMaster && !isMasterUser()) {
-      return <Navigate to="/producao/ordem" replace />;
-    }
-    if (!allowCSafety && isCSafetyUser()) {
-      return <Navigate to="/producao/ordem" replace />;
-    }
-    if (!allowOperational && isOperationalUser()) {
-      return <Navigate to="/producao/ordem" replace />;
-    }
-    return children;
-  };
-  
+
   return (
     <div className="App">
       {location.pathname !== "/login" ? (

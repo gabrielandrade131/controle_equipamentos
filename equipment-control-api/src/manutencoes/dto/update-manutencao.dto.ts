@@ -8,7 +8,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { StatusManutencao, TipoManutencao } from '@prisma/client';
+import { DestinoManutencao, StatusManutencao, TipoManutencao } from '@prisma/client';
 
 export class UpdateManutencaoDto {
   @ApiPropertyOptional({ example: 'uuid-do-tipo-equipamento' })
@@ -55,6 +55,11 @@ export class UpdateManutencaoDto {
   @IsOptional()
   @IsString()
   situacaoEquipamento?: string;
+
+  @ApiPropertyOptional({ enum: DestinoManutencao })
+  @IsOptional()
+  @IsEnum(DestinoManutencao)
+  destino?: DestinoManutencao;
 
   @ApiPropertyOptional({ example: '2026-04-20' })
   @IsOptional()

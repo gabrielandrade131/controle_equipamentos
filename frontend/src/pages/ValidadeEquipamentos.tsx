@@ -62,7 +62,6 @@ const ValidadeEquipamentos: React.FC = () => {
         setLoading(true);
         const response = await axiosInstance.get<ApiListResponse<any>>("/producoes", {
           params: {
-            limit: 1000,
             sortBy: "numeroOrdem",
             sortOrder: "asc",
           },

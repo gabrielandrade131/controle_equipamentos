@@ -11,6 +11,7 @@ import {
   StatusManutencao,
 } from "../types/manutencao";
 import { extractDateInput, getLocalDateInput } from "../utils/date";
+import { compressImagesList } from "../utils/imageCompression";
 import { normalizeTag } from "../utils/tag";
 
 const SECOES_INSPECAO = [
@@ -268,7 +269,12 @@ const mapApiToInspecao = (manutencao: any): InspecaoManutencao => {
     numeroSerie: manutencao.numeroSerie ?? "",
     tag: normalizeTag(manutencao.tag),
     numeroOrdemManutencao: manutencao.numeroOrdemManutencao ?? null,
-    destino: manutencao.situacaoEquipamento ?? "",
+    situacaoEquipamento:
+      manutencao.situacaoEquipamento ??
+      dadosInspecaoBrutos.situacaoEquipamento ??
+      dadosInspecaoBrutos.destino ??
+      "",
+    destino: manutencao.destino ?? undefined,
     responsavel: manutencao.responsavelManutencao ?? "",
     responsavelRevisao: manutencao.responsavelRevisao ?? "",
     statusManutencao: manutencao.statusManutencao ?? "EM_MANUTENCAO",
@@ -331,7 +337,8 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
   fabricante: inspecao.fabricante || undefined,
   numeroSerie: inspecao.numeroSerie || undefined,
   tag: normalizeTag(inspecao.tag) || undefined,
-  situacaoEquipamento: inspecao.destino || "Manutenção manual",
+  situacaoEquipamento: inspecao.situacaoEquipamento || "Manutenção manual",
+  destino: inspecao.destino || undefined,
   dataRetornoBase: inspecao.dataRetornoBase || undefined,
   dataInicio: inspecao.dataInicio || undefined,
   previsaoTermino: inspecao.previsaoTermino || undefined,
@@ -348,7 +355,10 @@ const mapInspecaoToApi = (inspecao: InspecaoManutencao) => ({
     inspecao.avaliacaoFinal === ""
       ? undefined
       : inspecao.avaliacaoFinal === "CONFORME",
-  imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
+  imagensAnexadas:
+    inspecao.imagensAnexadas && inspecao.imagensAnexadas.length > 0
+      ? JSON.stringify(inspecao.imagensAnexadas)
+      : undefined,
 });
 
 export const useManutencao = () => {
@@ -362,7 +372,7 @@ export const useManutencao = () => {
       const response = await axiosInstance.get<ApiListResponse<any>>(
         "/manutencoes",
         {
-          params: { limit: 100, incluirImagens: false },
+          params: { incluirImagens: false },
           timeout: INSPECAO_TIMEOUT,
         },
       );
@@ -415,9 +425,15 @@ export const useManutencao = () => {
   }, []);
 
   const adicionarInspecao = async (inspecao: InspecaoManutencao) => {
+    const imagensComprimidas = await compressImagesList(
+      inspecao.imagensAnexadas,
+    );
     const response = await axiosInstance.post(
       "/manutencoes",
-      mapInspecaoToApi(inspecao),
+      mapInspecaoToApi({
+        ...inspecao,
+        imagensAnexadas: imagensComprimidas,
+      }),
       { timeout: INSPECAO_TIMEOUT },
     );
     const novaInspecao = mapApiToInspecao(response.data);
@@ -429,9 +445,15 @@ export const useManutencao = () => {
     id: string,
     inspecao: InspecaoManutencao,
   ) => {
+    const imagensComprimidas = await compressImagesList(
+      inspecao.imagensAnexadas,
+    );
     const response = await patchManutencao(
       `/manutencoes/${id}`,
-      mapInspecaoToApi(inspecao),
+      mapInspecaoToApi({
+        ...inspecao,
+        imagensAnexadas: imagensComprimidas,
+      }),
       { timeout: INSPECAO_TIMEOUT },
     );
     const inspecaoAtualizada = mapApiToInspecao(response.data);
@@ -523,6 +545,9 @@ export const useManutencao = () => {
     id: string,
     inspecao: InspecaoManutencao,
   ) => {
+    const imagensComprimidas = await compressImagesList(
+      inspecao.imagensAnexadas,
+    );
     const response = await patchManutencao(
       `/manutencoes/${id}`,
       {
@@ -536,7 +561,7 @@ export const useManutencao = () => {
         fabricante: inspecao.fabricante || undefined,
         responsavelManutencao: inspecao.responsavel || undefined,
         responsavelRevisao: inspecao.responsavelRevisao || undefined,
-        imagensAnexadas: JSON.stringify(inspecao.imagensAnexadas || []),
+        imagensAnexadas: JSON.stringify(imagensComprimidas),
       },
       { timeout: INSPECAO_TIMEOUT },
     );

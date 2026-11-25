@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { clearAuthSession } from '../utils/auth';
 
 function withApiPrefix(baseUrl: string): string {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
@@ -55,8 +56,7 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       console.warn('Token expirado. Fazendo logout...');
-      sessionStorage.clear();
-      localStorage.removeItem('token');
+      clearAuthSession();
       window.location.href = '/login';
     }
     if (error.response?.status === 403) {

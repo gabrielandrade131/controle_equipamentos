@@ -147,6 +147,7 @@ model Manutencao {
   numeroSerie             String?
   tag                     String?
   situacaoEquipamento     String?
+  destino                 DestinoManutencao?
 
   dataRetornoBase DateTime?
   dataInicio      DateTime?
@@ -326,6 +327,11 @@ enum StatusManutencao {
   OPERACIONAL
   CONCLUIDA
   PARALISADA
+}
+
+enum DestinoManutencao {
+  ESTOQUE
+  OPERACAO
 }
 
 enum TipoManutencao {

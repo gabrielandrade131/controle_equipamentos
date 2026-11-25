@@ -10,8 +10,8 @@ async function bootstrap() {
 
   // As fotos da inspeção são enviadas como data URLs em JSON. O limite padrão
   // do parser do Express é insuficiente para o conjunto de até cinco imagens.
-  app.use(json({ limit: '25mb' }));
-  app.use(urlencoded({ extended: true, limit: '25mb' }));
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   app.setGlobalPrefix('api');
 
@@ -41,6 +41,8 @@ async function bootstrap() {
       'http://177.153.69.133',
       'http://177.153.69.133:3000',
       'http://177.153.69.133:3001',
+      'https://axis.ambipar.vps-kinghost.net',
+      'http://axis.ambipar.vps-kinghost.net',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],

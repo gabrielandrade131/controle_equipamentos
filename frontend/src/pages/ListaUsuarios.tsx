@@ -4,7 +4,7 @@ import './ListaUsuarios.css';
 import AlertModal from '../components/AlertModal';
 import ModalEditarUsuario from '../components/ModalEditarUsuario';
 import ModalConfirmacao from '../components/ModalConfirmacao';
-import { getAuthUser, isAdminUser } from '../utils/auth';
+import { getAuthUser, isAdminUser, setAuthUser } from '../utils/auth';
 
 interface Usuario {
   id: string;
@@ -77,18 +77,28 @@ const ListaUsuarios: React.FC = () => {
         );
 
         if (usuarioAtualizado) {
-          const proximoUsuarioLogado = {
-            ...usuarioSessao,
-            nome: usuarioAtualizado.nome,
-            email: usuarioAtualizado.email,
-            ativo: usuarioAtualizado.ativo,
-            cSafety: usuarioAtualizado.cSafety,
-            operacional: usuarioAtualizado.operacional,
-            verificado: usuarioAtualizado.verificado,
-          };
+          const mudou =
+            usuarioSessao.nome !== usuarioAtualizado.nome ||
+            usuarioSessao.email !== usuarioAtualizado.email ||
+            usuarioSessao.ativo !== usuarioAtualizado.ativo ||
+            Boolean(usuarioSessao.cSafety) !== Boolean(usuarioAtualizado.cSafety) ||
+            Boolean(usuarioSessao.operacional) !== Boolean(usuarioAtualizado.operacional) ||
+            Boolean(usuarioSessao.verificado) !== Boolean(usuarioAtualizado.verificado);
 
-          sessionStorage.setItem('authUser', JSON.stringify(proximoUsuarioLogado));
-          setUsuarioLogado(proximoUsuarioLogado);
+          if (mudou) {
+            const proximoUsuarioLogado = {
+              ...usuarioSessao,
+              nome: usuarioAtualizado.nome,
+              email: usuarioAtualizado.email,
+              ativo: usuarioAtualizado.ativo,
+              cSafety: usuarioAtualizado.cSafety,
+              operacional: usuarioAtualizado.operacional,
+              verificado: usuarioAtualizado.verificado,
+            };
+
+            setAuthUser(proximoUsuarioLogado);
+            setUsuarioLogado(proximoUsuarioLogado);
+          }
         }
       }
     } catch (error: any) {

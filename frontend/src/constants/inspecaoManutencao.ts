@@ -212,14 +212,14 @@ const CHECKLIST_BOMBA_HELICOIDAL: ChecklistTemplate = {
     },
     {
       secao: "estruturaMecanica",
-      itens: [{ id: "bhel_estr_1", titulo: "A estrutura do equipamento encontra-se em boas condições de uso?" }],
+      itens: [
+        { id: "bhel_estr_1", titulo: "A estrutura do equipamento encontra-se em boas condições de uso?" },
+        { id: "bhel_estr_2", titulo: "A condição e a fixação dos parafusos foi revisada?" },
+      ],
     },
     {
       secao: "sistemaHidraulico",
-      itens: [
-        { id: "bhel_hid_1", titulo: "As conexões hidráulicas estão íntegras?" },
-        { id: "bhel_hid_2", titulo: "As mangueiras estão bem fixadas?" },
-      ],
+      itens: [{ id: "bhel_hid_1", titulo: "As conexões hidráulicas estão íntegras?" }],
     },
     {
       secao: "dispositivoSeguranca",
@@ -227,12 +227,22 @@ const CHECKLIST_BOMBA_HELICOIDAL: ChecklistTemplate = {
     },
     {
       secao: "componentesOperacionais",
-      itens: [{ id: "bhel_comp_1", titulo: "A bomba foi lubrificada?" }],
+      itens: [
+        { id: "bhel_comp_1", titulo: "O óleo da caixa de engrenagens (SAE 90) foi substituido?" },
+        { id: "bhel_comp_2", titulo: "Ao sangrar o óleo da caixa de engrenagens, o mesmo está sem emulsão ou limalhas?" },
+        { id: "bhel_comp_3", titulo: "A bomba apresenta sinais de vazamento?" },
+        { id: "bhel_comp_4", titulo: "Os elementos vedantes foram verificados?" },
+        { id: "bhel_comp_5", titulo: "A folga dos eixos e rolamentos estão dentro das tolerâncias permitidas?" },
+        { id: "bhel_comp_6", titulo: "A bomba está livre de ruídos anormais ou vibrações excessivas?" },
+        { id: "bhel_comp_7", titulo: "A bomba foi lubrificada?" },
+        { id: "bhel_comp_8", titulo: "Os lóbulos estão em boas condições sem desgaste excessivo?" },
+        { id: "bhel_comp_9", titulo: "O equipamento encontra-se limpo?" },
+      ],
     },
     {
       secao: "testesOperacionais",
       itens: [
-        { id: "bhel_teste_1", titulo: "O equipamento encontra-se em perfeitas condições de funcionamento?" },
+        { id: "bhel_teste_1", titulo: "O equipamento foi testado?" },
         { id: "bhel_teste_2", titulo: "O equipamento está operacional?" },
       ],
     },
@@ -2500,7 +2510,7 @@ export const criarInspecaoVazia = (): InspecaoManutencao => {
     modelo: "",
     tag: "",
     numeroOrdemManutencao: null,
-    destino: "",
+    situacaoEquipamento: "",
     dataRetornoBase: "",
     previsaoTermino: "",
     dataParalisacao: "",

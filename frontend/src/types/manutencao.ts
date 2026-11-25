@@ -11,6 +11,7 @@ export type StatusManutencao =
   | "PARALISADA";
 
 export type TipoManutencao = "CORRETIVA" | "PREVENTIVA";
+export type DestinoManutencao = "ESTOQUE" | "OPERACAO";
 
 export interface ItemInspecao {
   id: string;
@@ -51,7 +52,8 @@ export interface InspecaoManutencao {
   numeroSerie?: string;
   tag: string;
   numeroOrdemManutencao?: number | null;
-  destino: string;
+  situacaoEquipamento: string;
+  destino?: DestinoManutencao;
   dataRetornoBase?: string;
   previsaoTermino?: string;
   dataParalisacao?: string;

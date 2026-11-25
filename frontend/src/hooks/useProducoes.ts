@@ -256,9 +256,6 @@ export const useProducoes = () => {
       setLoading(true);
       const response = await axiosInstance.get<ApiListResponse<any>>(
         "/producoes",
-        {
-          params: { limit: 100 },
-        },
       );
       setProducoes(response.data.data.map(mapApiToProducao));
       setError(null);

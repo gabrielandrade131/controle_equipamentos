@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/login/logo_interno.png';
+import { clearAuthSession } from '../../utils/auth';
 import './Header.css';
 
 interface HeaderProps {
@@ -12,8 +13,7 @@ const Header: React.FC<HeaderProps> = ({ title, isMenuOpen, onToggleMenu }) => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        sessionStorage.clear();
+        clearAuthSession();
         navigate('/login');
     };
 

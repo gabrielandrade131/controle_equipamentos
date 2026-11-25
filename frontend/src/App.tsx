@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import './pages/Producao.css';
@@ -16,41 +16,105 @@ import ListaUsuarios from './pages/ListaUsuarios';
 import TiposEquipamentoPage from './pages/TiposEquipamento';
 import ValidadeEquipamentos from './pages/ValidadeEquipamentos';
 import ListaEquipamentos from './pages/ListaEquipamentos';
-import { isCSafetyUser, isOperationalUser, isMasterUser } from './utils/auth';
+import axiosInstance from './services/axiosConfig';
+import {
+  AUTH_USER_UPDATED_EVENT,
+  AuthUser,
+  isCSafetyUser,
+  isOperationalUser,
+  isMasterUser,
+  setAuthUser,
+} from './utils/auth';
+
+const isAuthenticated = () => {
+  return Boolean(
+    sessionStorage.getItem("authToken") || localStorage.getItem("token"),
+  );
+};
+
+interface GuardedRouteProps {
+  children: React.ReactElement;
+  allowCSafety?: boolean;
+  allowOperational?: boolean;
+  requireMaster?: boolean;
+}
+
+const GuardedRoute: React.FC<GuardedRouteProps> = ({
+  children,
+  allowCSafety = true,
+  allowOperational = false,
+  requireMaster = false,
+}) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  if (requireMaster && !isMasterUser()) {
+    return <Navigate to="/producao/ordem" replace />;
+  }
+  if (!allowCSafety && isCSafetyUser()) {
+    return <Navigate to="/producao/ordem" replace />;
+  }
+  if (!allowOperational && isOperationalUser()) {
+    return <Navigate to="/producao/ordem" replace />;
+  }
+  return children;
+};
 
 function AppContent() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
-  };
-  const GuardedRoute = ({
-    children,
-    allowCSafety = true,
-    allowOperational = false,
-    requireMaster = false,
-  }: {
-    children: React.ReactElement;
-    allowCSafety?: boolean;
-    allowOperational?: boolean;
-    requireMaster?: boolean;
-  }) => {
-    if (!isAuthenticated()) {
-      return <Navigate to="/login" replace />;
+  const [, setAuthRevision] = useState(0);
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setAuthRevision((prev) => prev + 1);
+    };
+
+    window.addEventListener(AUTH_USER_UPDATED_EVENT, syncAuthState);
+    window.addEventListener('storage', syncAuthState);
+    return () => {
+      window.removeEventListener(AUTH_USER_UPDATED_EVENT, syncAuthState);
+      window.removeEventListener('storage', syncAuthState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/login' || !isAuthenticated()) {
+      return;
     }
-    if (requireMaster && !isMasterUser()) {
-      return <Navigate to="/producao/ordem" replace />;
-    }
-    if (!allowCSafety && isCSafetyUser()) {
-      return <Navigate to="/producao/ordem" replace />;
-    }
-    if (!allowOperational && isOperationalUser()) {
-      return <Navigate to="/producao/ordem" replace />;
-    }
-    return children;
-  };
-  
+
+    let active = true;
+
+    const refreshCurrentUser = async () => {
+      if (!isAuthenticated()) return;
+      try {
+        const response = await axiosInstance.get<AuthUser>('/auth/me');
+        if (active && response.data) {
+          setAuthUser(response.data);
+        }
+      } catch {
+        // Erros de autenticação (401) já são tratados pelo interceptor do axios
+      }
+    };
+
+    refreshCurrentUser();
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCurrentUser();
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    return () => {
+      active = false;
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
+  }, [location.pathname]);
+
   return (
     <div className="App">
       {location.pathname !== "/login" ? (

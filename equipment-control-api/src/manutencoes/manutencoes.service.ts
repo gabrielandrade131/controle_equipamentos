@@ -57,6 +57,7 @@ export class ManutencoesService {
     numeroSerie: true,
     tag: true,
     situacaoEquipamento: true,
+    destino: true,
     dataRetornoBase: true,
     dataInicio: true,
     dataParalisacao: true,
@@ -137,6 +138,23 @@ export class ManutencoesService {
     }
 
     return String(value);
+  }
+
+  private resumirImagensHistorico(value: string | null): string | null {
+    if (!value) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return `${parsed.length} foto(s)`;
+      }
+    } catch {
+      // Fallback para texto caso não seja um JSON válido
+    }
+
+    return value.length > 500 ? `${value.slice(0, 100)}...` : value;
   }
 
   private async adicionarValidadeEquipamento<T extends { tag?: string | null }>(
@@ -588,6 +606,7 @@ export class ManutencoesService {
         numeroSerie: data.numeroSerie,
         tag: this.normalizarTag(data.tag),
         situacaoEquipamento: data.situacaoEquipamento,
+        destino: data.destino,
         dataRetornoBase: this.normalizarData(data.dataRetornoBase),
         dataInicio: this.normalizarData(data.dataInicio),
         dataParalisacao: this.resolverDataParalisacao(
@@ -633,8 +652,8 @@ export class ManutencoesService {
   async findAll(filters: FilterManutencaoDto) {
     const where = this.montarWhere(filters);
     const page = filters.page ?? 1;
-    const limit = filters.limit ?? 10;
-    const skip = (page - 1) * limit;
+    const limit = filters.limit;
+    const skip = limit ? (page - 1) * limit : undefined;
     const sortBy = filters.sortBy ?? 'criadoEm';
     const sortOrder = filters.sortOrder ?? 'desc';
 
@@ -645,8 +664,8 @@ export class ManutencoesService {
         orderBy: {
           [sortBy]: sortOrder,
         },
-        skip,
-        take: limit,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(limit !== undefined ? { take: limit } : {}),
       })
       : await this.prisma.manutencao.findMany({
         where,
@@ -654,25 +673,43 @@ export class ManutencoesService {
         orderBy: {
           [sortBy]: sortOrder,
         },
-        skip,
-        take: limit,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(limit !== undefined ? { take: limit } : {}),
       });
     const total = await this.prisma.manutencao.count({ where });
 
     const manutencoesComValidade = await Promise.all(
-      data.map((manutencao) =>
-        this.adicionarValidadeEquipamento(
-          this.adicionarDiasManutencao(manutencao),
-        ),
-      ),
+      data.map((manutencao) => {
+        const itemNormalizado =
+          !filters.incluirImagens &&
+          manutencao.dadosInspecao &&
+          typeof manutencao.dadosInspecao === 'object' &&
+          !Array.isArray(manutencao.dadosInspecao) &&
+          'imagensAnexadas' in manutencao.dadosInspecao
+            ? {
+                ...manutencao,
+                dadosInspecao: Object.fromEntries(
+                  Object.entries(
+                    manutencao.dadosInspecao as Record<string, unknown>,
+                  ).filter(([key]) => key !== 'imagensAnexadas'),
+                ),
+              }
+            : manutencao;
+
+        return this.adicionarValidadeEquipamento(
+          this.adicionarDiasManutencao(itemNormalizado),
+        );
+      }),
     );
+
+    const effectiveLimit = limit ?? (total || 1);
 
     return {
       data: manutencoesComValidade,
       total,
       page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      limit: limit ?? total,
+      totalPages: Math.max(1, Math.ceil(total / effectiveLimit)),
     };
   }
 
@@ -689,8 +726,23 @@ export class ManutencoesService {
       throw new NotFoundException('Manutenção não encontrada.');
     }
 
+    const historicoLimpo = Array.isArray(manutencao.historicoAlteracoes)
+      ? manutencao.historicoAlteracoes.map((item) =>
+          item.campo === 'imagensAnexadas'
+            ? {
+                ...item,
+                valorAnterior: this.resumirImagensHistorico(item.valorAnterior),
+                valorNovo: this.resumirImagensHistorico(item.valorNovo),
+              }
+            : item,
+        )
+      : manutencao.historicoAlteracoes;
+
     return this.adicionarValidadeEquipamento(
-      this.adicionarDiasManutencao(manutencao),
+      this.adicionarDiasManutencao({
+        ...manutencao,
+        historicoAlteracoes: historicoLimpo,
+      }),
     );
   }
 
@@ -916,6 +968,7 @@ export class ManutencoesService {
       tag:
         data.tag !== undefined ? this.normalizarTag(data.tag) : undefined,
       situacaoEquipamento: data.situacaoEquipamento,
+      destino: data.destino,
       dataRetornoBase:
         data.dataRetornoBase !== undefined
           ? this.normalizarData(data.dataRetornoBase)
@@ -958,6 +1011,7 @@ export class ManutencoesService {
       'numeroSerie',
       'tag',
       'situacaoEquipamento',
+      'destino',
       'dataRetornoBase',
       'diagnostico',
       'dadosInspecao',
@@ -986,8 +1040,14 @@ export class ManutencoesService {
       if (anteriorFormatado !== novoFormatado) {
         historicoParaCriar.push({
           campo,
-          valorAnterior: anteriorFormatado,
-          valorNovo: novoFormatado,
+          valorAnterior:
+            campo === 'imagensAnexadas'
+              ? this.resumirImagensHistorico(anteriorFormatado)
+              : anteriorFormatado,
+          valorNovo:
+            campo === 'imagensAnexadas'
+              ? this.resumirImagensHistorico(novoFormatado)
+              : novoFormatado,
         });
       }
     }
@@ -1059,6 +1119,7 @@ export class ManutencoesService {
         key: 'situacaoEquipamento',
         width: 26,
       },
+      { header: 'Destino', key: 'destino', width: 16 },
       { header: 'Data de Retorno à Base', key: 'dataRetornoBase', width: 22 },
       { header: 'Data de Início', key: 'dataInicio', width: 18 },
       { header: 'Data de Paralisação', key: 'dataParalisacao', width: 18 },
@@ -1081,6 +1142,7 @@ export class ManutencoesService {
         modeloEquipamento: manutencao.modeloEquipamento,
         tag: manutencao.tag,
         situacaoEquipamento: manutencao.situacaoEquipamento,
+        destino: manutencao.destino,
         dataRetornoBase: manutencao.dataRetornoBase,
         dataInicio: manutencao.dataInicio,
         dataParalisacao: manutencao.dataParalisacao,

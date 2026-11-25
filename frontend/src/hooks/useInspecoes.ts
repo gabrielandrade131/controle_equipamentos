@@ -171,9 +171,7 @@ export const useInspecoes = () => {
   const carregarInspecoes = async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get<ApiListResponse<any>>('/producoes', {
-        params: { limit: 100 },
-      });
+      const response = await axiosInstance.get<ApiListResponse<any>>('/producoes');
       setInspecoes(response.data.data.map(mapApiToInspecao));
     } finally {
       setLoading(false);

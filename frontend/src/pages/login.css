@@ -23,17 +23,17 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
-} 
+}
 
 .login-card {
   pointer-events: auto;
   position: relative;
+  padding: 50px;
   width: min(100%, 480px);
-  padding: 40px 30px;
-  max-width: 420px;
   min-height: 100vh;
   box-sizing: border-box;
   justify-self: end;

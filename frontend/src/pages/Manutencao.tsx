@@ -18,6 +18,11 @@ import { FilterType } from "../types/filters";
 import { formatDatePtBr, getLocalDateInput } from "../utils/date";
 import { buildSelectOptions } from "../utils/filterOptions";
 import { isOperationalUser, isDouglasUser } from "../utils/auth";
+import {
+  construirNomesArquivosSemana,
+  filtrarManutencoesConcluidasNoPeriodo,
+  obterIntervaloSemana,
+} from "../utils/manutencaoSemanal";
 import "./Manutencao.css";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -78,6 +83,16 @@ export const Manutencao: React.FC = () => {
   const [confirmandoStatus, setConfirmandoStatus] = useState(false);
   const [salvandoStatus, setSalvandoStatus] = useState(false);
   const [salvandoInspecao, setSalvandoInspecao] = useState(false);
+  const [modalExportarAberto, setModalExportarAberto] = useState(false);
+  const [dataInicioExportacao, setDataInicioExportacao] = useState(
+    () => obterIntervaloSemana(getLocalDateInput()).inicio,
+  );
+  const [dataFimExportacao, setDataFimExportacao] = useState(
+    () => obterIntervaloSemana(getLocalDateInput()).fim,
+  );
+  const [exportandoPeriodo, setExportandoPeriodo] = useState(false);
+  const [progressoExportacaoPeriodo, setProgressoExportacaoPeriodo] =
+    useState("");
   const {
     historico,
     adicionarInspecao,
@@ -122,6 +137,24 @@ export const Manutencao: React.FC = () => {
   const responsavelOptions = useMemo(
     () => buildSelectOptions(historico.map((item) => item.responsavel)),
     [historico],
+  );
+
+  const intervaloExportacaoInvalido =
+    Boolean(dataInicioExportacao && dataFimExportacao) &&
+    dataInicioExportacao > dataFimExportacao;
+
+  const manutencoesConcluidasPeriodo = useMemo(
+    () =>
+      filtrarManutencoesConcluidasNoPeriodo(historico, {
+        inicio: dataInicioExportacao,
+        fim: dataFimExportacao,
+      }),
+    [historico, dataInicioExportacao, dataFimExportacao],
+  );
+
+  const nomesArquivosExportacao = useMemo(
+    () => construirNomesArquivosSemana(manutencoesConcluidasPeriodo),
+    [manutencoesConcluidasPeriodo],
   );
 
   const filteredHistorico = useMemo(() => {
@@ -236,6 +269,70 @@ export const Manutencao: React.FC = () => {
       await exportInspecaoToPdf(inspecao, nomeArquivo, logoPath);
     } catch (error) {
       alert("Erro ao gerar PDF: " + error);
+    }
+  };
+
+  const handleAbrirModalExportar = () => {
+    const semanaAtual = obterIntervaloSemana(getLocalDateInput());
+    setDataInicioExportacao(semanaAtual.inicio);
+    setDataFimExportacao(semanaAtual.fim);
+    setProgressoExportacaoPeriodo("");
+    setModalExportarAberto(true);
+  };
+
+  const handleFecharModalExportar = () => {
+    if (exportandoPeriodo) return;
+    setModalExportarAberto(false);
+    setProgressoExportacaoPeriodo("");
+  };
+
+  const handleExportarInspecoesPeriodo = async () => {
+    if (
+      exportandoPeriodo ||
+      intervaloExportacaoInvalido ||
+      manutencoesConcluidasPeriodo.length === 0
+    ) {
+      return;
+    }
+
+    try {
+      setExportandoPeriodo(true);
+      const total = manutencoesConcluidasPeriodo.length;
+      const logoPath = "/logo.png";
+
+      for (let i = 0; i < total; i++) {
+        const item = manutencoesConcluidasPeriodo[i];
+        const nomeArquivo = nomesArquivosExportacao[i];
+        setProgressoExportacaoPeriodo(
+          `Baixando PDF ${i + 1} de ${total}: ${nomeArquivo}`,
+        );
+
+        let inspecaoCompleta = item;
+        if (item.id) {
+          try {
+            inspecaoCompleta = await carregarDetalhesManutencao(item.id);
+          } catch {
+            // Mantém os dados resumidos já carregados se falhar a busca individual
+          }
+        }
+
+        await exportInspecaoToPdf(inspecaoCompleta, nomeArquivo, logoPath);
+
+        if (i < total - 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, 350));
+        }
+      }
+
+      setModalExportarAberto(false);
+      setProgressoExportacaoPeriodo("");
+    } catch (error) {
+      console.error("Erro ao exportar inspeções:", error);
+      setAlertModal({
+        isOpen: true,
+        message: "Não foi possível gerar os PDFs das inspeções do período.",
+      });
+    } finally {
+      setExportandoPeriodo(false);
     }
   };
 
@@ -475,7 +572,7 @@ export const Manutencao: React.FC = () => {
 
     return (
       <div className="manutencao-page">
-        <h2>Manutenção</h2>
+        <h2>Ordens de Manutenção</h2>
         <ModalEditarDetalhesManutencao
           inspecao={novaOM}
           onSalvar={handleCriarNova}
@@ -490,7 +587,7 @@ export const Manutencao: React.FC = () => {
   return (
     <div className="manutencao-page">
       <div className="page-header">
-        <h2>Manutenção</h2>
+        <h2>Ordens de Manutenção</h2>
         <div className="page-toolbar">
           {!isOperational ? (
             <button
@@ -500,6 +597,13 @@ export const Manutencao: React.FC = () => {
               Gerar Ordem de Manutenção
             </button>
           ) : null}
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleAbrirModalExportar}
+          >
+            Exportar Inspeções
+          </button>
         </div>
       </div>
 
@@ -1069,6 +1173,143 @@ export const Manutencao: React.FC = () => {
             </button>
             <img src={imagemAmpliada.src} alt={imagemAmpliada.alt} />
             <p>{imagemAmpliada.legenda}</p>
+          </div>
+        </div>
+      )}
+
+      {modalExportarAberto && (
+        <div
+          className="exportar-semana-overlay"
+          onClick={handleFecharModalExportar}
+        >
+          <div
+            className="exportar-semana-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Exportar inspeções em PDF"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="exportar-semana-header">
+              <h3>Exportar Inspeções</h3>
+              <button
+                type="button"
+                className="exportar-semana-fechar"
+                aria-label="Fechar"
+                disabled={exportandoPeriodo}
+                onClick={handleFecharModalExportar}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="exportar-semana-body">
+              <p className="exportar-semana-subtitulo">
+                Selecione o intervalo de <strong>data de conclusão</strong> para
+                baixar os arquivos <strong>.pdf</strong> individuais de cada
+                manutenção <strong>Concluída</strong> no período.
+              </p>
+
+              <div className="exportar-semana-seletor">
+                <div className="exportar-periodo-grid">
+                  <label className="exportar-periodo-campo">
+                    <span>Data inicial</span>
+                    <input
+                      type="date"
+                      value={dataInicioExportacao}
+                      disabled={exportandoPeriodo}
+                      onChange={(event) =>
+                        setDataInicioExportacao(event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label className="exportar-periodo-campo">
+                    <span>Data final</span>
+                    <input
+                      type="date"
+                      value={dataFimExportacao}
+                      min={dataInicioExportacao || undefined}
+                      disabled={exportandoPeriodo}
+                      onChange={(event) =>
+                        setDataFimExportacao(event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
+
+                {intervaloExportacaoInvalido && (
+                  <p className="exportar-periodo-erro">
+                    A data inicial deve ser anterior ou igual à data final.
+                  </p>
+                )}
+              </div>
+
+              <div className="exportar-semana-resumo">
+                <strong>
+                  {manutencoesConcluidasPeriodo.length}{" "}
+                  {manutencoesConcluidasPeriodo.length === 1
+                    ? "manutenção concluída encontrada"
+                    : "manutenções concluídas encontradas"}
+                </strong>
+              </div>
+
+              {manutencoesConcluidasPeriodo.length > 0 ? (
+                <ul className="exportar-semana-lista">
+                  {manutencoesConcluidasPeriodo.map((item, index) => (
+                    <li
+                      key={item.id || `${nomesArquivosExportacao[index]}-${index}`}
+                    >
+                      <span className="exportar-semana-arquivo">
+                        {nomesArquivosExportacao[index]}
+                      </span>
+                      <span className="exportar-semana-meta">
+                        OM #{item.numeroOrdemManutencao ?? "-"} &bull; Conclusão:{" "}
+                        {formatDatePtBr(item.dataTermino)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="exportar-semana-vazio">
+                  {intervaloExportacaoInvalido
+                    ? "Ajuste as datas para visualizar as manutenções concluídas."
+                    : dataInicioExportacao && dataFimExportacao
+                      ? `Nenhuma manutenção concluída entre ${formatDatePtBr(dataInicioExportacao)} e ${formatDatePtBr(dataFimExportacao)}.`
+                      : "Informe a data inicial e a data final para listar as inspeções."}
+                </p>
+              )}
+
+              {progressoExportacaoPeriodo && (
+                <p className="exportar-semana-progresso">
+                  {progressoExportacaoPeriodo}
+                </p>
+              )}
+            </div>
+
+            <div className="exportar-semana-footer">
+              <button
+                type="button"
+                className="exportar-semana-cancelar"
+                disabled={exportandoPeriodo}
+                onClick={handleFecharModalExportar}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={
+                  exportandoPeriodo ||
+                  intervaloExportacaoInvalido ||
+                  manutencoesConcluidasPeriodo.length === 0
+                }
+                onClick={() => void handleExportarInspecoesPeriodo()}
+              >
+                {exportandoPeriodo
+                  ? "Exportando..."
+                  : `Baixar PDFs (${manutencoesConcluidasPeriodo.length})`}
+              </button>
+            </div>
           </div>
         </div>
       )}

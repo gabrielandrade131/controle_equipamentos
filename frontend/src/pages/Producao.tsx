@@ -45,7 +45,7 @@ const Producao: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="producao-container">
       <div className="producao-header">
-        <h1>Produção</h1>
+        <h1>Ordens de Produção</h1>
         <div className="producao-tabs">
           {visibleItems.map((item) => (
             <button

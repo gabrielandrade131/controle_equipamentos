@@ -35,8 +35,8 @@ const Navbar: React.FC<NavbarProps> = ({ isOpen, onClose }) => {
   const isOperational = isOperationalUser();
   const isMaster = isMasterUser();
   const menuItems = [
-    { label: 'Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false, hiddenForOperational: false },
-    { label: 'Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true, hiddenForOperational: false },
+    { label: 'Ordens de Produção', path: '/producao', icon: 'precision_manufacturing', hiddenForCSafety: false, hiddenForOperational: false },
+    { label: 'Ordens de Manutenção', path: '/manutencao', icon: 'build', hiddenForCSafety: true, hiddenForOperational: false },
     { label: 'Validades', path: '/validade-equipamentos', icon: 'event_upcoming', hiddenForCSafety: true, hiddenForOperational: true },
     { label: 'Equipamentos', path: '/equipamentos', icon: 'construction', hiddenForCSafety: true, hiddenForOperational: true, onlyMaster: true },
     { label: 'Usuários', path: '/usuarios', icon: 'group', hiddenForCSafety: true, hiddenForOperational: true },

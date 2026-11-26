@@ -16,18 +16,36 @@ const STATUS_LABELS: Record<string, string> = {
   CONCLUIDA: "Concluída",
 };
 
+const logoImageCache = new Map<string, Promise<HTMLImageElement | null>>();
+
+const loadLogoImage = (logoPath: string): Promise<HTMLImageElement | null> => {
+  const cached = logoImageCache.get(logoPath);
+  if (cached) return cached;
+
+  const promise = new Promise<HTMLImageElement | null>((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      logoImageCache.delete(logoPath);
+      resolve(null);
+    };
+    img.src = logoPath;
+  });
+
+  logoImageCache.set(logoPath, promise);
+  return promise;
+};
+
 export const usePdfExportManutencao = () => {
-  const exportInspecaoToPdf = async (
+  const buildInspecaoPdf = async (
     inspecao: InspecaoManutencao,
-    filename: string,
     logoPath?: string,
-  ) => {
-    try {
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
+  ): Promise<jsPDF> => {
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
       // O formulário já contém apenas os itens do checklist aplicável ao tipo
       // de equipamento. Reaplicar o template aqui poderia substituir esse
       // conjunto e fazer o PDF exibir perguntas que não pertencem à inspeção.
@@ -307,13 +325,11 @@ export const usePdfExportManutencao = () => {
 
       if (logoPath) {
         try {
-          const img = new Image();
-          img.src = logoPath;
-          await new Promise(
-            (resolve) => (img.onload = () => resolve(undefined)),
-          );
-          pdf.addImage(img, "PNG", marginX, y + 2, 27, 20);
-          y += 18;
+          const img = await loadLogoImage(logoPath);
+          if (img) {
+            pdf.addImage(img, "PNG", marginX, y + 2, 27, 20);
+            y += 18;
+          }
         } catch (e) {
           console.error("Erro ao adicionar logo:", e);
         }
@@ -528,6 +544,16 @@ export const usePdfExportManutencao = () => {
         size: 9,
       });
 
+      return pdf;
+  };
+
+  const exportInspecaoToPdf = async (
+    inspecao: InspecaoManutencao,
+    filename: string,
+    logoPath?: string,
+  ) => {
+    try {
+      const pdf = await buildInspecaoPdf(inspecao, logoPath);
       pdf.save(filename);
     } catch (error) {
       console.error("Erro ao exportar PDF:", error);
@@ -535,5 +561,18 @@ export const usePdfExportManutencao = () => {
     }
   };
 
-  return { exportInspecaoToPdf };
+  const generateInspecaoPdfBytes = async (
+    inspecao: InspecaoManutencao,
+    logoPath?: string,
+  ): Promise<Uint8Array> => {
+    try {
+      const pdf = await buildInspecaoPdf(inspecao, logoPath);
+      return new Uint8Array(pdf.output("arraybuffer"));
+    } catch (error) {
+      console.error("Erro ao gerar bytes do PDF:", error);
+      throw error;
+    }
+  };
+
+  return { exportInspecaoToPdf, generateInspecaoPdfBytes };
 };

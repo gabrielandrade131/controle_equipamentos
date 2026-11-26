@@ -604,6 +604,217 @@
   font-size: 12px;
 }
 
+.exportar-semana-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.exportar-semana-modal {
+  width: min(640px, 100%);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.28);
+  overflow: hidden;
+}
+
+.exportar-semana-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.exportar-semana-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #0a3a70;
+}
+
+.exportar-semana-fechar {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.exportar-semana-fechar:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.exportar-semana-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.exportar-semana-subtitulo {
+  margin: 0;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.exportar-semana-seletor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.exportar-periodo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.exportar-periodo-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.exportar-periodo-campo input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.exportar-periodo-campo input:focus {
+  outline: none;
+  border-color: #b2cc21;
+  box-shadow: 0 0 0 2px rgba(178, 204, 33, 0.25);
+}
+
+.exportar-periodo-erro {
+  margin: 0;
+  color: #c0161d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.exportar-semana-resumo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.exportar-semana-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.exportar-semana-lista li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+}
+
+.exportar-semana-lista li:last-child {
+  border-bottom: none;
+}
+
+.exportar-semana-arquivo {
+  font-weight: 600;
+  color: #111827;
+  word-break: break-word;
+}
+
+.exportar-semana-meta {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.exportar-semana-vazio {
+  margin: 0;
+  padding: 18px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  color: #6b7280;
+  text-align: center;
+  font-size: 13px;
+}
+
+.exportar-semana-progresso {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #eef6c0;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.exportar-semana-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.exportar-semana-cancelar {
+  padding: 10px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exportar-semana-footer .btn-primary:disabled,
+.exportar-semana-cancelar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 @media (max-width: 768px) {
   .imagem-ampliada-overlay {
     padding: 12px;
@@ -631,6 +842,24 @@
   }
 
   .btn-primary {
+    width: 100%;
+  }
+
+  .exportar-periodo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exportar-semana-lista li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .exportar-semana-footer {
+    flex-direction: column-reverse;
+  }
+
+  .exportar-semana-cancelar {
     width: 100%;
   }
 }

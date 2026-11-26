@@ -30,7 +30,7 @@ export const NovaManutencao: React.FC = () => {
 
   return (
     <div className="manutencao-page">
-      <h2>Manutenção</h2>
+      <h2>Ordens de Manutenção</h2>
       <ModalEditarDetalhesManutencao
         inspecao={novaOM}
         onSalvar={handleSalvar}

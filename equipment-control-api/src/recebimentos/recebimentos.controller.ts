@@ -18,8 +18,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RecebimentosService } from './recebimentos.service';
 
 @ApiTags('Recebimentos')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('recebimentos')
 export class RecebimentosController {
   constructor(private readonly recebimentosService: RecebimentosService) {}
@@ -75,6 +73,7 @@ export class RecebimentosController {
     return this.recebimentosService.criarRecebimento(dados, arquivos ?? []);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   listar(
     @Query('numeroOs') numeroOs?: string,
